@@ -1,0 +1,59 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Node / Nuxt (frontend)
+frontend/node_modules/
+frontend/.nuxt/
+frontend/.output/
+frontend/.nitro/
+frontend/.cache/
+frontend/dist/
+frontend/.pnpm-store/
+frontend/.npm/
+frontend/.yarn/
+
+# pnpm
+.pnpm-store/
+**/.pnpm-store/
+.pnpm-debug.log*
+.pnpm-state*
+
+# Java / Maven / Spring Boot (backend)
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+*.class
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Runtime / temp
+*.pid
+*.seed
+*.pid.lock
+*.swp
+*.swo
+*.tmp
+.tmp/
+tmp/
+
+# Docker volumes and local data
+mysql_data/
+redis_data/
+
+# Optional archive / artifacts
+*.zip
+*.tar
+*.gz

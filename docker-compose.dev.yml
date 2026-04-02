@@ -1,0 +1,62 @@
+services:
+  backend:
+    image: maven:3.9-eclipse-temurin-21
+    container_name: get_my_page_backend_dev
+    profiles: ["app"]
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    command: >
+      sh -c "
+      if [ ! -f pom.xml ]; then
+        echo 'backend 未初始化，请先执行 docs/project-init.md';
+        sleep infinity;
+      fi;
+      if [ -f mvnw ]; then chmod +x mvnw; ./mvnw spring-boot:run;
+      else mvn spring-boot:run;
+      fi"
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app_net
+
+  frontend:
+    image: node:22-alpine
+    container_name: get_my_page_frontend_dev
+    profiles: ["app"]
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    environment:
+      NUXT_PUBLIC_API_BASE_URL: ${NUXT_PUBLIC_API_BASE_URL}
+    command: >
+      sh -c "
+      if [ ! -f package.json ]; then
+        echo 'frontend 未初始化，请先执行 docs/project-init.md';
+        sleep infinity;
+      fi;
+      corepack enable;
+      if [ -f pnpm-lock.yaml ]; then pnpm install && pnpm dev --host 0.0.0.0 --port 3000;
+      else npm install && npm run dev -- --host 0.0.0.0 --port 3000;
+      fi"
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - app_net
