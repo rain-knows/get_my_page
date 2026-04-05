@@ -96,3 +96,10 @@ backend/.mvn/wrapper/maven-wrapper.jar
 .nyc_output
 coverage/
 *.lcov
+
+#------------------------------
+# agents & design-system
+#------------------------------
+
+.agent/
+design-system/
