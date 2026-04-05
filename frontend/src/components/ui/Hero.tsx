@@ -33,7 +33,7 @@ export default function Hero() {
           <span>V1.0 is now live for testing</span>
         </motion.div>
 
-        <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-transparent bg-clip-text bg-linear-to-b from-white to-white/60 mb-6 drop-shadow-sm leading-tight pb-2">
+        <h1 className="font-heading text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-transparent bg-clip-text bg-linear-to-b from-white to-white/60 mb-6 drop-shadow-sm leading-tight pb-2">
           写给未来的代码<br />
           <span className="bg-clip-text text-transparent bg-linear-to-r from-blue-400 via-indigo-400 to-violet-500">
             读给世界的文字
@@ -56,13 +56,13 @@ export default function Hero() {
           transition={{ delay: 0.4, duration: 0.6 }}
           className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto px-6"
         >
-          <button className="group relative w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-white text-black font-semibold rounded-full overflow-hidden hover:scale-105 active:scale-95 transition-all duration-300 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]">
+          <button className="cursor-pointer group relative w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-white text-black font-heading font-semibold rounded-full overflow-hidden hover:scale-105 active:scale-95 transition-all duration-300 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_-10px_rgba(255,255,255,0.5)]">
             <span className="relative z-10">探索最近输出</span>
             <ArrowRight size={18} className="relative z-10 group-hover:translate-x-1 transition-transform" />
             <div className="absolute inset-0 bg-linear-to-r from-blue-200 to-violet-200 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
           </button>
           
-          <button className="w-full sm:w-auto px-8 py-3.5 bg-white/5 text-white font-medium rounded-full border border-white/10 backdrop-blur-md hover:bg-white/10 hover:border-white/20 active:bg-white/5 transition-colors duration-300">
+          <button className="cursor-pointer w-full sm:w-auto px-8 py-3.5 bg-white/5 text-white font-medium rounded-full border border-white/10 backdrop-blur-md hover:bg-white/10 hover:border-white/20 active:bg-white/5 transition-colors duration-300">
             订阅我的专栏
           </button>
         </motion.div>

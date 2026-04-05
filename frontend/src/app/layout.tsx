@@ -1,8 +1,16 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Archivo, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const spaceGrotesk = Space_Grotesk({ 
+  subsets: ["latin"],
+  variable: "--font-space-grotesk" 
+});
+
+const archivo = Archivo({ 
+  subsets: ["latin"],
+  variable: "--font-archivo"
+});
 
 export const metadata: Metadata = {
   title: "Get My Page | 高质感数字博客",
@@ -17,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className="dark">
       <body
-        className={`${inter.className} min-h-screen bg-neutral-950 text-neutral-100 antialiased selection:bg-blue-500/30 selection:text-blue-200 overscroll-none`}
+        className={`${spaceGrotesk.className} ${archivo.variable} ${spaceGrotesk.variable} min-h-screen bg-neutral-950 text-neutral-100 antialiased selection:bg-blue-500/30 selection:text-blue-200 overscroll-none`}
       >
         {children}
       </body>
