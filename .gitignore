@@ -1,0 +1,98 @@
+# ==========================================
+# Root .gitignore for Get My Page (Blog)
+# Covers Next.js (frontend) and Spring Boot (backend)
+# ==========================================
+
+# ------------------------------------------
+# General OS/IDE/Editor
+# ------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+
+# IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ------------------------------------------
+# Environment Variables & Secrets
+# ------------------------------------------
+.env
+.env*.local
+*.pem
+*.key
+*.cert
+
+# ------------------------------------------
+# Logs and Databases
+# ------------------------------------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+/logs
+/mysql_data
+/redis_data
+/minio_data
+/meili_data
+/maven_cache
+
+# ------------------------------------------
+# Frontend (Next.js & Node)
+# ------------------------------------------
+frontend/node_modules/
+frontend/.pnp
+frontend/.pnp.js
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/dist/
+frontend/coverage/
+
+# Next.js build output
+*.tsbuildinfo
+next-env.d.ts
+
+# ------------------------------------------
+# Backend (Spring Boot & Maven)
+# ------------------------------------------
+backend/target/
+backend/pom.xml.tag
+backend/pom.xml.releaseBackup
+backend/pom.xml.versionsBackup
+backend/pom.xml.next
+backend/release.properties
+backend/dependency-reduced-pom.xml
+backend/buildNumber.properties
+backend/.mvn/timing.properties
+backend/.mvn/wrapper/maven-wrapper.jar
+
+# ------------------------------------------
+# Tests & Coverage
+# ------------------------------------------
+.nyc_output
+coverage/
+*.lcov

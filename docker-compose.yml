@@ -1,0 +1,156 @@
+version: '3.8'
+
+services:
+  # ========================
+  # 前端 - Next.js 开发服务器
+  # ========================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: blog-frontend-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # 源码挂载 (热重载)
+      - ./frontend:/app
+      # 排除 node_modules (使用容器内的)
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8080/api}
+      - NEXT_PUBLIC_MINIO_URL=${NEXT_PUBLIC_MINIO_URL:-http://localhost:9000}
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # ========================
+  # 后端 - Spring Boot 开发服务器
+  # ========================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: blog-backend-dev
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "5005:5005"  # 远程调试端口
+    volumes:
+      # 源码挂载
+      - ./backend:/app
+      # Maven 本地仓库缓存
+      - maven_cache:/root/.m2
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - MYSQL_HOST=mysql
+      - MYSQL_DB=${MYSQL_DB:-blog}
+      - MYSQL_USER=${MYSQL_USER:-bloguser}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-blog_password_change_me}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_key_at_least_32_chars}
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin_password_change_me}
+      - MEILI_HOST=http://meilisearch:7700
+      - MEILI_API_KEY=${MEILI_API_KEY:-meili_master_key_change_me}
+      # 启用远程调试
+      - JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ========================
+  # MySQL 8.0
+  # ========================
+  mysql:
+    image: mysql:8.0
+    container_name: blog-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password_change_me}
+      MYSQL_DATABASE: ${MYSQL_DB:-blog}
+      MYSQL_USER: ${MYSQL_USER:-bloguser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-blog_password_change_me}
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --max-connections=200
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================
+  # Redis 7
+  # ========================
+  redis:
+    image: redis:7-alpine
+    container_name: blog-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================
+  # Meilisearch
+  # ========================
+  meilisearch:
+    image: getmeili/meilisearch:v1.38
+    container_name: blog-meilisearch
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-meili_master_key_change_me}
+      MEILI_ENV: development
+      MEILI_NO_ANALYTICS: true
+    ports:
+      - "7700:7700"
+    volumes:
+      - meili_data:/meili_data
+
+  # ========================
+  # MinIO
+  # ========================
+  minio:
+    image: minio/minio:latest
+    container_name: blog-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin_password_change_me}
+    ports:
+      - "9000:9000"
+      - "9001:9001"  # Web Console
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+volumes:
+  mysql_data:
+  redis_data:
+  meili_data:
+  minio_data:
+  maven_cache:

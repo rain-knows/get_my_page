@@ -1,0 +1,11 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# 安装依赖
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+# 源码通过 volume 挂载
+# 启动开发服务器
+CMD ["npm", "run", "dev"]
