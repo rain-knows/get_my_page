@@ -61,39 +61,39 @@
 
 | 技术 | 版本 | 职责 |
 |------|------|------|
-| Next.js (App Router) | v15.0+ | SSR/SSG/ISR 元框架 |
-| React | v19.0+ | 视图层框架 |
-| TypeScript | v5.0+ | 强类型语言 |
-| Tailwind CSS | v4.0+ | 原子化样式引擎 (CSS-first, Oxide 引擎) |
-| shadcn/ui (CLI) | v4.1+ | 无头化 UI 组件库 |
-| Motion (原 Framer Motion) | v12.0+ | 动画与过渡 |
-| Zustand | v5.0+ | 全局 UI 状态管理 |
-| SWR | v2.4+ | 客户端数据请求与缓存 |
-| MDX | v3.0+ | 增强型 Markdown 内容引擎 |
+| Next.js (App Router) | =16.2.2 | SSR/SSG/ISR 元框架 |
+| React | =19.2.4 | 视图层框架 |
+| TypeScript | =5.x | 强类型语言 |
+| Tailwind CSS | =4.x | 原子化样式引擎 (CSS-first, Oxide 引擎) |
+| shadcn/ui (CLI) | =4.x | 无头化 UI 组件库 |
+| Motion (原 Framer Motion) | =12.x | 动画与过渡 |
+| Zustand | =5.x | 全局 UI 状态管理 |
+| SWR | =2.x | 客户端数据请求与缓存 |
+| MDX | =3.x | 增强型 Markdown 内容引擎 |
 
 ### 3.2 后端层
 
 | 技术 | 版本 | 职责 |
 |------|------|------|
-| Spring Boot | v3.5+ | RESTful API 核心框架 |
-| Java | v21 LTS | 虚拟线程高并发运行时 |
-| Flyway | v10.0+ | 数据库结构迁移管控 |
-| MyBatis-Plus | v3.5.16+ | ORM / 数据持久化 |
-| Caffeine | v3.1+ | JVM 本地一级缓存 |
-| Spring Security | v6.4+ | RBAC 身份与权限 |
-| JWT (jjwt) | v0.12+ | 无状态认证令牌 |
-| SpringDoc | v2.3+ | OpenAPI 3.0 文档生成 |
+| Spring Boot | =4.0.5 | RESTful API 核心框架 |
+| Java | =21 LTS | 虚拟线程高并发运行时 |
+| Flyway | =10.x | 数据库结构迁移管控 |
+| MyBatis-Plus | =3.5.16 | ORM / 数据持久化 |
+| Caffeine | =3.x | JVM 本地一级缓存 |
+| Spring Security | =6.x | RBAC 身份与权限 |
+| JWT (jjwt) | =0.12.x | 无状态认证令牌 |
+| SpringDoc | =2.x | OpenAPI 3.0 文档生成 |
 
 ### 3.3 基础设施层
 
 | 技术 | 版本 | 职责 |
 |------|------|------|
-| MySQL | v8.0+ | 关系型数据持久化 |
-| Redis | v7.0+ | 分布式缓存与原子计数 |
-| Meilisearch | v1.38+ | 全文搜索引擎 |
-| MinIO | RELEASE.2026-03+ | S3 兼容对象存储 |
-| Docker | v27.0+ | 容器化封装 |
-| Traefik | v3.0+ | 反向代理与自动 TLS |
+| MySQL | =8.0 | 关系型数据持久化 |
+| Redis | =7-alpine | 分布式缓存与原子计数 |
+| Meilisearch | =v1.38 | 全文搜索引擎 |
+| MinIO | =latest | S3 兼容对象存储 |
+| Docker | =27.x | 容器化封装 |
+| Traefik | =3.x | 反向代理与自动 TLS |
 
 ---
 
