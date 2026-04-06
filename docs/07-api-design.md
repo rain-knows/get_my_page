@@ -184,8 +184,33 @@
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
 | GET | `/api/posts/{postId}/comments` | 公开 | 获取文章评论（树形） |
-| POST | `/api/comments` | USER | 发表评论 |
+| POST | `/api/comments` | USER / 游客 | 发表评论（支持游客，受全局开关控制） |
 | DELETE | `/api/comments/{id}` | ADMIN/本人 | 删除评论 |
+
+#### 发表评论请求（游客）
+
+```json
+// POST /api/comments
+{
+  "targetType": "post",
+  "targetId": 1,
+  "content": "写得好！",
+  "guestNickname": "匿名用户",
+  "guestEmail": "guest@example.com"
+}
+```
+
+#### 发表评论请求（已登录用户）
+
+```json
+// POST /api/comments
+{
+  "targetType": "post",
+  "targetId": 1,
+  "parentId": null,
+  "content": "学到了！"
+}
+```
 
 ### 4.6 搜索模块 `/api/search`
 
