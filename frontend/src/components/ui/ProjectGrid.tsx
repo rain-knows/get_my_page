@@ -59,7 +59,10 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as any },
+    transition: {
+      duration: 0.6,
+      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+    },
   },
 };
 
@@ -99,7 +102,7 @@ export default function ProjectGrid() {
               <h3 className="font-heading text-xl md:text-2xl font-bold text-white/90 mb-3 group-hover:text-white transition-colors">
                 {item.title}
               </h3>
-              
+
               <p className="text-neutral-400 mb-8 leading-relaxed line-clamp-3">
                 {item.description}
               </p>
@@ -115,7 +118,7 @@ export default function ProjectGrid() {
                     </span>
                   ))}
                 </div>
-                
+
                 <span className="p-1.5 rounded-full bg-white/5 text-white/40 group-hover:bg-white/10 group-hover:text-white transition-all transform group-hover:rotate-45">
                   <ArrowUpRight size={16} />
                 </span>
