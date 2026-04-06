@@ -102,4 +102,5 @@ coverage/
 #------------------------------
 
 .agent/
+.claude/
 design-system/
