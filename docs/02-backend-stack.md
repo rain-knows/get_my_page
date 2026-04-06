@@ -1,10 +1,10 @@
 # 后端技术栈规范
 
-> **文档版本**: v1.1.0 | **最后更新**: 2026-04-04 | **适用范围**: 后端开发人员
+> **文档版本**: v1.2.0 | **最后更新**: 2026-04-06 | **适用范围**: 后端开发人员
 
 ---
 
-## 1. Spring Boot — v3.5+
+## 1. Spring Boot — v3.5.13
 
 ### 1.1 核心定位
 
@@ -172,7 +172,7 @@ server:
 
 ---
 
-## 3. Flyway — v10.0+
+## 3. Flyway — v10.20.x (由 BOM 管理)
 
 ### 3.1 迁移脚本约定
 
@@ -331,7 +331,7 @@ public class CacheConfig {
 
 ---
 
-## 6. Spring Security — v6.4+
+## 6. Spring Security — v6.5.x (由 BOM 管理)
 
 ### 6.1 安全架构
 
@@ -418,7 +418,7 @@ springdoc:
 <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.5.0</version>
+    <version>3.5.13</version>
 </parent>
 
 <properties>

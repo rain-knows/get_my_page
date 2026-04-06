@@ -118,14 +118,33 @@
 | 字段 | 类型 | 约束 | 说明 |
 |------|------|------|------|
 | id | BIGINT | PK, AUTO_INCREMENT | 评论 ID |
-| post_id | BIGINT | FK → post.id, NOT NULL | 所属文章 |
-| user_id | BIGINT | FK → user.id, NOT NULL | 评论者 |
-| parent_id | BIGINT | FK → comment.id, NULLABLE | 父评论 (嵌套回复) |
-| content | TEXT | NOT NULL | 评论内容 |
-| status | TINYINT | NOT NULL, DEFAULT 1 | 0-隐藏 1-显示 |
+| target_type | VARCHAR(20) | NOT NULL | 目标类型 (post, page) |
+| target_id | BIGINT | NOT NULL | 目标内容的 ID |
+| user_id | BIGINT | FK → user.id, NOT NULL | 评论者 ID |
+| parent_id | BIGINT | FK → comment.id, NULLABLE | 直接父评论 ID |
+| root_id | BIGINT | FK → comment.id, NULLABLE | 根评论 ID（层级汇总用） |
+| content | TEXT | NOT NULL | 评论正文 (utf8mb4) |
+| ip_address | VARCHAR(45) | NULLABLE | IP 地址 |
+| user_agent | VARCHAR(255) | NULLABLE | 浏览器 User-Agent |
+| status | TINYINT | NOT NULL, DEFAULT 1 | 0-待审 1-正常 2-违规 |
 | created_at | DATETIME | NOT NULL | 创建时间 |
 | updated_at | DATETIME | NOT NULL | 更新时间 |
 | deleted | TINYINT | NOT NULL, DEFAULT 0 | 逻辑删除 |
+
+### 2.7 操作日志表 `operation_log`
+
+| 字段 | 类型 | 约束 | 说明 |
+|------|------|------|------|
+| id | BIGINT | PK, AUTO_INCREMENT | 日志 ID |
+| module | VARCHAR(50) | NOT NULL | 所属模块 (Post, User, etc.) |
+| action | VARCHAR(100) | NOT NULL | 操作描述 (Create, Update, Delete) |
+| user_id | BIGINT | FK → user.id, NULLABLE | 触发者 ID |
+| description | VARCHAR(255) | NULLABLE | 操作梗概 |
+| request_params | JSON | NULLABLE | 原始请求参数 |
+| result_data | JSON | NULLABLE | 操作结果信息 |
+| execution_ms | INT | NOT NULL, DEFAULT 0 | 执行耗时 (ms) |
+| ip_address | VARCHAR(45) | NULLABLE | 操作 IP |
+| created_at | DATETIME | NOT NULL | 记录时间 |
 
 ---
 

@@ -15,9 +15,9 @@ services:
     volumes:
       # 源码挂载 (热重载)
       - ./frontend:/app
-      # 排除 node_modules (使用容器内的)
-      - /app/node_modules
-      - /app/.next
+      # 使用命名 volume 隔离 node_modules，防止宿主机挂载将其覆盖为空目录
+      - frontend_node_modules:/app/node_modules
+      - frontend_next_cache:/app/.next
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8080/api}
@@ -154,3 +154,6 @@ volumes:
   meili_data:
   minio_data:
   maven_cache:
+  # 前端依赖与构建缓存 (命名 volume，防止被宿主机挂载覆盖)
+  frontend_node_modules:
+  frontend_next_cache:

@@ -1,7 +1,7 @@
 # 博客系统 — 总体架构概览
 
-> **文档版本**: v1.1.0  
-> **最后更新**: 2026-04-04  
+> **文档版本**: v1.2.0  
+> **最后更新**: 2026-04-06  
 > **适用范围**: 全体开发人员、运维人员、架构评审人员
 
 ---
@@ -75,12 +75,12 @@
 
 | 技术 | 版本 | 职责 |
 |------|------|------|
-| Spring Boot | =4.0.5 | RESTful API 核心框架 |
+| Spring Boot | =3.5.13 | RESTful API 核心框架 |
 | Java | =21 LTS | 虚拟线程高并发运行时 |
-| Flyway | =10.x | 数据库结构迁移管控 |
+| Flyway | =10.20.x | 数据库结构迁移管控 (由 BOM 管理) |
 | MyBatis-Plus | =3.5.16 | ORM / 数据持久化 |
 | Caffeine | =3.x | JVM 本地一级缓存 |
-| Spring Security | =6.x | RBAC 身份与权限 |
+| Spring Security | =6.5.x | RBAC 身份与权限 (由 BOM 管理) |
 | JWT (jjwt) | =0.12.x | 无状态认证令牌 |
 | SpringDoc | =2.x | OpenAPI 3.0 文档生成 |
 

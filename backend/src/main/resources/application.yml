@@ -2,10 +2,14 @@ spring:
   application:
     name: blog
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/${MYSQL_DB:blog}?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
-    username: ${MYSQL_USER:root}
-    password: ${MYSQL_PASSWORD:root}
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/${MYSQL_DB:blog}?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${MYSQL_USER:bloguser}
+    password: ${MYSQL_PASSWORD:blog_password_change_me}
     driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -18,3 +22,4 @@ logging:
   level:
     root: INFO
     com.getmypage.blog: DEBUG
+
