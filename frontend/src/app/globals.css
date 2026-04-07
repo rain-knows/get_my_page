@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "tw-animate-css";
+@import "../../node_modules/tw-animate-css/dist/tw-animate.css";
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
@@ -12,17 +12,22 @@
 
 /* Minimal clean globals file for Tailwind V4 */
 @layer base {
-  html, body {
+
+  html,
+  body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
   }
+
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }

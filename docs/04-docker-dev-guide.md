@@ -356,6 +356,7 @@ CMD ["mvn", "spring-boot:run", \
 | 问题 | 排查方法 |
 |------|---------|
 | 前端热重载不生效 | 检查 volume 挂载是否正确，确认 `.next` 被排除 |
+| 新增前端依赖后容器报 `module not found` | 重启前端触发自动依赖同步，或执行 `make sync-fe` |
 | 后端启动失败 | `docker compose logs backend` 查看错误，通常是数据库连接问题 |
 | MySQL 连接拒绝 | 等待 healthcheck 通过，或检查密码配置 |
 | 端口冲突 | `lsof -i :3000` 检查占用进程 |

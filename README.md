@@ -101,6 +101,8 @@ docker compose ps
 | `make restart-be` | 重启后端 |
 | `make restart-fe` | 重启前端 |
 | `make build` | 无缓存重新构建镜像 |
+| `make sync-fe` | 手动同步前端依赖到容器 (`package*.json` 改动时可用) |
+| `make rebuild-fe` | 重建并重启前端服务 |
 | `make mysql-cli` | 进入 MySQL CLI |
 | `make redis-cli` | 进入 Redis CLI |
 

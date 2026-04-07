@@ -2,10 +2,14 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# 启动脚本放在 /usr/local/bin，避免被 /app volume 覆盖
+COPY scripts/dev-entrypoint.sh /usr/local/bin/dev-entrypoint.sh
+RUN chmod +x /usr/local/bin/dev-entrypoint.sh
+
 # 安装依赖
 COPY package.json package-lock.json* ./
 RUN npm ci
 
 # 源码通过 volume 挂载
 # 启动开发服务器
-CMD ["npm", "run", "dev"]
+CMD ["/usr/local/bin/dev-entrypoint.sh"]
