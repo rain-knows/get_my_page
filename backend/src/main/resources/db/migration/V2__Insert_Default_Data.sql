@@ -11,7 +11,7 @@
 INSERT INTO `user` (`username`, `password`, `nickname`, `email`, `bio`, `role`, `status`)
 VALUES (
     'admin',
-    '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi',
+    '$2a$12$E.Og2pkDW27OP/IN6vOpYOEEKclh9NFHZenrRRUHtQ9b1N6TaT8D6',
     '站长',
     'admin@getmypage.com',
     '这里是我的个人博客，记录技术与生活。',

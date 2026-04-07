@@ -44,6 +44,7 @@ services:
       # Maven 本地仓库缓存
       - maven_cache:/root/.m2
     environment:
+      - TZ=Asia/Shanghai
       - SPRING_PROFILES_ACTIVE=dev
       - MYSQL_HOST=mysql
       - MYSQL_DB=${MYSQL_DB:-blog}
@@ -58,7 +59,7 @@ services:
       - MEILI_HOST=http://meilisearch:7700
       - MEILI_API_KEY=${MEILI_API_KEY:-meili_master_key_change_me}
       # 启用远程调试
-      - JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+      - JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Duser.timezone=Asia/Shanghai
     depends_on:
       mysql:
         condition: service_healthy

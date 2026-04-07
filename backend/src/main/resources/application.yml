@@ -1,25 +1,88 @@
+server:
+  port: 8080
+  tomcat:
+    threads:
+      virtual:
+        enabled: true
+
 spring:
   application:
-    name: blog
+    name: blog-backend
+
+  # 数据源
   datasource:
     url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/${MYSQL_DB:blog}?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     username: ${MYSQL_USER:bloguser}
     password: ${MYSQL_PASSWORD:blog_password_change_me}
     driver-class-name: com.mysql.cj.jdbc.Driver
-  flyway:
-    enabled: true
-    baseline-on-migrate: true
-    locations: classpath:db/migration
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+
+  # Redis
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
       database: 0
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+
+  # Flyway
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  # Jackson
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    serialization:
+      write-dates-as-timestamps: false
+
+# MyBatis-Plus
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+# SpringDoc
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: method
+
+# 自定义配置
+blog:
+  jwt:
+    secret: ${JWT_SECRET:my-very-long-secret-key-that-is-at-least-256-bits-long}
+    access-expiration: 3600000      # 1小时
+    refresh-expiration: 604800000   # 7天
+  minio:
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    access-key: ${MINIO_ACCESS_KEY:minioadmin}
+    secret-key: ${MINIO_SECRET_KEY:minioadmin}
+    bucket: ${MINIO_BUCKET:blog-assets}
+  meilisearch:
+    host: ${MEILI_HOST:http://localhost:7700}
+    api-key: ${MEILI_API_KEY:masterKey}
 
 # 日志输出配置
 logging:
   level:
     root: INFO
     com.getmypage.blog: DEBUG
-

@@ -2,9 +2,8 @@ FROM maven:3.9-eclipse-temurin-21
 
 WORKDIR /app
 
+COPY settings.xml ./settings.xml
 COPY pom.xml ./
-# 预下载依赖以加速后续构建，屏蔽没有对应 plugin 时报的错或忽略
-RUN mvn dependency:go-offline -B || true
 
 # 启动 Spring Boot，注入远程 Debug 的 JAVA_OPTS 参数
-CMD ["mvn", "spring-boot:run", "-Dspring-boot.run.jvmArguments=${JAVA_OPTS}"]
+CMD mvn -s ./settings.xml spring-boot:run "-Dspring-boot.run.jvmArguments=${JAVA_OPTS}"
