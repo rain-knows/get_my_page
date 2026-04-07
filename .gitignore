@@ -104,3 +104,8 @@ coverage/
 .agent/
 .claude/
 design-system/
+
+#------------------------------------------
+# AI-generated code & artifacts
+#------------------------------------------
+.codex

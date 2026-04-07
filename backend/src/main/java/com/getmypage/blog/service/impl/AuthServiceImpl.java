@@ -16,7 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 /**
- * 认证服务实现。
+ * 认证服务实现
  */
 @Service
 @RequiredArgsConstructor

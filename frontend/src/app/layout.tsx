@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
-import { Archivo, Space_Grotesk } from "next/font/google";
+import { Archivo, Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
+import { cn } from "@/lib/utils";
+
+const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 const spaceGrotesk = Space_Grotesk({ 
   subsets: ["latin"],
@@ -23,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" className="dark">
+    <html lang="zh-CN" className={cn("dark", "font-sans", inter.variable)}>
       <body
         className={`${spaceGrotesk.className} ${archivo.variable} ${spaceGrotesk.variable} min-h-screen bg-neutral-950 text-neutral-100 antialiased selection:bg-blue-500/30 selection:text-blue-200 overscroll-none`}
       >
