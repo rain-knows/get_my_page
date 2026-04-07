@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 /**
  * MyBatis-Plus 字段自动填充处理器。
- * 用于自动填充 createdAt 和 updatedAt 字段。
+ * 插入时自动填充 createdAt 和 updatedAt，更新时自动填充 updatedAt。
  */
 @Slf4j
 @Component

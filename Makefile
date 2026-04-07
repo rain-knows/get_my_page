@@ -1,54 +1,54 @@
 .PHONY: dev build down up logs help clean
 
-# Load environment variables
+# 加载环境变量
 ifneq (,$(wildcard ./.env))
     include .env
     export
 endif
 
-help: ## Show this help
+help: ## 显示帮助信息
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
-init: ## Initialize copy of .env
+init: ## 初始化 .env 文件
 	cp .env.example .env
-	@echo ".env file created. Please update it with your own values."
+	@echo "已创建 .env 文件，请根据你的实际情况修改配置。"
 
-up: ## Start all services in detached mode
+up: ## 启动所有服务（后台运行）
 	docker compose up -d
 
-dev: ## Start backend and frontend along with dependencies
+dev: ## 启动所有服务和数据库
 	docker compose up -d
 	docker compose logs -f frontend backend
 
-down: ## Stop all services
+down: ## 停止所有服务
 	docker compose down
 
-clean: ## Stop all services and remove volumes (Data will be lost!)
+clean: ## 停止所有服务并删除数据卷（数据会丢失！）
 	docker compose down -v
 
-logs: ## Show logs of all services
+logs: ## 查看所有服务日志
 	docker compose logs -f
 
-logs-be: ## Show backend logs
+logs-be: ## 查看后端服务日志
 	docker compose logs -f backend
 
-logs-fe: ## Show frontend logs
+logs-fe: ## 查看前端服务日志
 	docker compose logs -f frontend
 
-restart-be: ## Restart backend service
+restart-be: ## 重启后端服务
 	docker compose restart backend
 
-restart-fe: ## Restart frontend service
+restart-fe: ## 重启前端服务
 	docker compose restart frontend
 
-build: ## Rebuild all images without cache
+build: ## 不使用缓存重新构建所有镜像
 	docker compose build --no-cache
 
-mysql-cli: ## Enter MySQL CLI container
+mysql-cli: ## 进入 MySQL 命令行
 	docker exec -it blog-mysql mysql -u root -p$(MYSQL_ROOT_PASSWORD)
 
-redis-cli: ## Enter Redis CLI container
+redis-cli: ## 进入 Redis 命令行
 	docker exec -it blog-redis redis-cli
