@@ -1,6 +1,6 @@
 # 生产部署规范
 
-> **文档版本**: v1.1.0 | **最后更新**: 2026-04-04 | **适用范围**: 运维人员、DevOps 工程师
+> **文档版本**: v1.2.0 | **最后更新**: 2026-04-08 | **适用范围**: 运维人员、DevOps 工程师
 
 ---
 
@@ -198,7 +198,7 @@ services:
 
   # === 中间件服务同开发环境配置 ===
   mysql:
-    image: mysql:8.0
+    image: mysql:8.0.39
     container_name: blog-mysql
     restart: always
     env_file: .env.prod
@@ -212,7 +212,7 @@ services:
       retries: 5
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.2.5-alpine
     container_name: blog-redis
     restart: always
     volumes:
@@ -232,7 +232,7 @@ services:
       - meili_data:/meili_data
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2024-06-13T22-53-53Z
     container_name: blog-minio
     restart: always
     env_file: .env.prod
@@ -337,6 +337,20 @@ docker compose -f docker-compose.prod.yml up -d --no-deps frontend backend
 # 4. 清理旧镜像
 docker image prune -f
 ```
+
+### 4.3 CI 门禁与失败处理
+
+仓库默认使用 GitHub Actions 三段式门禁，任何一项失败都会阻断合并：
+
+1. `frontend-quality`：`npm ci`、`npm run lint`、`npm run build`
+2. `backend-quality`：`./mvnw -B test`
+3. `docker-smoke`：`docker compose config`、`docker compose -f docker-compose.prod.yml config`、前后端生产镜像构建
+
+排障顺序建议：
+
+1. 先修复对应 job 的第一处报错（通常后续报错是级联影响）。
+2. 若 `docker-smoke` 失败，先本地运行 `docker compose config` 检查变量与语法。
+3. 若后端测试失败，先在 CI 日志定位失败用例，再本地用同命令复现。
 
 ---
 

@@ -123,7 +123,8 @@ get_my_page/
 │   │   ├── types/             # 跨模块公共类型
 │   │   └── styles/            # 全局/共享样式资源
 │   ├── public/                # 静态资源
-│   └── Dockerfile.dev         # 开发容器
+│   ├── Dockerfile.dev         # 开发容器
+│   └── Dockerfile             # 生产镜像（多阶段构建）
 ├── backend/                   # Spring Boot 后端项目
 │   ├── src/main/java/
 │   │   └── com/getmypage/blog/
@@ -140,7 +141,8 @@ get_my_page/
 │   ├── src/main/resources/
 │   │   └── db/migration/      # Flyway 迁移脚本
 │   ├── pom.xml
-│   └── Dockerfile.dev         # 开发容器
+│   ├── Dockerfile.dev         # 开发容器
+│   └── Dockerfile             # 生产镜像（多阶段构建）
 ├── docker/                    # 基础设施配置
 │   ├── mysql/conf.d/          # MySQL 自定义配置
 │   ├── redis/                 # Redis 配置
@@ -177,6 +179,16 @@ get_my_page/
 ```
 
 详见 [08-frontend-backend-integration.md](docs/08-frontend-backend-integration.md)
+
+### CI 质量门禁
+
+当前仓库默认使用 GitHub Actions 三段式门禁（全部通过才允许合并）：
+
+1. `frontend-quality`: `npm ci` + `npm run lint` + `npm run build`
+2. `backend-quality`: `./mvnw -B test`
+3. `docker-smoke`: `docker compose config` + 生产镜像构建 smoke test
+
+同一分支重复推送会自动取消旧流水线（`concurrency.cancel-in-progress: true`），避免无效排队。
 
 ### 分层约束
 

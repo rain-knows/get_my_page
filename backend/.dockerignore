@@ -1,0 +1,7 @@
+.git
+target/
+.env*
+*.log
+HELP.md
+AGENTS.md
+CLAUDE.md

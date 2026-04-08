@@ -1,0 +1,42 @@
+# VCS
+.git
+.gitignore
+
+# Local env / secrets
+.env
+.env.*
+*.pem
+*.key
+*.cert
+
+# Logs and runtime artifacts
+*.log
+logs/
+
+# Frontend heavy artifacts
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/coverage/
+
+# Backend build artifacts
+backend/target/
+
+# Tool/cache folders
+.agent/
+.claude/
+.codex
+.vscode/
+.idea/
+
+# Data/cache folders from local compose
+mysql_data/
+redis_data/
+minio_data/
+meili_data/
+maven_cache/
+
+# Docs and design assets are not required in runtime images
+design-system/
+docs/
