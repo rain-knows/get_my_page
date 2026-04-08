@@ -109,5 +109,5 @@ design-system/
 # AI-generated code & artifacts
 #------------------------------------------
 .codex
-AGENT.md/
-CLAUDE.md/
+AGENTS.md
+CLAUDE.md
