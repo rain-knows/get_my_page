@@ -146,12 +146,14 @@ get_my_page/
 ├── docs/                    # 项目文档
 ├── frontend/                # Next.js 前端项目
 │   ├── src/
-│   │   ├── app/             # App Router 页面与布局
-│   │   ├── components/      # 可复用 UI 组件
-│   │   ├── lib/             # 工具函数与 API 封装
+│   │   ├── app/             # 路由层（仅页面/布局）
+│   │   ├── components/      # 组件分层（ui/blog/admin/shared）
+│   │   ├── features/        # 业务模块聚合
+│   │   ├── hooks/           # 跨模块通用 Hooks
+│   │   ├── lib/             # 基础能力封装（api/mdx/seo）
 │   │   ├── stores/          # Zustand 状态仓库
-│   │   ├── types/           # TypeScript 类型定义
-│   │   └── styles/          # 全局样式与 Tailwind 配置
+│   │   ├── types/           # 公共类型定义
+│   │   └── styles/          # 全局样式与共享样式资源
 │   ├── public/              # 静态资源
 │   ├── next.config.js
 │   ├── tsconfig.json
@@ -165,7 +167,10 @@ get_my_page/
 │   │       ├── mapper/      # MyBatis Mapper 接口
 │   │       ├── model/       # 实体与 DTO
 │   │       ├── security/    # Security & JWT 组件
-│   │       └── util/        # 工具类
+│   │       ├── event/       # 应用事件
+│   │       ├── infrastructure/ # 缓存/搜索/存储封装
+│   │       ├── common/      # 常量/枚举/通用工具
+│   │       └── exception/   # 异常与错误码
 │   ├── src/main/resources/
 │   │   ├── db/migration/    # Flyway 迁移脚本
 │   │   └── application.yml
@@ -193,6 +198,7 @@ get_my_page/
 | 文档编号 | 文档名称 | 主要内容 |
 |---------|---------|---------|
 | 00 | 总体架构概览 (本文) | 系统定位、架构图、技术栈全景 |
+| A0 | 架构契约 | 前后端分层职责、依赖方向、禁止项（Agent 首读） |
 | 01 | 前端技术栈规范 | Next.js、TypeScript、Tailwind CSS 等前端技术细节 |
 | 02 | 后端技术栈规范 | Spring Boot、MyBatis-Plus、Spring Security 等后端技术细节 |
 | 03 | 基础设施与中间件规范 | MySQL、Redis、Meilisearch、MinIO 配置与使用 |

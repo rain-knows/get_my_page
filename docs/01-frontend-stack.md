@@ -26,17 +26,15 @@ src/app/
 ├── not-found.tsx            # 404 页面
 ├── (blog)/                  # 博客路由组
 │   ├── page.tsx             # 文章列表
-│   └── [slug]/page.tsx      # 文章详情 (SSG + ISR)
+│   ├── [slug]/page.tsx      # 文章详情 (SSG + ISR)
+│   └── search/page.tsx      # 搜索页
 ├── (auth)/                  # 认证路由组
 │   ├── login/page.tsx
 │   └── register/page.tsx
 ├── admin/                   # 管理后台
 │   ├── layout.tsx
-│   ├── dashboard/page.tsx
-│   ├── posts/               # 文章管理
+│   ├── posts/page.tsx       # 文章管理
 │   └── settings/page.tsx
-└── api/                     # Route Handlers (BFF)
-    └── revalidate/route.ts
 ```
 
 ### 1.3 关键配置 `next.config.js`
@@ -200,11 +198,24 @@ Tailwind v4 采用全新的 **CSS-first** 配置模式，不再依赖 `tailwind.
 
 ```
 src/components/
-├── ui/           # shadcn/ui 基础组件 (button, dialog, input, skeleton, toast...)
-├── blog/         # 博客业务组件 (post-card, post-list, toc, search-dialog...)
-├── layout/       # 布局组件 (header, footer, sidebar, theme-toggle)
-└── shared/       # 通用组件 (seo-head, loading-skeleton, error-boundary)
+├── ui/           # shadcn/ui 基础组件（不放业务组件）
+├── blog/         # 博客业务组件 (post-card, tag-badge, toc...)
+├── admin/        # 管理后台业务组件 (editor, charts...)
+└── shared/       # 跨板块通用组件 (header, footer, seo...)
 ```
+
+### 4.3 业务分层约束
+
+```
+src/features/
+├── auth/         # 登录/注册 API、hooks、类型
+├── post/         # 文章 CRUD 逻辑
+├── search/       # 搜索逻辑与高亮处理
+└── upload/       # 上传逻辑封装
+```
+
+- `app/` 仅路由与页面拼装，不放请求逻辑
+- 业务 hooks/types 优先放 `features/*`，`src/hooks` 仅放跨领域通用 hooks
 
 ---
 

@@ -1,4 +1,4 @@
-package com.getmypage.blog.service.impl;
+package com.getmypage.blog.service.auth.impl;
 
 import com.getmypage.blog.exception.BizException;
 import com.getmypage.blog.exception.ErrorCode;
@@ -6,9 +6,9 @@ import com.getmypage.blog.model.dto.request.LoginRequest;
 import com.getmypage.blog.model.dto.request.RegisterRequest;
 import com.getmypage.blog.model.dto.response.LoginResponse;
 import com.getmypage.blog.model.entity.User;
-import com.getmypage.blog.security.JwtTokenProvider;
-import com.getmypage.blog.service.AuthService;
-import com.getmypage.blog.service.UserService;
+import com.getmypage.blog.security.auth.JwtTokenProvider;
+import com.getmypage.blog.service.auth.AuthService;
+import com.getmypage.blog.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

@@ -1,14 +1,9 @@
 import { create } from 'zustand';
+import type { AuthUser } from '@/features/auth/types';
 
 interface AuthState {
   isAuthenticated: boolean;
-  user: {
-    id: number;
-    username: string;
-    nickname: string;
-    avatarUrl: string;
-    role: string;
-  } | null;
+  user: AuthUser | null;
 
   setAuth: (user: AuthState['user'], accessToken: string, refreshToken: string) => void;
   logout: () => void;

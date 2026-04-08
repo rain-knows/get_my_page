@@ -1,4 +1,4 @@
-package com.getmypage.blog.security;
+package com.getmypage.blog.security.auth;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

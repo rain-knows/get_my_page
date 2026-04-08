@@ -5,41 +5,28 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { Eye, EyeOff, Lock, User } from "lucide-react";
-import { apiClient, ApiError } from "@/lib/api-client";
-import { useAuthStore } from "@/stores/use-auth-store";
-import type { LoginRequest, LoginResponse } from "@/types/api";
+import { useAuthActions } from "@/features/auth/hooks";
 
 export default function LoginPage() {
   const router = useRouter();
-  const setAuth = useAuthStore((s) => s.setAuth);
+  const { login, loading, error, clearError } = useAuthActions();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
+    clearError();
 
     try {
-      const data = await apiClient.post<LoginResponse>("/auth/login", {
+      await login({
         username,
         password,
-      } as LoginRequest);
-
-      setAuth(data.user, data.accessToken, data.refreshToken);
+      });
       router.push("/");
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError("登录失败，请稍后重试");
-      }
-    } finally {
-      setLoading(false);
+      void err;
     }
   };
 

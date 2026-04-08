@@ -5,45 +5,31 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { Eye, EyeOff, Lock, User, Mail } from "lucide-react";
-import { apiClient, ApiError } from "@/lib/api-client";
-import { useAuthStore } from "@/stores/use-auth-store";
-import type { RegisterRequest, LoginResponse } from "@/types/api";
+import { useAuthActions } from "@/features/auth/hooks";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const setAuth = useAuthStore((s) => s.setAuth);
+  const { register, loading, error, clearError } = useAuthActions();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
+    clearError();
 
     try {
-      const data = await apiClient.post<LoginResponse>("/auth/register", {
+      await register({
         username,
         password,
         nickname,
         email: email || undefined,
-      } as RegisterRequest);
-
-      setAuth(data.user, data.accessToken, data.refreshToken);
+      });
       router.push("/");
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError("注册失败，请稍后重试");
-      }
-    } finally {
-      setLoading(false);
+      void err;
     }
   };
 

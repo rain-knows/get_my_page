@@ -1,4 +1,4 @@
-package com.getmypage.blog.security;
+package com.getmypage.blog.security.auth;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

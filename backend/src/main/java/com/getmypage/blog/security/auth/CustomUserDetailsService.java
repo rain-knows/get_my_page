@@ -1,4 +1,4 @@
-package com.getmypage.blog.security;
+package com.getmypage.blog.security.auth;
 
 import com.getmypage.blog.model.entity.User;
 import com.getmypage.blog.mapper.UserMapper;

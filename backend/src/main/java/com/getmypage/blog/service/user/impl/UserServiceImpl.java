@@ -1,11 +1,11 @@
-package com.getmypage.blog.service.impl;
+package com.getmypage.blog.service.user.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.getmypage.blog.exception.BizException;
 import com.getmypage.blog.exception.ErrorCode;
 import com.getmypage.blog.mapper.UserMapper;
 import com.getmypage.blog.model.entity.User;
-import com.getmypage.blog.service.UserService;
+import com.getmypage.blog.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

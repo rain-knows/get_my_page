@@ -1,4 +1,4 @@
-package com.getmypage.blog.service;
+package com.getmypage.blog.service.user;
 
 import com.getmypage.blog.model.entity.User;
 

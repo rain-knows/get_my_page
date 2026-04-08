@@ -1,6 +1,6 @@
-import Navbar from "@/components/ui/Navbar";
-import Hero from "@/components/ui/Hero";
-import ProjectGrid from "@/components/ui/ProjectGrid";
+import Navbar from "@/components/shared/Navbar";
+import Hero from "@/components/shared/Hero";
+import ProjectGrid from "@/components/shared/ProjectGrid";
 
 export default function Home() {
   return (

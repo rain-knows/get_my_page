@@ -1,4 +1,4 @@
-package com.getmypage.blog.service;
+package com.getmypage.blog.service.auth;
 
 import com.getmypage.blog.model.dto.request.LoginRequest;
 import com.getmypage.blog.model.dto.request.RegisterRequest;

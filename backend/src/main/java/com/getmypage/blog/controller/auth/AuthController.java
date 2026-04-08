@@ -1,10 +1,10 @@
-package com.getmypage.blog.controller;
+package com.getmypage.blog.controller.auth;
 
 import com.getmypage.blog.model.dto.request.LoginRequest;
 import com.getmypage.blog.model.dto.request.RegisterRequest;
 import com.getmypage.blog.model.dto.response.ApiResponse;
 import com.getmypage.blog.model.dto.response.LoginResponse;
-import com.getmypage.blog.service.AuthService;
+import com.getmypage.blog.service.auth.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

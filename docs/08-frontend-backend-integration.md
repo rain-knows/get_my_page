@@ -175,7 +175,7 @@ async function getPost(slug: string): Promise<PostDetail> {
 ## 4. 客户端数据获取 (SWR)
 
 ```typescript
-// hooks/use-posts.ts
+// features/post/hooks/use-posts.ts
 import useSWR from 'swr';
 
 /**
@@ -185,7 +185,7 @@ export function usePosts(page: number = 1) {
   return useSWR(`/api/posts?page=${page}&size=10`);
 }
 
-// hooks/use-search.ts
+// features/search/hooks/use-search.ts
 import useSWR from 'swr';
 
 /**

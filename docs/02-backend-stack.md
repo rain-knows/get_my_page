@@ -18,50 +18,49 @@ backend/src/main/java/com/getmypage/blog/
 ├── config/                       # 配置类
 │   ├── WebMvcConfig.java         # CORS / 拦截器配置
 │   ├── CacheConfig.java          # Caffeine 缓存配置
-│   ├── RedisConfig.java          # Redis 序列化配置
-│   ├── MybatisPlusConfig.java    # 分页插件 / 自动填充配置
-│   ├── MinioConfig.java          # MinIO 客户端配置
-│   └── MeilisearchConfig.java    # Meilisearch 客户端配置
+│   └── MybatisPlusConfig.java    # 分页插件 / 自动填充配置
 ├── controller/                   # REST 控制器
-│   ├── PostController.java       # 文章 CRUD
-│   ├── CategoryController.java   # 分类管理
-│   ├── TagController.java        # 标签管理
-│   ├── CommentController.java    # 评论管理
-│   ├── AuthController.java       # 认证（登录/注册/刷新令牌）
-│   ├── UserController.java       # 用户信息
-│   ├── FileController.java       # 文件上传
-│   └── SearchController.java     # 全文搜索
+│   ├── auth/
+│   │   └── AuthController.java   # 认证（登录/注册/刷新令牌）
+│   └── UserController.java       # 用户信息
 ├── service/                      # 业务服务层
-│   ├── PostService.java
-│   ├── impl/
-│   │   └── PostServiceImpl.java
-│   └── ...
+│   ├── auth/
+│   │   ├── AuthService.java
+│   │   └── impl/AuthServiceImpl.java
+│   └── user/
+│       ├── UserService.java
+│       └── impl/UserServiceImpl.java
 ├── mapper/                       # MyBatis Mapper 接口
-│   ├── PostMapper.java
-│   └── ...
+│   └── UserMapper.java
 ├── model/                        # 实体与 DTO
 │   ├── entity/                   # 数据库实体
-│   │   ├── Post.java
 │   │   ├── User.java
-│   │   ├── Category.java
-│   │   ├── Tag.java
-│   │   └── Comment.java
+│   │   └── ...
 │   ├── dto/                      # 数据传输对象
 │   │   ├── request/              # 请求 DTO
 │   │   └── response/             # 响应 DTO
 │   └── vo/                       # 视图对象
 ├── security/                     # Security & JWT
 │   ├── SecurityConfig.java       # Spring Security 配置
-│   ├── JwtTokenProvider.java     # JWT 签发与解析
-│   ├── JwtAuthenticationFilter.java
-│   └── CustomUserDetailsService.java
+│   └── auth/
+│       ├── JwtTokenProvider.java
+│       ├── JwtAuthenticationFilter.java
+│       └── CustomUserDetailsService.java
+├── event/                        # 应用事件
+│   ├── PostPublishedEvent.java
+│   └── PostPublishedListener.java
+├── infrastructure/               # 基础设施封装
+│   ├── cache/CacheFacade.java
+│   ├── search/SearchClient.java
+│   └── storage/StorageClient.java
+├── common/                       # 通用层（替代 util）
+│   ├── constant/
+│   ├── enums/
+│   └── util/
 ├── exception/                    # 全局异常处理
 │   ├── GlobalExceptionHandler.java
 │   ├── BizException.java         # 业务异常
 │   └── ErrorCode.java            # 错误码枚举
-└── util/                         # 工具类
-    ├── PageUtils.java
-    └── IpUtils.java
 ```
 
 ### 1.3 关键配置 `application.yml`

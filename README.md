@@ -114,12 +114,14 @@ docker compose ps
 get_my_page/
 ├── frontend/                  # Next.js 前端项目
 │   ├── src/
-│   │   ├── app/               # App Router 页面与布局
-│   │   ├── components/        # UI 组件 (ui/ + blog/ + layout/)
-│   │   ├── lib/               # 工具函数与 API 封装
+│   │   ├── app/               # 路由层（仅页面/布局）
+│   │   ├── components/        # 组件分层 (ui/blog/admin/shared)
+│   │   ├── features/          # 业务模块（auth/post/search/upload）
+│   │   ├── hooks/             # 通用 React Hooks
+│   │   ├── lib/               # 基础能力封装（api-client/mdx/seo）
 │   │   ├── stores/            # Zustand 状态仓库
-│   │   ├── types/             # TypeScript 类型定义
-│   │   └── styles/            # 全局样式 (Tailwind CSS v4)
+│   │   ├── types/             # 跨模块公共类型
+│   │   └── styles/            # 全局/共享样式资源
 │   ├── public/                # 静态资源
 │   └── Dockerfile.dev         # 开发容器
 ├── backend/                   # Spring Boot 后端项目
@@ -131,6 +133,9 @@ get_my_page/
 │   │       ├── mapper/        # MyBatis Mapper
 │   │       ├── model/         # 实体与 DTO
 │   │       ├── security/      # Spring Security & JWT
+│   │       ├── event/         # 应用事件（如文章发布）
+│   │       ├── infrastructure/ # 缓存/搜索/存储基础设施封装
+│   │       ├── common/        # 常量/枚举/通用工具
 │   │       └── exception/     # 全局异常处理
 │   ├── src/main/resources/
 │   │   └── db/migration/      # Flyway 迁移脚本
@@ -172,6 +177,13 @@ get_my_page/
 ```
 
 详见 [08-frontend-backend-integration.md](docs/08-frontend-backend-integration.md)
+
+### 分层约束
+
+- `frontend/src/app` 仅放页面与布局，不放业务请求逻辑
+- `frontend/src/components/ui` 仅放 shadcn 原子组件，不放业务组件
+- 业务 hooks/types 优先放 `frontend/src/features/*`
+- 后端 `common` 作为通用层，替代旧 `util`
 
 ---
 
@@ -246,6 +258,7 @@ docker compose -f docker-compose.prod.yml up -d --no-deps frontend backend
 | 文档 | 内容 |
 |------|------|
 | [00-架构概览](docs/00-architecture-overview.md) | 系统定位、架构图、技术栈全景 |
+| [架构契约](docs/architecture-contract.md) | 前后端分层职责、依赖方向、禁止项（Agent 首读） |
 | [01-前端技术栈](docs/01-frontend-stack.md) | Next.js、Tailwind v4、shadcn/ui、MDX |
 | [02-后端技术栈](docs/02-backend-stack.md) | Spring Boot、MyBatis-Plus、Security |
 | [03-基础设施](docs/03-infrastructure.md) | MySQL、Redis、Meilisearch、MinIO |

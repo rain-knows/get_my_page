@@ -59,32 +59,3 @@ export interface Tag {
   name: string;
   slug: string;
 }
-
-/** 登录请求 */
-export interface LoginRequest {
-  username: string;
-  password: string;
-}
-
-/** 注册请求 */
-export interface RegisterRequest {
-  username: string;
-  password: string;
-  nickname: string;
-  email?: string;
-}
-
-/** 登录响应 */
-export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  tokenType: string;
-  user: {
-    id: number;
-    username: string;
-    nickname: string;
-    avatarUrl: string;
-    role: string;
-  };
-}
