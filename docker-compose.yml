@@ -8,6 +8,11 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
+      args:
+        HTTP_PROXY: ${HTTP_PROXY:-}
+        HTTPS_PROXY: ${HTTPS_PROXY:-}
+        ALL_PROXY: ${ALL_PROXY:-}
+        NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,backend,mysql,redis,minio,meilisearch,host.docker.internal}
     container_name: blog-frontend-dev
     restart: unless-stopped
     ports:
@@ -20,8 +25,17 @@ services:
       - frontend_next_cache:/app/.next
     environment:
       - NODE_ENV=development
+      # 在 Docker 挂载场景下启用轮询，降低新增/重命名文件监听丢失概率
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8080/api}
       - NEXT_PUBLIC_MINIO_URL=${NEXT_PUBLIC_MINIO_URL:-http://localhost:9000}
+      - HTTP_PROXY=${HTTP_PROXY:-}
+      - HTTPS_PROXY=${HTTPS_PROXY:-}
+      - ALL_PROXY=${ALL_PROXY:-}
+      - NO_PROXY=${NO_PROXY:-localhost,127.0.0.1,backend,mysql,redis,minio,meilisearch,host.docker.internal}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       backend:
         condition: service_healthy

@@ -1,18 +1,33 @@
 import type { Metadata } from "next";
-import { Archivo, Space_Grotesk, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
-
-const spaceGrotesk = Space_Grotesk({ 
-  subsets: ["latin"],
-  variable: "--font-space-grotesk" 
+const inter = localFont({
+  src: [
+    { path: "../../public/fonts/GeistLatin-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../../public/fonts/GeistLatinExt-Regular.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-sans",
+  display: "swap",
 });
 
-const archivo = Archivo({ 
-  subsets: ["latin"],
-  variable: "--font-archivo"
+const spaceGrotesk = localFont({
+  src: [
+    { path: "../../public/fonts/GeistLatin-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../../public/fonts/GeistLatinExt-Regular.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-space-grotesk",
+  display: "swap",
+});
+
+const archivo = localFont({
+  src: [
+    { path: "../../public/fonts/GeistLatin-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../../public/fonts/GeistLatinExt-Regular.woff2", weight: "400", style: "normal" },
+  ],
+  variable: "--font-archivo",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -20,6 +35,11 @@ export const metadata: Metadata = {
   description: "采用 Next.js 驱动的现代化内容创造者平台",
 };
 
+/**
+ * 功能：定义全站根布局与字体变量注入，统一暗色工业化主题的基础样式入口。
+ * 关键参数：children 为当前路由注入的页面节点树。
+ * 返回值/副作用：返回 HTML 根骨架；会为全站注入字体变量与基础样式类名。
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,7 +48,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className={cn("dark", "font-sans", inter.variable)}>
       <body
-        className={`${spaceGrotesk.className} ${archivo.variable} ${spaceGrotesk.variable} min-h-screen bg-neutral-950 text-neutral-100 antialiased selection:bg-blue-500/30 selection:text-blue-200 overscroll-none`}
+        className={`${spaceGrotesk.className} ${archivo.variable} ${spaceGrotesk.variable} min-h-screen bg-[#0a0d12] text-neutral-100 antialiased selection:bg-[#d4c3a2]/30 selection:text-[#f4ecdc] overscroll-none`}
       >
         {children}
       </body>

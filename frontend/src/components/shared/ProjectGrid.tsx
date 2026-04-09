@@ -1,10 +1,10 @@
 "use client";
 
-import { motion } from "motion/react";
-import { ArrowUpRight, FolderGit2, BookOpen } from "lucide-react";
 import Link from "next/link";
+import { motion } from "motion/react";
+import { ArrowUpRight, BookOpen, FolderGit2 } from "lucide-react";
+import { Badge, Button, Card, CardContent, CardFooter, CardHeader, CardTitle, Separator } from "@/components/ui";
 
-// Mock data: mixed stream of Blog Posts and Projects
 const feedItems = [
   {
     id: 1,
@@ -48,32 +48,57 @@ const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-    },
+    transition: { staggerChildren: 0.06 },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
+  hidden: { opacity: 0, y: 14 },
   visible: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.6,
+      duration: 0.24,
       ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
     },
   },
 };
 
+const cardInteractionVariants = {
+  rest: { y: 0 },
+  hover: {
+    y: -3,
+    transition: { duration: 0.18, ease: "easeOut" },
+  },
+};
+
+const arrowMotionVariants = {
+  rest: { x: 0, y: 0, rotate: 0 },
+  hover: {
+    x: 2,
+    y: 0,
+    rotate: 45,
+    transition: { duration: 0.24, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+  },
+};
+
+/**
+ * 功能：渲染首页近期动态卡片网格，统一展示项目与文章入口。
+ * 关键参数：无外部参数，数据源使用本地 feedItems mock。
+ * 返回值/副作用：返回动态列表节点，无副作用。
+ */
 export default function ProjectGrid() {
   return (
-    <section id="feed" className="relative w-full max-w-6xl mx-auto px-6 py-24 z-10">
-      <div className="mb-12 flex items-baseline justify-between">
-        <h2 className="font-heading text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-white to-white/60">
-          近期动态
-        </h2>
-        <span className="text-sm font-medium text-neutral-500">MIXED FEED</span>
+    <section id="feed" className="mx-auto w-full max-w-6xl px-4 pb-20 md:px-6">
+      <div id="projects" className="sr-only" aria-hidden="true" />
+      <div className="mb-8 flex items-end justify-between gap-4">
+        <div className="space-y-2">
+          <h2 className="font-heading text-2xl font-semibold tracking-tight text-[var(--gmp-text-primary)] md:text-3xl">近期动态</h2>
+          <p className="text-sm text-[var(--gmp-text-secondary)]">项目进展与博客文章的混合流。</p>
+        </div>
+        <Badge variant="outline" className="border-[var(--gmp-line-strong)] bg-[var(--gmp-bg-panel)] font-mono text-[11px] tracking-[0.14em] text-[var(--gmp-text-secondary)] uppercase">
+          Mixed Feed
+        </Badge>
       </div>
 
       <motion.div
@@ -81,49 +106,46 @@ export default function ProjectGrid() {
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-100px" }}
-        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        className="grid grid-cols-1 gap-5 md:grid-cols-2"
       >
         {feedItems.map((item) => (
           <motion.div key={item.id} variants={itemVariants}>
-            <Link
-              href={item.link}
-              className="group block relative h-full bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8 backdrop-blur-sm overflow-hidden hover:bg-white/10 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 cursor-pointer"
-            >
-              {/* Type Badge */}
-              <div className="flex items-center gap-2 mb-4">
-                <span className="flex items-center justify-center p-2 rounded-lg bg-neutral-900 border border-white/5 text-neutral-400 group-hover:text-blue-400 transition-colors">
-                  {item.type === "project" ? <FolderGit2 size={16} /> : <BookOpen size={16} />}
-                </span>
-                <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-                  {item.type}
-                </span>
-              </div>
+            <motion.div initial="rest" whileHover="hover" animate="rest" variants={cardInteractionVariants}>
+              <Card className="group relative h-full overflow-hidden border border-[var(--gmp-line-soft)] bg-[rgba(15,20,30,0.7)] py-0 shadow-[var(--gmp-shadow-soft)] transition-[border-color,background-color] duration-200 hover:border-[var(--gmp-line-strong)] hover:bg-[rgba(20,27,39,0.78)]">
+                <CardHeader className="space-y-3 border-b border-[var(--gmp-line-soft)] px-5 py-5 transition-colors duration-200 group-hover:border-[var(--gmp-line-strong)]">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="gap-1.5 border border-[var(--gmp-line-soft)] bg-[var(--gmp-bg-panel)] text-xs text-[var(--gmp-text-secondary)] transition-colors group-hover:border-[var(--gmp-line-strong)] group-hover:text-[var(--gmp-text-primary)]">
+                      {item.type === "project" ? <FolderGit2 className="size-3.5" /> : <BookOpen className="size-3.5" />}
+                      {item.type}
+                    </Badge>
+                    <span className="font-mono text-[11px] tracking-[0.08em] text-[var(--gmp-text-secondary)]">{item.date}</span>
+                  </div>
+                  <CardTitle className="text-xl leading-snug text-[var(--gmp-text-primary)]">{item.title}</CardTitle>
+                </CardHeader>
 
-              <h3 className="font-heading text-xl md:text-2xl font-bold text-white/90 mb-3 group-hover:text-white transition-colors">
-                {item.title}
-              </h3>
+                <CardContent className="px-5 py-4">
+                  <p className="line-clamp-3 text-sm leading-relaxed text-[var(--gmp-text-secondary)]">{item.description}</p>
+                </CardContent>
 
-              <p className="text-neutral-400 mb-8 leading-relaxed line-clamp-3">
-                {item.description}
-              </p>
-
-              <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/5">
-                <div className="flex flex-wrap items-center gap-2">
-                  {item.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-2.5 py-1 text-[10px] font-semibold tracking-wide uppercase bg-white/5 border border-white/10 rounded-full text-neutral-400"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-
-                <span className="p-1.5 rounded-full bg-white/5 text-white/40 group-hover:bg-white/10 group-hover:text-white transition-all transform group-hover:rotate-45">
-                  <ArrowUpRight size={16} />
-                </span>
-              </div>
-            </Link>
+                <Separator className="mx-5 w-auto bg-[var(--gmp-line-soft)]" />
+                <CardFooter className="mt-auto flex items-center justify-between px-5 py-4">
+                  <div className="flex flex-wrap gap-1.5">
+                    {item.tags.map((tag) => (
+                      <Badge key={tag} variant="outline" className="border-[var(--gmp-line-soft)] bg-[rgba(255,255,255,0.01)] font-mono text-[10px] tracking-[0.1em] text-[var(--gmp-text-secondary)] uppercase">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                  <Button asChild variant="ghost" size="icon-sm" className="border border-transparent text-[var(--gmp-text-secondary)] hover:border-[var(--gmp-line-soft)] hover:bg-[var(--gmp-bg-panel)] hover:text-[var(--gmp-text-primary)]" aria-label={`查看 ${item.title}`}>
+                    <Link href={item.link}>
+                      <motion.span variants={arrowMotionVariants} className="inline-flex">
+                        <ArrowUpRight className="size-4" />
+                      </motion.span>
+                    </Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            </motion.div>
           </motion.div>
         ))}
       </motion.div>

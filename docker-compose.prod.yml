@@ -26,10 +26,20 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.example.com/api}
         NEXT_PUBLIC_MINIO_URL: ${NEXT_PUBLIC_MINIO_URL:-https://cdn.example.com}
+        HTTP_PROXY: ${HTTP_PROXY:-}
+        HTTPS_PROXY: ${HTTPS_PROXY:-}
+        ALL_PROXY: ${ALL_PROXY:-}
+        NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,backend,mysql,redis,minio,meilisearch,host.docker.internal}
     container_name: blog-frontend
     restart: always
     environment:
       - NODE_ENV=production
+      - HTTP_PROXY=${HTTP_PROXY:-}
+      - HTTPS_PROXY=${HTTPS_PROXY:-}
+      - ALL_PROXY=${ALL_PROXY:-}
+      - NO_PROXY=${NO_PROXY:-localhost,127.0.0.1,backend,mysql,redis,minio,meilisearch,host.docker.internal}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`${APP_HOST:-example.com}`)"

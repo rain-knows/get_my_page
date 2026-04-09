@@ -1,71 +1,74 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "motion/react";
-import { ArrowRight, Terminal } from "lucide-react";
+import { ArrowRight, Compass, Gauge, Layers3 } from "lucide-react";
+import { Badge, Button } from "@/components/ui";
 
+const heroMetrics = [
+  { label: "Render Pipeline", value: "SSR/SSG" },
+  { label: "Content Surface", value: "MDX + Search" },
+  { label: "Interaction Noise", value: "Low" },
+];
+
+/**
+ * 功能：渲染首页首屏 Hero，展示站点定位与主行动入口。
+ * 关键参数：无外部参数，文案和 CTA 在组件内静态定义。
+ * 返回值/副作用：返回首屏展示节点，无副作用。
+ */
 export default function Hero() {
   return (
-    <section className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden pt-20 px-4">
-      {/* 极光背景特效 */}
-      <div className="absolute top-1/2 left-1/2 -z-10 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] md:w-[800px] md:h-[600px] bg-blue-600/20 blur-[120px] rounded-full opacity-60 mix-blend-screen pointer-events-none" />
-      <div className="absolute top-1/3 left-1/4 -z-10 w-[300px] h-[300px] md:w-[400px] md:h-[400px] bg-violet-600/20 blur-[100px] rounded-full opacity-50 mix-blend-screen pointer-events-none" />
-
-      {/* 点阵网格背景 */}
-      <div className="absolute inset-0 -z-20 h-full w-full bg-[radial-gradient(#ffffff15_1px,transparent_1px)] bg-size-[24px_24px] md:bg-size-[32px_32px] pointer-events-none" />
-
-      {/* 半透明渐变遮罩 */}
-      <div className="absolute inset-0 -z-10 bg-linear-to-b from-transparent via-neutral-950/50 to-neutral-950 pointer-events-none" />
-
-      {/* 核心视觉文字 */}
+    <section className="relative flex min-h-[72vh] flex-col items-center justify-center px-4 pt-24 pb-14">
       <motion.div
-        initial={{ opacity: 0, y: 40 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="text-center max-w-4xl mx-auto flex flex-col items-center"
+        transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+        className="mx-auto flex w-full max-w-6xl flex-col items-start gap-10"
       >
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full bg-white/5 border border-white/10 backdrop-blur-md text-xs font-medium text-blue-300"
-        >
-          <Terminal size={14} className="text-blue-400" />
-          <span>V1.0 is now live for testing</span>
-        </motion.div>
+        <div className="space-y-5">
+          <Badge variant="outline" className="border-[var(--gmp-line-strong)] bg-[var(--gmp-bg-panel)] px-3 py-1 font-mono text-[11px] tracking-[0.18em] text-[var(--gmp-accent)] uppercase">
+            <Compass className="size-3.5" />
+            Industrial Story Layer
+          </Badge>
 
-        <h1 className="font-heading text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-transparent bg-clip-text bg-linear-to-b from-white to-white/60 mb-6 drop-shadow-sm leading-tight pb-2">
-          写给未来的代码<br />
-          <span className="bg-clip-text text-transparent bg-linear-to-r from-blue-400 via-indigo-400 to-violet-500">
-            读给世界的文字
-          </span>
-        </h1>
+          <h1 className="max-w-4xl font-heading text-4xl leading-[1.05] font-semibold tracking-tight text-[var(--gmp-text-primary)] md:text-6xl lg:text-7xl">
+            简洁结构，
+            <span className="mt-2 block text-[var(--gmp-accent)]">高密度信息表达。</span>
+          </h1>
 
-        <motion.p 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.8 }}
-          className="text-lg md:text-xl text-neutral-400 mb-10 max-w-2xl leading-relaxed px-4"
-        >
-          一个具备高度客制化的现代数字花园。采用 Next.js 与 弹性后台架构驱动，将每一次灵感记录转化为震撼视角的极客体验。
-        </motion.p>
+          <p className="max-w-2xl text-base leading-relaxed text-[var(--gmp-text-secondary)] md:text-lg">
+            用工业化排版和低噪声交互承载创作流程，从输入灵感到内容发布，保持一致、清晰、可控的表达节奏。
+          </p>
+        </div>
 
-        {/* 交互按钮区域 */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.6 }}
-          className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto px-6"
-        >
-          <button className="cursor-pointer group relative w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-white text-black font-heading font-semibold rounded-full overflow-hidden hover:scale-105 active:scale-95 transition-all duration-300 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_-10px_rgba(255,255,255,0.5)]">
-            <span className="relative z-10">探索最近输出</span>
-            <ArrowRight size={18} className="relative z-10 group-hover:translate-x-1 transition-transform" />
-            <div className="absolute inset-0 bg-linear-to-r from-blue-200 to-violet-200 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-          </button>
-          
-          <button className="cursor-pointer w-full sm:w-auto px-8 py-3.5 bg-white/5 text-white font-medium rounded-full border border-white/10 backdrop-blur-md hover:bg-white/10 hover:border-white/20 active:bg-white/5 transition-colors duration-300">
-            订阅我的专栏
-          </button>
-        </motion.div>
+        <div className="flex w-full flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button asChild size="lg" className="h-11 min-w-44 border border-[var(--gmp-line-strong)] bg-[var(--gmp-accent)] text-black hover:bg-[#e2d3b4]">
+              <Link href="/search">
+                查看内容流
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="h-11 min-w-44 border-[var(--gmp-line-strong)] bg-[var(--gmp-bg-panel)] text-[var(--gmp-text-primary)] hover:bg-[var(--gmp-bg-elevated)]">
+              <Link href="/register">
+                <Layers3 className="size-4" />
+                创建主页
+              </Link>
+            </Button>
+          </div>
+
+          <div className="industrial-panel grid w-full max-w-xl grid-cols-1 gap-2 rounded-2xl p-3 sm:grid-cols-3">
+            {heroMetrics.map((item) => (
+              <div key={item.label} className="rounded-xl border border-[var(--gmp-line-soft)] bg-[rgba(255,255,255,0.02)] px-3 py-2.5">
+                <p className="font-mono text-[10px] tracking-[0.12em] text-[var(--gmp-text-secondary)] uppercase">{item.label}</p>
+                <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--gmp-text-primary)]">
+                  <Gauge className="size-3.5 text-[var(--gmp-accent-dim)]" />
+                  {item.value}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
       </motion.div>
     </section>
   );

@@ -1,40 +1,61 @@
 "use client";
 
-import { motion } from "motion/react";
-import { Code2, Search, LogIn } from "lucide-react";
 import Link from "next/link";
+import { motion } from "motion/react";
+import { Code2, LogIn, Search } from "lucide-react";
+import { Badge, Button } from "@/components/ui";
 
+/**
+ * 功能：渲染首页顶部导航，提供核心入口与外部链接。
+ * 关键参数：无外部参数，导航项与按钮在组件内部静态定义。
+ * 返回值/副作用：返回导航头部节点，无副作用。
+ */
 export default function Navbar() {
   return (
     <motion.header
-      initial={{ y: -100, opacity: 0 }}
+      initial={{ y: -18, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed top-4 left-4 right-4 max-w-200 mx-auto z-50 flex items-center justify-between px-6 py-3 rounded-full backdrop-blur-xl bg-neutral-950/60 border border-white/10 shadow-2xl shadow-black/50"
+      transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+      className="industrial-panel sticky top-3 z-50 mx-auto mt-3 flex w-[min(1100px,calc(100%-1.5rem))] items-center justify-between rounded-2xl px-4 py-3 backdrop-blur-sm md:px-5"
     >
-      <Link href="/" className="flex items-center gap-3 cursor-pointer group">
-        <div className="w-8 h-8 rounded-full bg-linear-to-tr from-blue-600 to-violet-500 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-shadow duration-300">
-          G
-        </div>
-        <span className="font-heading font-semibold tracking-tight text-white/90 text-lg group-hover:text-white transition-colors duration-200">GetMyPage</span>
-      </Link>
+      <div className="flex items-center gap-3">
+        <Link href="/" className="inline-flex items-center gap-2.5">
+          <span className="inline-flex size-8 items-center justify-center rounded-md border border-[var(--gmp-line-strong)] bg-[var(--gmp-bg-panel)] font-mono text-xs font-semibold tracking-[0.18em] text-[var(--gmp-accent)]">
+            GMP
+          </span>
+          <span className="font-heading text-sm font-semibold tracking-wide text-[var(--gmp-text-primary)] md:text-base">GetMyPage</span>
+        </Link>
+        <Badge variant="outline" className="hidden border-[var(--gmp-line-strong)] bg-[var(--gmp-bg-panel)] font-mono text-[10px] tracking-[0.16em] text-[var(--gmp-text-secondary)] uppercase lg:inline-flex">
+          Sector 01
+        </Badge>
+      </div>
 
-      <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-neutral-400">
-        <Link href="#feed" className="hover:text-white transition-colors duration-200 cursor-pointer">近期动态</Link>
-        <Link href="#projects" className="hover:text-white transition-colors duration-200 cursor-pointer">作品集</Link>
-        <Link href="#about" className="hover:text-white transition-colors duration-200 cursor-pointer">关于我</Link>
+      <nav className="hidden items-center gap-6 text-sm text-[var(--gmp-text-secondary)] md:flex">
+        <Link href="#feed" className="transition-colors hover:text-[var(--gmp-text-primary)]">
+          近期动态
+        </Link>
+        <Link href="#flow" className="transition-colors hover:text-[var(--gmp-text-primary)]">
+          创作流程
+        </Link>
+        <Link href="#projects" className="transition-colors hover:text-[var(--gmp-text-primary)]">
+          作品集
+        </Link>
       </nav>
 
-      <div className="flex items-center gap-1 md:gap-2">
-        <Link href="/login" className="p-2 text-neutral-400 hover:text-white hover:bg-white/10 rounded-full transition-all duration-200 cursor-pointer" aria-label="Login">
-          <LogIn size={18} />
-        </Link>
-        <button className="p-2 text-neutral-400 hover:text-white hover:bg-white/10 rounded-full transition-all duration-200 cursor-pointer" aria-label="Search">
-          <Search size={18} />
-        </button>
-        <Link href="https://github.com" target="_blank" className="p-2 text-neutral-400 hover:text-white hover:bg-white/10 rounded-full transition-all duration-200 cursor-pointer" aria-label="GitHub">
-          <Code2 size={18} />
-        </Link>
+      <div className="flex items-center gap-1.5">
+        <Button asChild variant="ghost" size="icon-sm" className="border border-transparent text-[var(--gmp-text-secondary)] hover:border-[var(--gmp-line-soft)] hover:bg-[var(--gmp-bg-panel)] hover:text-[var(--gmp-text-primary)]" aria-label="登录">
+          <Link href="/login">
+            <LogIn className="size-4" />
+          </Link>
+        </Button>
+        <Button variant="ghost" size="icon-sm" className="border border-transparent text-[var(--gmp-text-secondary)] hover:border-[var(--gmp-line-soft)] hover:bg-[var(--gmp-bg-panel)] hover:text-[var(--gmp-text-primary)]" aria-label="搜索">
+          <Search className="size-4" />
+        </Button>
+        <Button asChild variant="ghost" size="icon-sm" className="border border-transparent text-[var(--gmp-text-secondary)] hover:border-[var(--gmp-line-soft)] hover:bg-[var(--gmp-bg-panel)] hover:text-[var(--gmp-text-primary)]" aria-label="GitHub">
+          <Link href="https://github.com" target="_blank" rel="noreferrer">
+            <Code2 className="size-4" />
+          </Link>
+        </Button>
       </div>
     </motion.header>
   );

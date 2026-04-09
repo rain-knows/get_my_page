@@ -1,30 +1,44 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import type { FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
-import { Eye, EyeOff, Lock, User, Mail } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react";
+import { Button, Input, Label } from "@/components/ui";
 import { useAuthActions } from "@/features/auth/hooks";
+import { AuthShell } from "@/features/auth/components/AuthShell";
 
+/**
+ * 功能：渲染注册页面并提交注册信息创建新账户。
+ * 关键参数：无外部参数，内部维护 username/nickname/email/password 四项字段。
+ * 返回值/副作用：返回注册页面节点；注册成功后会跳转到首页。
+ */
 export default function RegisterPage() {
   const router = useRouter();
   const { register, loading, error, clearError } = useAuthActions();
 
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const handleSubmit = async (e: React.FormEvent) => {
+
+  /**
+   * 功能：处理注册表单提交并调用注册 API。
+   * 关键参数：e 为表单提交事件，用于阻止默认提交行为。
+   * 返回值/副作用：无返回值；会触发注册请求并在成功后跳转首页。
+   */
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     clearError();
 
     try {
       await register({
         username,
-        password,
         nickname,
+        password,
         email: email || undefined,
       });
       router.push("/");
@@ -34,165 +48,116 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-neutral-950 px-4">
-      {/* 背景装饰 */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-125 h-100 bg-blue-600/10 blur-[120px] rounded-full opacity-50 pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] bg-size-[24px_24px] pointer-events-none" />
-
-      {/* Logo 链接 */}
-      <motion.div
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="absolute top-6 left-6"
-      >
-        <Link href="/" className="flex items-center gap-2 text-white/70 hover:text-white transition-colors">
-          <div className="w-7 h-7 rounded-full bg-linear-to-tr from-blue-600 to-violet-500 flex items-center justify-center text-xs font-bold text-white">
-            G
-          </div>
-          <span className="font-heading font-medium text-sm">GetMyPage</span>
-        </Link>
-      </motion.div>
-
-      {/* 注册卡片 */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.1 }}
-        className="relative w-full max-w-md"
-      >
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-xl shadow-2xl shadow-black/40">
-          {/* 标题 */}
-          <div className="text-center mb-8">
-            <h1 className="font-heading text-2xl font-bold text-white mb-2">创建账户</h1>
-            <p className="text-neutral-400 text-sm">填写以下信息完成注册</p>
-          </div>
-
-          {/* 错误提示 */}
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              className="mb-6 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm"
-            >
-              {error}
-            </motion.div>
-          )}
-
-          {/* 表单 */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* 用户名 */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-300 mb-2">
-                用户名
-              </label>
-              <div className="relative">
-                <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500" />
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="3-50 个字符"
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/25 transition-all text-sm"
-                  required
-                  minLength={3}
-                  maxLength={50}
-                  autoComplete="username"
-                />
-              </div>
-            </div>
-
-            {/* 昵称 */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-300 mb-2">
-                昵称
-              </label>
-              <div className="relative">
-                <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500" />
-                <input
-                  type="text"
-                  value={nickname}
-                  onChange={(e) => setNickname(e.target.value)}
-                  placeholder="显示昵称"
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/25 transition-all text-sm"
-                  required
-                  maxLength={100}
-                />
-              </div>
-            </div>
-
-            {/* 邮箱 */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-300 mb-2">
-                邮箱 <span className="text-neutral-600">(可选)</span>
-              </label>
-              <div className="relative">
-                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/25 transition-all text-sm"
-                  autoComplete="email"
-                />
-              </div>
-            </div>
-
-            {/* 密码 */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-300 mb-2">
-                密码
-              </label>
-              <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="至少 6 个字符"
-                  className="w-full pl-10 pr-12 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/25 transition-all text-sm"
-                  required
-                  minLength={6}
-                  autoComplete="new-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300 transition-colors"
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-
-            {/* 提交按钮 */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-white text-black font-heading font-semibold rounded-xl hover:bg-white/90 active:bg-white/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full"
-                />
-              ) : (
-                "注册"
-              )}
-            </button>
-          </form>
-
-          {/* 登录链接 */}
-          <p className="mt-6 text-center text-sm text-neutral-500">
-            已有账户？{" "}
-            <Link href="/login" className="text-blue-400 hover:text-blue-300 transition-colors font-medium">
-              立即登录
-            </Link>
-          </p>
+    <AuthShell
+      title="创建账户"
+      description="完成注册后即可发布内容、管理作品与订阅。"
+      footer={
+        <>
+          已有账户？{" "}
+          <Link href="/login" className="font-medium text-[var(--gmp-accent)] transition-colors hover:text-[var(--gmp-text-primary)]">
+            立即登录
+          </Link>
+        </>
+      }
+    >
+      {error && (
+        <div className="mb-4 rounded-lg border border-rose-300/35 bg-rose-300/10 px-3 py-2 text-sm text-rose-100">
+          {error}
         </div>
-      </motion.div>
-    </div>
+      )}
+
+      <motion.form
+        onSubmit={handleSubmit}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.24, ease: "easeOut" }}
+        className="space-y-4"
+      >
+        <div className="space-y-2">
+          <Label htmlFor="register-username" className="text-[var(--gmp-text-primary)]">用户名</Label>
+          <div className="relative">
+            <User className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--gmp-text-secondary)]" />
+            <Input
+              id="register-username"
+              type="text"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              placeholder="3-50 个字符"
+              autoComplete="username"
+              minLength={3}
+              maxLength={50}
+              required
+              className="h-11 border-[var(--gmp-line-soft)] bg-[rgba(255,255,255,0.02)] pl-9 text-[var(--gmp-text-primary)] placeholder:text-[var(--gmp-text-secondary)] focus-visible:border-[var(--gmp-line-strong)] focus-visible:ring-[var(--gmp-accent-dim)]/25"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="register-nickname" className="text-[var(--gmp-text-primary)]">昵称</Label>
+          <div className="relative">
+            <User className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--gmp-text-secondary)]" />
+            <Input
+              id="register-nickname"
+              type="text"
+              value={nickname}
+              onChange={(event) => setNickname(event.target.value)}
+              placeholder="显示昵称"
+              maxLength={100}
+              required
+              className="h-11 border-[var(--gmp-line-soft)] bg-[rgba(255,255,255,0.02)] pl-9 text-[var(--gmp-text-primary)] placeholder:text-[var(--gmp-text-secondary)] focus-visible:border-[var(--gmp-line-strong)] focus-visible:ring-[var(--gmp-accent-dim)]/25"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="register-email" className="text-[var(--gmp-text-primary)]">邮箱（可选）</Label>
+          <div className="relative">
+            <Mail className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--gmp-text-secondary)]" />
+            <Input
+              id="register-email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="your@email.com"
+              autoComplete="email"
+              className="h-11 border-[var(--gmp-line-soft)] bg-[rgba(255,255,255,0.02)] pl-9 text-[var(--gmp-text-primary)] placeholder:text-[var(--gmp-text-secondary)] focus-visible:border-[var(--gmp-line-strong)] focus-visible:ring-[var(--gmp-accent-dim)]/25"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="register-password" className="text-[var(--gmp-text-primary)]">密码</Label>
+          <div className="relative">
+            <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--gmp-text-secondary)]" />
+            <Input
+              id="register-password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="至少 6 个字符"
+              autoComplete="new-password"
+              minLength={6}
+              required
+              className="h-11 border-[var(--gmp-line-soft)] bg-[rgba(255,255,255,0.02)] pr-10 pl-9 text-[var(--gmp-text-primary)] placeholder:text-[var(--gmp-text-secondary)] focus-visible:border-[var(--gmp-line-strong)] focus-visible:ring-[var(--gmp-accent-dim)]/25"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute top-1/2 right-1 -translate-y-1/2 text-[var(--gmp-text-secondary)] hover:bg-[var(--gmp-bg-panel)] hover:text-[var(--gmp-text-primary)]"
+              aria-label={showPassword ? "隐藏密码" : "显示密码"}
+            >
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </Button>
+          </div>
+        </div>
+
+        <Button type="submit" disabled={loading} className="h-11 w-full border border-[var(--gmp-line-strong)] bg-[var(--gmp-accent)] text-black font-medium hover:bg-[#e2d3b4]">
+          {loading && <Loader2 className="size-4 animate-spin" />}
+          {loading ? "注册中..." : "注册"}
+        </Button>
+      </motion.form>
+    </AuthShell>
   );
 }
