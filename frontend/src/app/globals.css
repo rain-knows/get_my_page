@@ -213,29 +213,76 @@
   mix-blend-mode: screen;
 }
 
-.gmp-endfield-home-bg {
+.gmp-kinetic-bg {
   background-image:
-    radial-gradient(circle at 22% 18%, rgba(255, 233, 96, 0.28), transparent 42%),
-    radial-gradient(circle at 72% 20%, rgba(229, 35, 23, 0.22), transparent 40%),
-    linear-gradient(106deg, rgba(144, 7, 7, 0.76) 0%, rgba(11, 12, 14, 0.84) 28%, rgba(10, 11, 14, 0.52) 52%, rgba(13, 13, 15, 0.84) 100%);
+    radial-gradient(circle at 16% 12%, rgba(255, 231, 98, 0.24), transparent 36%),
+    radial-gradient(circle at 84% 86%, rgba(190, 28, 18, 0.2), transparent 33%),
+    linear-gradient(162deg, #080a0d 0%, #0c1016 46%, #090b0f 100%);
 }
 
-.gmp-endfield-home-noise {
+.gmp-kinetic-grid {
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
-  background-size: 48px 48px, 48px 48px;
-  opacity: 0.3;
+    linear-gradient(to right, rgba(255, 255, 255, 0.038) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.038) 1px, transparent 1px);
+  background-size: 44px 44px, 44px 44px;
+  opacity: 0.32;
 }
 
-.gmp-auth-grid-bg {
+.gmp-kinetic-geometry {
   background-image:
-    radial-gradient(circle at 18% 12%, rgba(255, 231, 98, 0.2), transparent 32%),
-    radial-gradient(circle at 84% 84%, rgba(190, 28, 18, 0.2), transparent 30%),
-    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(160deg, #090b0f 0%, #0d1016 45%, #0a0d12 100%);
-  background-size: auto, auto, 40px 40px, 40px 40px, auto;
+    repeating-radial-gradient(circle at 72% 48%, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 20px),
+    radial-gradient(circle at 64% 66%, rgba(255, 228, 88, 0.12), transparent 44%);
+  mix-blend-mode: screen;
+  opacity: 0.62;
+}
+
+.gmp-kinetic-geometry[data-module="scan"] {
+  background-image:
+    repeating-radial-gradient(circle at 72% 48%, rgba(255, 255, 255, 0.09) 0 1px, transparent 1px 18px),
+    radial-gradient(circle at 62% 64%, rgba(255, 228, 88, 0.17), transparent 42%);
+}
+
+.gmp-kinetic-geometry[data-module="forge"] {
+  background-image:
+    repeating-linear-gradient(132deg, rgba(255, 230, 89, 0.09) 0 1px, transparent 1px 16px),
+    radial-gradient(circle at 70% 60%, rgba(255, 203, 94, 0.14), transparent 46%);
+}
+
+.gmp-kinetic-geometry[data-module="shield"] {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    radial-gradient(circle at 70% 62%, rgba(255, 66, 66, 0.14), transparent 48%);
+  background-size: 22px 22px, 22px 22px, auto;
+}
+
+.gmp-module-stage__aura {
+  transition:
+    background var(--gmp-end-timing-mid) ease,
+    opacity var(--gmp-end-timing-mid) ease;
+}
+
+.gmp-module-stage__aura--scan {
+  background:
+    radial-gradient(circle at 26% 24%, rgba(255, 230, 94, 0.24), transparent 44%),
+    radial-gradient(circle at 80% 24%, rgba(190, 32, 20, 0.18), transparent 40%),
+    linear-gradient(114deg, rgba(87, 10, 10, 0.64) 0%, rgba(12, 14, 18, 0.8) 36%, rgba(11, 12, 16, 0.54) 100%);
+}
+
+.gmp-module-stage__aura--forge {
+  background:
+    linear-gradient(132deg, rgba(255, 227, 96, 0.17) 0%, transparent 36%),
+    linear-gradient(36deg, rgba(177, 39, 27, 0.32) 0%, transparent 50%),
+    linear-gradient(120deg, rgba(18, 22, 31, 0.82) 0%, rgba(9, 11, 14, 0.68) 100%);
+}
+
+.gmp-module-stage__aura--shield {
+  background:
+    linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    radial-gradient(circle at 72% 28%, rgba(229, 35, 23, 0.2), transparent 46%),
+    linear-gradient(116deg, rgba(14, 18, 26, 0.86) 0%, rgba(8, 10, 13, 0.84) 100%);
+  background-size: 30px 30px, 30px 30px, auto, auto;
 }
 
 @keyframes gmp-scanline {

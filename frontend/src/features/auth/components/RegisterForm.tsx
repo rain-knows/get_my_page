@@ -8,10 +8,10 @@ import { motion } from "motion/react";
 import { CheckCircle2, Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react";
 import { Button, Input, Label } from "@/components/ui";
 import { useAuthActions } from "@/features/auth/hooks";
-import { InteractiveAuthShell, type AuthFieldKey, type AuthSubmitState } from "@/features/auth/components/InteractiveAuthShell";
+import { InteractiveAuthShell } from "@/features/auth/components/InteractiveAuthShell";
 
 /**
- * 功能：渲染注册表单并驱动注册流程，提供与登录一致的高级交互动效体验。
+ * 功能：渲染注册表单并驱动注册流程，提供与登录一致的居中单卡片体验。
  * 关键参数：无外部参数，内部维护注册字段与提交状态机。
  * 返回值/副作用：返回注册页业务组件；注册成功后跳转首页。
  */
@@ -24,10 +24,9 @@ export function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [activeField, setActiveField] = useState<AuthFieldKey>(null);
-  const [submitState, setSubmitState] = useState<AuthSubmitState>("idle");
+  const [submitState, setSubmitState] = useState<"idle" | "loading" | "success" | "error">("idle");
 
-  const currentSubmitState: AuthSubmitState = loading ? "loading" : error ? "error" : submitState;
+  const currentSubmitState = loading ? "loading" : error ? "error" : submitState;
 
   /**
    * 功能：处理注册提交并调用注册 API，成功后写入状态并跳转首页。
@@ -60,8 +59,6 @@ export function RegisterForm() {
       mode="register"
       title="创建账户"
       description="接入后即可发布内容、管理作品并加入协作流。"
-      activeField={activeField}
-      submitState={currentSubmitState}
       footer={
         <>
           已有账户？{" "}
@@ -93,8 +90,6 @@ export function RegisterForm() {
               type="text"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
-              onFocus={() => setActiveField("username")}
-              onBlur={() => setActiveField(null)}
               placeholder="3-50 个字符"
               autoComplete="username"
               minLength={3}
@@ -114,8 +109,6 @@ export function RegisterForm() {
               type="text"
               value={nickname}
               onChange={(event) => setNickname(event.target.value)}
-              onFocus={() => setActiveField("nickname")}
-              onBlur={() => setActiveField(null)}
               placeholder="显示昵称"
               maxLength={100}
               required
@@ -133,8 +126,6 @@ export function RegisterForm() {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              onFocus={() => setActiveField("email")}
-              onBlur={() => setActiveField(null)}
               placeholder="your@email.com"
               autoComplete="email"
               className="h-11 rounded-xs border-white/18 bg-black/42 pl-9 text-white placeholder:text-white/38 focus-visible:border-[var(--gmp-end-accent)] focus-visible:ring-[var(--gmp-end-accent)]/30"
@@ -151,8 +142,6 @@ export function RegisterForm() {
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              onFocus={() => setActiveField("password")}
-              onBlur={() => setActiveField(null)}
               placeholder="至少 6 个字符"
               autoComplete="new-password"
               minLength={6}

@@ -8,10 +8,10 @@ import { motion } from "motion/react";
 import { CheckCircle2, Eye, EyeOff, Loader2, Lock, User } from "lucide-react";
 import { Button, Input, Label } from "@/components/ui";
 import { useAuthActions } from "@/features/auth/hooks";
-import { InteractiveAuthShell, type AuthFieldKey, type AuthSubmitState } from "@/features/auth/components/InteractiveAuthShell";
+import { InteractiveAuthShell } from "@/features/auth/components/InteractiveAuthShell";
 
 /**
- * 功能：渲染登录表单并驱动认证提交流程，结合交互壳层输出高级动效体验。
+ * 功能：渲染登录表单并驱动认证提交流程，结合居中认证壳层输出单卡片体验。
  * 关键参数：无外部参数，内部维护 username/password 与提交状态机。
  * 返回值/副作用：返回登录页业务组件；登录成功后跳转首页。
  */
@@ -22,10 +22,9 @@ export function LoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [activeField, setActiveField] = useState<AuthFieldKey>(null);
-  const [submitState, setSubmitState] = useState<AuthSubmitState>("idle");
+  const [submitState, setSubmitState] = useState<"idle" | "loading" | "success" | "error">("idle");
 
-  const currentSubmitState: AuthSubmitState = loading ? "loading" : error ? "error" : submitState;
+  const currentSubmitState = loading ? "loading" : error ? "error" : submitState;
 
   /**
    * 功能：处理登录表单提交并执行登录请求，按结果更新状态机并跳转。
@@ -53,8 +52,6 @@ export function LoginForm() {
       mode="login"
       title="欢迎回来"
       description="完成验证后，继续你的内容创作与系统管理。"
-      activeField={activeField}
-      submitState={currentSubmitState}
       footer={
         <>
           还没有账户？{" "}
@@ -86,8 +83,6 @@ export function LoginForm() {
               type="text"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
-              onFocus={() => setActiveField("username")}
-              onBlur={() => setActiveField(null)}
               placeholder="输入用户名"
               autoComplete="username"
               required
@@ -105,8 +100,6 @@ export function LoginForm() {
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              onFocus={() => setActiveField("password")}
-              onBlur={() => setActiveField(null)}
               placeholder="输入密码"
               autoComplete="current-password"
               required
