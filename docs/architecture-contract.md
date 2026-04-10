@@ -29,6 +29,33 @@
 - 在 `app/**/page.tsx` 内直接写请求封装与业务 orchestration（应下沉到 `features/*`）。
 - 在 `components/ui` 放 `Navbar`、`PostCard`、`Editor` 这类业务组件。
 
+### 1.4 设计语言工程契约（首页/认证）
+
+> 目标：把“终末地灵感”的视觉方案变成可复现、可验收、可维护的工程标准，而不是一次性样式改动。
+
+- 风格基线（必须）
+  - 使用“黑 + 高亮黄 + 控制性红”的高对比工业风语义，不直接复用第三方版权角色/品牌素材。
+  - 统一通过设计令牌驱动样式（如 `--gmp-end-*`），禁止在业务组件中散落硬编码色值。
+  - 背景纹理采用可程序化复现方案（gradient/grid/noise/scanline），避免依赖不可追踪图片资产。
+- 分层与复用（必须）
+  - `app` 仅保留路由拼装；页面视觉编排与状态门控下沉到 `features/home/*`、`features/auth/*`。
+  - 认证高交互壳层必须在 `features/auth/components/InteractiveAuthShell.tsx` 统一承载，登录/注册通过 props 配置差异。
+  - `components/ui` 继续保持原子组件职责，不承载业务动效与业务语义。
+- 动效与性能（必须）
+  - 动效时序使用令牌化时长（快/中/慢），默认控制在 `180ms / 280ms / 420ms` 档位。
+  - 优先 `transform/opacity`，避免 layout 抖动；页面需满足无明显卡顿与可中断交互。
+  - 必须实现 `prefers-reduced-motion` 降级路径，降级后仍能完整完成主流程。
+- 首页加载门控策略（强制）
+  - 首页首屏加载采用门控组件（`EntryExperienceGate`）统一管理。
+  - **每次浏览器刷新首页都必须显示加载页**，不使用 `sessionStorage/localStorage/cookie` 跳过加载。
+  - 加载阶段结束后再展示主首页，且加载组件与主首页组件职责分离（`EndfieldLoadingScreen` vs `HomeLandingSurface`）。
+- 可访问性与交互反馈（必须）
+  - 认证表单保留显式 `Label`、字段就近错误提示、密码显隐可访问标签与可见焦点。
+  - 所有关键按钮触控尺寸不低于 44px，高风险操作与提交状态必须有明确反馈。
+- 验收与文档同步（必须）
+  - 视觉与交互改造需同步更新设计规范文档（当前基线：`docs/11-endfield-inspired-home-auth-design-spec.md`）。
+  - 验收至少覆盖：`375/768/1024/1440` 响应式、键盘导航、reduced-motion、生效的加载门控。
+
 ## 2. 后端分层契约
 
 ### 2.1 目录职责

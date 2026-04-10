@@ -123,6 +123,17 @@
   --gmp-accent: #d4c3a2;
   --gmp-accent-dim: #9eb1c3;
   --gmp-shadow-soft: 0 28px 60px -44px rgba(0, 0, 0, 0.82);
+  --gmp-end-bg: #090b0f;
+  --gmp-end-panel: rgba(6, 8, 11, 0.54);
+  --gmp-end-accent: #f8e64f;
+  --gmp-end-accent-soft: #ffe88a;
+  --gmp-end-danger: #cf1d12;
+  --gmp-end-timing-fast: 180ms;
+  --gmp-end-timing-mid: 280ms;
+  --gmp-end-timing-slow: 420ms;
+  --gmp-end-z-base: 1;
+  --gmp-end-z-overlay: 20;
+  --gmp-end-z-top: 40;
 }
 
 .dark {
@@ -178,6 +189,62 @@
   border: 1px solid color-mix(in srgb, var(--gmp-line-strong) 55%, transparent);
   background: color-mix(in srgb, var(--gmp-bg-panel) 66%, transparent);
   color: var(--gmp-text-secondary);
+}
+
+.gmp-endfield-loading-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 56px 56px, 56px 56px;
+  opacity: 0.28;
+}
+
+.gmp-endfield-loading-map {
+  background-image:
+    radial-gradient(circle at 26% 18%, rgba(255, 231, 94, 0.12), transparent 32%),
+    radial-gradient(circle at 72% 72%, rgba(199, 28, 17, 0.14), transparent 30%),
+    repeating-radial-gradient(circle at 68% 44%, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 18px),
+    linear-gradient(180deg, #080a0d 0%, #0b0d11 48%, #090b0f 100%);
+}
+
+.gmp-endfield-scanline {
+  background-image: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.05) 45%, transparent 100%);
+  animation: gmp-scanline 3.2s linear infinite;
+  mix-blend-mode: screen;
+}
+
+.gmp-endfield-home-bg {
+  background-image:
+    radial-gradient(circle at 22% 18%, rgba(255, 233, 96, 0.28), transparent 42%),
+    radial-gradient(circle at 72% 20%, rgba(229, 35, 23, 0.22), transparent 40%),
+    linear-gradient(106deg, rgba(144, 7, 7, 0.76) 0%, rgba(11, 12, 14, 0.84) 28%, rgba(10, 11, 14, 0.52) 52%, rgba(13, 13, 15, 0.84) 100%);
+}
+
+.gmp-endfield-home-noise {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 48px 48px, 48px 48px;
+  opacity: 0.3;
+}
+
+.gmp-auth-grid-bg {
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(255, 231, 98, 0.2), transparent 32%),
+    radial-gradient(circle at 84% 84%, rgba(190, 28, 18, 0.2), transparent 30%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(160deg, #090b0f 0%, #0d1016 45%, #0a0d12 100%);
+  background-size: auto, auto, 40px 40px, 40px 40px, auto;
+}
+
+@keyframes gmp-scanline {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(100%);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

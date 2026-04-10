@@ -68,7 +68,7 @@ const cardInteractionVariants = {
   rest: { y: 0 },
   hover: {
     y: -3,
-    transition: { duration: 0.18, ease: "easeOut" },
+    transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
   },
 };
 
