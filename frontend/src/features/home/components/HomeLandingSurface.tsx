@@ -119,24 +119,50 @@ export function HomeLandingSurface() {
       centerTitle={narrative.title}
       centerDescription={narrative.description}
     >
-      <div className="grid gap-3 md:grid-cols-2">
-        {homeCards.map((card) => {
+      <div className="grid gap-4 md:grid-cols-2 lg:gap-5">
+        {homeCards.map((card, index) => {
           const CardIcon = card.icon;
           return (
-            <article key={card.id} className="rounded-xs border border-white/16 bg-black/44 p-4 backdrop-blur-sm">
-              <p className="mb-2 font-mono text-[10px] tracking-[0.18em] text-[var(--gmp-end-accent)] uppercase">{card.id}</p>
-              <h2 className="flex items-center gap-2 text-base font-semibold text-white">
-                <CardIcon className="h-4 w-4 text-[var(--gmp-end-accent)]" />
-                {card.title}
-              </h2>
-              <p className="mt-2 text-sm leading-relaxed text-white/68">{card.summary}</p>
-              <div className="mt-4 flex items-center justify-between">
-                <span className="rounded-xs border border-white/16 bg-black/52 px-2 py-1 text-xs text-white/72">{card.status}</span>
-                <Link href={card.href} className="inline-flex items-center gap-1 text-xs text-[var(--gmp-end-accent)] hover:text-[var(--gmp-end-accent-soft)]">
-                  查看
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                </Link>
+            <article
+              key={card.id}
+              className="gmp-corner-border gmp-corner-border--tl gmp-corner-border--br gmp-panel-premium gmp-inner-glow group relative overflow-hidden bg-black/44 p-6 transition-all hover:border-[var(--gmp-end-accent)]/40"
+            >
+              <div className="pointer-events-none absolute top-3 right-4 font-mono text-[9px] tracking-[0.3em] text-white/10 uppercase opacity-0 transition-opacity group-hover:opacity-100">
+                P_Node: 0x{index + 1} SYNC
               </div>
+              
+              <div className="relative z-10">
+                <p className="mb-4 font-mono text-[11px] font-bold tracking-[0.3em] text-[var(--gmp-end-accent)] uppercase">
+                  {card.id}
+                  <span className="ml-3 inline-block h-1 w-1 bg-[var(--gmp-end-accent)] animate-pulse" />
+                </p>
+                
+                <h2 className="flex items-center gap-3 text-xl font-heading font-semibold text-white transition-colors group-hover:text-[var(--gmp-end-accent)]">
+                  <CardIcon className="h-5 w-5 text-[var(--gmp-end-accent)]" />
+                  {card.title}
+                </h2>
+                
+                <p className="mt-4 text-sm leading-relaxed text-white/50 group-hover:text-white/80 transition-colors">
+                  {card.summary}
+                </p>
+                
+                <div className="mt-8 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--gmp-end-accent)]/40" />
+                    <span className="rounded-xs border border-white/8 bg-black/40 px-3 py-1 font-mono text-[10px] tracking-widest text-white/50 uppercase">{card.status}</span>
+                  </div>
+                  <Link 
+                    href={card.href} 
+                    className="inline-flex items-center gap-2 rounded-xs border border-white/5 bg-black/20 px-3 py-1.5 font-mono text-[11px] font-bold tracking-widest text-[var(--gmp-end-accent)] transition-all hover:border-[var(--gmp-end-accent)]/50 hover:bg-[var(--gmp-end-accent)]/10"
+                  >
+                    ACCESS
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* 装饰条 */}
+              <div className="absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-[var(--gmp-end-accent)]/40 to-transparent scale-x-0 transition-transform duration-500 group-hover:scale-x-100" />
             </article>
           );
         })}

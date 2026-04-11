@@ -1,10 +1,9 @@
 "use client";
 
-import type { MouseEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
+import { motion } from "motion/react";
 import { ArrowUpRight, Layers3 } from "lucide-react";
-import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import { INTERACTION_MODULES, type InteractionModuleKey } from "@/types/interaction-module";
 
@@ -72,142 +71,146 @@ export function KineticPageShell({
   rightBottom,
   className,
 }: KineticPageShellProps) {
-  const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
-  const pointerX = useMotionValue(50);
-  const pointerY = useMotionValue(50);
-  const smoothX = useSpring(pointerX, { stiffness: 150, damping: 22 });
-  const smoothY = useSpring(pointerY, { stiffness: 150, damping: 22 });
-  const gridOffsetX = useTransform(smoothX, [0, 100], [-10, 10]);
-  const gridOffsetY = useTransform(smoothY, [0, 100], [-8, 8]);
-  const geometryOffsetX = useTransform(smoothX, [0, 100], [7, -7]);
-  const geometryOffsetY = useTransform(smoothY, [0, 100], [5, -5]);
   const modeLabel = INTERACTION_MODULES.find((item) => item.key === mode)?.label ?? "SCAN";
-
-  /**
-   * 功能：跟踪鼠标在壳层内的相对位置，驱动网格与几何背景层平滑位移。
-   * 关键参数：event 为鼠标移动事件，包含当前光标在壳层内的坐标信息。
-   * 返回值/副作用：无返回值；会更新 motion 值并触发背景层位移。
-   */
-  const handlePointerMove = (event: MouseEvent<HTMLElement>) => {
-    if (reducedMotion) {
-      return;
-    }
-
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-    pointerX.set(Math.max(0, Math.min(100, x)));
-    pointerY.set(Math.max(0, Math.min(100, y)));
-  };
 
   return (
     <section
       className={cn("relative min-h-dvh overflow-hidden bg-[var(--gmp-end-bg)] text-white", className)}
       data-module={mode}
-      onMouseMove={handlePointerMove}
     >
-      <div className="gmp-kinetic-bg pointer-events-none absolute inset-0" />
-      <motion.div
-        className="gmp-kinetic-grid pointer-events-none absolute inset-0"
-        style={reducedMotion ? undefined : { x: gridOffsetX, y: gridOffsetY }}
-      />
-      <motion.div
-        className="gmp-kinetic-geometry pointer-events-none absolute inset-0"
-        style={reducedMotion ? undefined : { x: geometryOffsetX, y: geometryOffsetY }}
-        data-module={mode}
-      />
-
+      {/* 增强层：V2 高级工业背景 */}
+      <div className="gmp-noise-overlay" />
+      <div className="gmp-fluid-scan" />
+      <div className="gmp-parallax-geometry" />
+      <div className="gmp-kinetic-bg pointer-events-none absolute inset-0 opacity-40" />
+      
       <main className="relative z-10 mx-auto grid min-h-dvh w-full max-w-[1600px] grid-cols-1 gap-4 px-4 py-4 md:grid-cols-[84px_1fr] xl:grid-cols-[96px_1fr_320px] xl:gap-5 xl:px-6 xl:py-5">
-        <aside className="hidden h-full rounded-sm border border-white/12 bg-black/36 p-3 backdrop-blur-sm md:flex md:flex-col md:items-center md:justify-between">
-          <div className="flex flex-col items-center gap-3">
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-sm border border-white/20 bg-black/40 font-heading text-xl font-semibold tracking-tight text-white">
-              GMP
-            </span>
-            <span className="[writing-mode:vertical-rl] rotate-180 font-mono text-[10px] tracking-[0.2em] text-white/55 uppercase">
-              Page Navigation
-            </span>
+        {/* 左侧工业导轨 */}
+        <aside className="gmp-corner-border gmp-corner-border--tl gmp-corner-border--br gmp-panel-premium gmp-inner-glow hidden h-full flex-col items-center justify-between bg-black/36 p-4 backdrop-blur-[2px] md:flex">
+          <div className="flex flex-col items-center gap-6">
+            <Link href="/" className="group flex flex-col items-center gap-1.5 transition-transform hover:scale-105">
+              <span className="flex h-12 w-12 items-center justify-center rounded-xs border border-white/20 bg-black/60 font-heading text-lg font-bold tracking-widest text-[var(--gmp-end-accent)] shadow-[0_0_15px_rgba(248,230,79,0.15)]">
+                GMP
+              </span>
+              <span className="font-mono text-[7px] tracking-[0.3em] text-white/20 uppercase opacity-0 group-hover:opacity-100 transition-opacity">V2.0</span>
+            </Link>
+            
+            <nav className="flex w-full flex-col gap-3">
+              {navItems.map((item, index) => {
+                const active = isNavActive(currentPath, item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "group relative flex h-11 w-full flex-col items-center justify-center rounded-xs border transition-all",
+                      active
+                        ? "border-[var(--gmp-end-accent)] bg-[var(--gmp-end-accent)]/10 text-[var(--gmp-end-accent)]"
+                        : "border-transparent text-white/40 hover:border-white/20 hover:text-white",
+                    )}
+                  >
+                    <span className="mb-0.5 text-[10px] uppercase tracking-tighter">{item.label}</span>
+                    <span className="font-mono text-[8px] opacity-40 tracking-widest">0{index + 1}</span>
+                    {active && (
+                      <span className="absolute -left-1 top-1/2 h-4 w-0.5 -translate-y-1/2 bg-[var(--gmp-end-accent)] animate-pulse" />
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
           </div>
 
-          <nav className="flex w-full flex-col gap-2">
-            {navItems.map((item) => {
-              const active = isNavActive(currentPath, item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "group flex h-10 w-full items-center justify-center rounded-xs border font-mono text-[10px] tracking-[0.14em] transition-all",
-                    active
-                      ? "border-[var(--gmp-end-accent)] bg-black/72 text-[var(--gmp-end-accent)]"
-                      : "border-white/16 bg-black/50 text-white/62 hover:border-[var(--gmp-end-accent)] hover:text-[var(--gmp-end-accent)]",
-                  )}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <p className="font-mono text-[10px] tracking-[0.16em] text-white/55 uppercase">2026</p>
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-16 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+            <span className="font-mono text-[8px] tracking-[0.4em] text-white/20 uppercase [writing-mode:vertical-rl]">
+              Frontier_Signal // OK
+            </span>
+          </div>
         </aside>
 
+        {/* 主舞台区域 */}
         <motion.section
-          initial={{ opacity: 0, scale: 0.986 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.46, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
-          className="gmp-module-stage relative overflow-hidden rounded-sm border border-white/16 bg-black/30"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.54, ease: [0.22, 1, 0.36, 1] }}
+          className="gmp-module-stage gmp-corner-border gmp-corner-border--tl gmp-corner-border--br gmp-panel-premium gmp-inner-glow relative flex flex-col overflow-hidden bg-black/30 backdrop-blur-[2px]"
           data-module={mode}
         >
-          <div className={cn("gmp-module-stage__aura absolute inset-0", `gmp-module-stage__aura--${mode}`)} />
+          <div className={cn("gmp-module-stage__aura absolute inset-0 opacity-10", `gmp-module-stage__aura--${mode}`)} />
 
-          <div className="relative z-10 flex h-full min-h-[660px] flex-col p-5 md:p-8 lg:p-10">
-            <header className="mb-5 flex flex-wrap items-start justify-between gap-3 border-b border-white/14 pb-4">
-              <div>
-                <p className="inline-flex items-center gap-2 rounded-sm border border-white/16 bg-black/45 px-3 py-1.5 font-mono text-[11px] tracking-[0.18em] text-white/72 uppercase">
-                  <Layers3 className="h-3.5 w-3.5 text-[var(--gmp-end-accent)]" />
-                  Content Surface
+          <div className="relative z-10 flex h-full min-h-[660px] flex-col p-6 md:p-8 lg:p-10">
+            <header className="mb-6 flex flex-wrap items-start justify-between gap-3 border-b border-white/8 pb-6">
+              <div className="space-y-4">
+                <p className="inline-flex items-center gap-2 rounded-sm border border-white/12 bg-black/45 px-3 py-1.5 font-mono text-[10px] tracking-[0.2em] text-white/55 uppercase">
+                  <Layers3 className="h-4 w-4 text-[var(--gmp-end-accent)]" />
+                  Terminal_Core // {mode.toUpperCase()}
+                  <span className="ml-2 inline-block h-1 w-1 rounded-full bg-[var(--gmp-end-accent)] animate-pulse" />
                 </p>
-                <h1 className="mt-3 font-heading text-3xl font-semibold tracking-tight text-white md:text-4xl">{centerTitle}</h1>
-                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/68 md:text-base">{centerDescription}</p>
+                <div>
+                  <h1 className="font-heading text-4xl font-semibold tracking-tight text-white md:text-5xl">{centerTitle}</h1>
+                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/55 md:text-base">{centerDescription}</p>
+                </div>
               </div>
 
-              <button
-                type="button"
-                onClick={onModeCycle}
-                className="inline-flex h-10 items-center gap-2 rounded-xs border border-[var(--gmp-end-accent)]/70 bg-black/62 px-3 font-mono text-[11px] tracking-[0.16em] text-[var(--gmp-end-accent)] uppercase transition-colors hover:bg-black/78"
-                aria-label="切换背景模式"
-              >
-                模式
-                <span>{modeLabel}</span>
-              </button>
+              <div className="flex items-center gap-4">
+                <div className="hidden flex-col items-end font-mono text-[8px] tracking-[0.3em] text-white/20 uppercase sm:flex">
+                  <span>Logic_Link: Stabilized</span>
+                  <span>Sys_Entropy: 0x4F2A</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={onModeCycle}
+                  className="group relative inline-flex h-12 items-center gap-3 rounded-xs border border-[var(--gmp-end-accent)]/50 bg-black/62 px-5 font-mono text-[11px] font-bold tracking-[0.2em] text-[var(--gmp-end-accent)] uppercase transition-all hover:border-[var(--gmp-end-accent)] hover:bg-black/82"
+                  aria-label="Toggle interaction module"
+                >
+                  <span className="relative z-10">{modeLabel}</span>
+                  <div className="absolute inset-0 bg-[var(--gmp-end-accent)]/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+              </div>
             </header>
 
-            <div className="min-h-0 flex-1 overflow-y-auto pr-1">{children}</div>
+            <div className="min-h-0 flex-1 overflow-y-auto custom-scrollbar">
+              {children}
+            </div>
+            
+            <footer className="mt-6 flex items-center justify-between border-t border-white/8 pt-4 font-mono text-[9px] tracking-[0.3em] text-white/20 uppercase">
+               <span>Module_ID: 0xFD42A01</span>
+               <span>Endfield_Tech // v2.0.4</span>
+            </footer>
           </div>
         </motion.section>
 
-        <aside className="grid grid-cols-1 gap-3 xl:grid">
-          <section className="rounded-sm border border-white/16 bg-black/44 p-4 backdrop-blur-sm">
-            <p className="mb-3 font-mono text-[10px] tracking-[0.16em] text-white/62 uppercase">Core Actions</p>
-            <div className="space-y-2">
+        {/* 右侧行动区 */}
+        <aside className="grid grid-cols-1 gap-4 xl:grid">
+          <section className="gmp-corner-border gmp-corner-border--tl gmp-corner-border--br gmp-panel-premium p-5 backdrop-blur-[2px]">
+            <p className="mb-4 font-mono text-[10px] tracking-[0.25em] text-white/30 uppercase border-b border-white/8 pb-2 flex items-center gap-2">
+              <span className="h-1 w-1 bg-[var(--gmp-end-accent)]" />
+              Core Actions
+            </p>
+            <div className="space-y-3">
               {topActions.map((item) => (
                 <Link
                   key={item.label}
                   href={item.href}
-                  className="flex h-11 w-full items-center justify-between rounded-xs border border-white/14 bg-black/45 px-3.5 text-sm text-white transition-colors hover:border-[var(--gmp-end-accent)] hover:bg-black/66"
+                  className="group relative flex h-12 w-full items-center justify-between rounded-xs border border-white/12 bg-black/45 px-4 text-xs font-bold tracking-widest text-white/80 transition-all hover:border-[var(--gmp-end-accent)]/50 hover:bg-black/66 hover:text-white"
                 >
                   <span>{item.label}</span>
-                  <ArrowUpRight className="h-4 w-4 text-[var(--gmp-end-accent)]" />
+                  <ArrowUpRight className="h-4 w-4 text-[var(--gmp-end-accent)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </Link>
               ))}
             </div>
           </section>
 
-          <section className="rounded-sm border border-white/16 bg-black/44 p-4 backdrop-blur-sm">
-            <p className="mb-2 font-mono text-[10px] tracking-[0.16em] text-white/62 uppercase">Reserved</p>
+          <section className="gmp-corner-border gmp-corner-border--tl gmp-corner-border--br gmp-panel-premium p-5 backdrop-blur-[2px]">
+            <p className="mb-3 font-mono text-[10px] tracking-[0.25em] text-white/30 uppercase flex items-center gap-2">
+               <span className="h-1 w-1 bg-white/20" />
+               Reserved_Sector
+            </p>
             {rightBottom ?? (
-              <div className="rounded-xs border border-dashed border-white/22 bg-black/42 p-3">
-                <p className="text-sm text-white/68">功能待定</p>
+              <div className="rounded-xs border border-dashed border-white/10 bg-black/20 p-4">
+                <p className="text-[11px] leading-relaxed text-white/40 font-mono tracking-wider italic">
+                  Waiting for system link...
+                </p>
               </div>
             )}
           </section>

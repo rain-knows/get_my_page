@@ -134,6 +134,10 @@
   --gmp-end-z-base: 1;
   --gmp-end-z-overlay: 20;
   --gmp-end-z-top: 40;
+
+  /* 新增动效令牌 */
+  --gmp-glow-yellow: 0 0 15px rgba(248, 230, 79, 0.4);
+  --gmp-glow-red: 0 0 15px rgba(207, 29, 18, 0.4);
 }
 
 .dark {
@@ -303,4 +307,120 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* --- 大胆优化：视觉表现增强层 --- */
+
+/* 1. 动态纹理：静态微粒 + 扫读光带 (V2 高级工业风) */
+.gmp-noise-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.012; /* 极其微弱，仅增加质感 */
+}
+
+.gmp-fluid-scan {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(248, 230, 79, 0.015) 45%,
+    rgba(248, 230, 79, 0.03) 50%,
+    rgba(248, 230, 79, 0.015) 55%,
+    transparent 100%
+  );
+  background-size: 100% 200%;
+  animation: gmp-fluid-scan 12s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes gmp-fluid-scan {
+  0% { background-position: 0 100%; }
+  100% { background-position: 0 -100%; }
+}
+
+/* 视差几何背景层 */
+.gmp-parallax-geometry {
+  position: fixed;
+  inset: -10%;
+  z-index: 1;
+  pointer-events: none;
+  background-image: 
+    radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.02) 0, transparent 40%),
+    repeating-radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.015) 0 1px, transparent 1px 40px);
+  filter: blur(1px);
+  animation: gmp-parallax-float 60s linear infinite;
+}
+
+@keyframes gmp-parallax-float {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(1deg) scale(1.02); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+/* 2. CRT 故障文字动效 */
+.gmp-glitch-text {
+  position: relative;
+  text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75),
+    -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
+    0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+  animation: gmp-glitch 500ms infinite;
+}
+
+@keyframes gmp-glitch {
+  0% { text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75), -0.05em -0.025em 0 rgba(0, 255, 0, 0.75), -0.025em 0.05em 0 rgba(0, 0, 255, 0.75); }
+  14% { text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75), -0.05em -0.025em 0 rgba(0, 255, 0, 0.75), -0.025em 0.05em 0 rgba(0, 0, 255, 0.75); }
+  15% { text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75), 0.025em 0.025em 0 rgba(0, 255, 0, 0.75), -0.05em -0.05em 0 rgba(0, 0, 255, 0.75); }
+  49% { text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75), 0.025em 0.025em 0 rgba(0, 255, 0, 0.75), -0.05em -0.05em 0 rgba(0, 0, 255, 0.75); }
+  50% { text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75), 0.05em 0 0 rgba(0, 255, 0, 0.75), 0 -0.05em 0 rgba(0, 0, 255, 0.75); }
+  99% { text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75), 0.05em 0 0 rgba(0, 255, 0, 0.75), 0 -0.05em 0 rgba(0, 0, 255, 0.75); }
+  100% { text-shadow: -0.025em 0 0 rgba(255, 0, 0, 0.75), -0.025em -0.025em 0 rgba(0, 255, 0, 0.75), -0.025em -0.05em 0 rgba(0, 0, 255, 0.75); }
+}
+
+/* 3. 工业转角装饰筋 */
+.gmp-corner-border {
+  position: relative;
+}
+
+.gmp-corner-border::before,
+.gmp-corner-border::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: var(--gmp-end-accent);
+  border-style: solid;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.gmp-corner-border--tl::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.gmp-corner-border--tr::after { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+.gmp-corner-border--bl::before { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+.gmp-corner-border--br::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+/* 4. 面板深度增强 (V2 Premium) */
+.gmp-panel-premium {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 
+    inset 0 0 30px rgba(0, 0, 0, 0.4),
+    0 10px 40px -10px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(135deg, rgba(15, 18, 24, 0.8) 0%, rgba(9, 11, 15, 0.9) 100%);
+}
+
+.gmp-inner-glow {
+  position: relative;
+}
+
+.gmp-inner-glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 1px solid rgba(248, 230, 79, 0.03);
+  mask-image: linear-gradient(to bottom, black, transparent);
 }
