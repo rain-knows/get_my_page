@@ -20,7 +20,7 @@ export function EndfieldLoadingScreen({ progress }: EndfieldLoadingScreenProps) 
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.36, ease: [0.22, 1, 0.36, 1] }}
-      className="relative isolate min-h-dvh overflow-hidden bg-[var(--gmp-end-bg)]"
+      className="relative isolate min-h-dvh overflow-hidden bg-(--gmp-end-bg)"
       aria-label="首页加载中"
       role="status"
       aria-live="polite"
@@ -39,7 +39,7 @@ export function EndfieldLoadingScreen({ progress }: EndfieldLoadingScreenProps) 
       <div className="relative z-10 flex min-h-dvh flex-col justify-between px-6 py-8 md:px-12 md:py-10">
         <div className="flex items-center justify-between">
           <div className="gmp-corner-border gmp-corner-border--tl gmp-corner-border--br inline-flex items-center gap-2.5 border border-white/10 bg-black/40 px-4 py-2 font-mono text-[9px] tracking-[0.2em] text-white/60 uppercase">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--gmp-end-accent)] shadow-[0_0_6px_var(--gmp-end-accent)] opacity-80" />
+            <span className="h-1.5 w-1.5 rounded-full bg-(--gmp-end-accent) shadow-[0_0_6px_var(--gmp-end-accent)] opacity-80" />
             Initialization Protocol
           </div>
           <span className="font-mono text-[10px] tracking-[0.3em] text-white/40 uppercase">Global Stage // Frontier</span>
@@ -57,7 +57,7 @@ export function EndfieldLoadingScreen({ progress }: EndfieldLoadingScreenProps) 
             <div className="mt-8 flex items-center justify-center gap-6 opacity-80">
               <div className="h-px w-16 bg-white/10" />
               <p className="text-xs tracking-[0.4em] text-white/40 md:text-sm font-heading uppercase">
-                <span className="text-[var(--gmp-end-accent)] font-semibold">OVER THE FRONTIER</span> / INTO THE SIGNAL
+                <span className="text-(--gmp-end-accent) font-semibold">OVER THE FRONTIER</span> / INTO THE SIGNAL
               </p>
               <div className="h-px w-16 bg-white/10" />
             </div>
@@ -67,12 +67,12 @@ export function EndfieldLoadingScreen({ progress }: EndfieldLoadingScreenProps) 
             <div className="mb-4 flex items-center justify-between font-mono text-[11px] tracking-[0.2em] text-white/70 uppercase">
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-2">
-                  <div className="h-[2px] w-4 bg-[var(--gmp-end-accent)] opacity-80 animate-pulse" />
+                  <div className="h-0.5 w-4 bg-(--gmp-end-accent) opacity-80 animate-pulse" />
                   Loading...
                 </span>
                 <span className="text-white/30 hidden sm:inline-block">System Warmup</span>
               </div>
-              <span className="text-[var(--gmp-end-accent)] font-bold">{Math.round(clamped)}%</span>
+              <span className="text-(--gmp-end-accent) font-bold">{Math.round(clamped)}%</span>
             </div>
             <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
               <motion.div
@@ -90,7 +90,7 @@ export function EndfieldLoadingScreen({ progress }: EndfieldLoadingScreenProps) 
 
         <div className="flex items-center justify-between">
           <span className="font-mono text-[8px] tracking-[0.4em] text-white/10 uppercase">© 2026 Endfield Technology</span>
-          <div className="h-px w-24 bg-gradient-to-r from-transparent via-[var(--gmp-end-accent)]/20 to-transparent" />
+          <div className="h-px w-24 bg-linear-to-r from-transparent via-(--gmp-end-accent)/20 to-transparent" />
           <span className="font-mono text-[8px] tracking-[0.4em] text-white/10 uppercase">Archive // 0xFD42A01</span>
         </div>
       </div>

@@ -279,7 +279,8 @@ docker compose -f docker-compose.prod.yml up -d --no-deps frontend backend
 | [06-数据库设计](docs/06-database-design.md) | ER 模型、索引、Flyway 迁移规范 |
 | [07-API 设计](docs/07-api-design.md) | RESTful 约定、错误码、接口清单 |
 | [08-前后端联调](docs/08-frontend-backend-integration.md) | 接口对接、跨域、环境变量 |
-| [Design System](docs/design-system.md) | 设计规范、配色、字体、动效 |
+| [09-数据存储矩阵](docs/09-data-storage-matrix.md) | 各类数据的存储选型与读写策略 |
+| [10-MVP需规说明](docs/10-mvp-requirements-spec.md) | MVP 功能需求、非功能需求、验收与追踪矩阵 |
 
 ---
 
