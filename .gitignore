@@ -111,3 +111,15 @@ design-system/
 .codex
 AGENTS.md
 CLAUDE.md
+
+# learn artifacts (documents tracked, generated artifacts ignored)
+learn/**/.cache/
+learn/**/tmp/
+learn/**/artifacts/
+learn/**/exports/
+learn/**/recordings/
+learn/**/screenshots/
+learn/**/http-dumps/
+learn/**/evidence/*
+!learn/**/evidence/README.md
+!learn/**/evidence/.gitkeep
