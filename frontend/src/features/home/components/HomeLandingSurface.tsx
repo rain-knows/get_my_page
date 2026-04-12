@@ -125,44 +125,44 @@ export function HomeLandingSurface() {
           return (
             <article
               key={card.id}
-              className="gmp-corner-border gmp-corner-border--tl gmp-corner-border--br gmp-panel-premium gmp-inner-glow group relative overflow-hidden bg-black/44 p-6 transition-all hover:border-[var(--gmp-end-accent)]/40"
+              className={`gmp-corner-border gmp-corner-border--tl gmp-corner-border--br gmp-inner-glow group relative overflow-hidden transition-all duration-200 ${index < 2 ? "bg-white/[0.03] border-white/20 shadow-lg shadow-black/50" : "bg-black/40 border-white/10 opacity-80 hover:opacity-100"} p-6 hover:border-[var(--gmp-end-accent)]/50 hover:bg-[var(--gmp-card-hover-bg)]`}
             >
-              <div className="pointer-events-none absolute top-3 right-4 font-mono text-[9px] tracking-[0.3em] text-white/10 uppercase opacity-0 transition-opacity group-hover:opacity-100">
+              <div className="pointer-events-none absolute top-3 right-4 font-mono text-[9px] tracking-[0.3em] text-white/10 uppercase opacity-0 transition-opacity group-hover:opacity-100 md:block hidden">
                 P_Node: 0x{index + 1} SYNC
               </div>
-              
+
               <div className="relative z-10">
                 <p className="mb-4 font-mono text-[11px] font-bold tracking-[0.3em] text-[var(--gmp-end-accent)] uppercase">
                   {card.id}
                   <span className="ml-3 inline-block h-1 w-1 bg-[var(--gmp-end-accent)] animate-pulse" />
                 </p>
-                
-                <h2 className="flex items-center gap-3 text-xl font-heading font-semibold text-white transition-colors group-hover:text-[var(--gmp-end-accent)]">
-                  <CardIcon className="h-5 w-5 text-[var(--gmp-end-accent)]" />
+
+                <h2 className={`flex items-center gap-3 text-xl font-heading font-semibold transition-colors duration-200 ${index < 2 ? "text-white" : "text-gray-300"} group-hover:text-[var(--gmp-end-accent)] group-hover:[text-shadow:var(--gmp-glow-yellow)]`}>
+                  <CardIcon className="h-5 w-5 text-[var(--gmp-end-accent)] opacity-80 group-hover:opacity-100 transition-opacity" />
                   {card.title}
                 </h2>
-                
-                <p className="mt-4 text-sm leading-relaxed text-white/50 group-hover:text-white/80 transition-colors">
+
+                <p className="mt-4 text-sm leading-relaxed text-[var(--gmp-text-gray-contrast)] group-hover:text-gray-200 transition-colors duration-200">
                   {card.summary}
                 </p>
-                
+
                 <div className="mt-8 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--gmp-end-accent)]/40" />
-                    <span className="rounded-xs border border-white/8 bg-black/40 px-3 py-1 font-mono text-[10px] tracking-widest text-white/50 uppercase">{card.status}</span>
+                    <span className={`h-1.5 w-1.5 rounded-full ${index < 2 ? "bg-[var(--gmp-end-accent)]" : "bg-white/20 group-hover:bg-[var(--gmp-end-accent)]/50"} transition-colors`} />
+                    <span className="rounded-xs border border-white/8 bg-black/40 px-3 py-1 font-mono text-[10px] tracking-widest text-[#a1a1aa] uppercase">{card.status}</span>
                   </div>
-                  <Link 
-                    href={card.href} 
-                    className="inline-flex items-center gap-2 rounded-xs border border-white/5 bg-black/20 px-3 py-1.5 font-mono text-[11px] font-bold tracking-widest text-[var(--gmp-end-accent)] transition-all hover:border-[var(--gmp-end-accent)]/50 hover:bg-[var(--gmp-end-accent)]/10"
+                  <Link
+                    href={card.href}
+                    className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 rounded-xs border border-white/5 bg-black/20 px-4 py-2 font-mono text-[11px] font-bold tracking-widest text-[var(--gmp-end-accent)] transition-all duration-200 hover:border-[var(--gmp-end-accent)]/50 hover:bg-[var(--gmp-end-accent)]/10 hover:[box-shadow:var(--gmp-glow-yellow)] group"
                   >
                     ACCESS
-                    <ArrowUpRight className="h-4 w-4" />
+                    <ArrowUpRight className="h-4 w-4 transition-transform duration-200 group-hover:-translate-y-[2px] group-hover:translate-x-[2px]" />
                   </Link>
                 </div>
               </div>
 
               {/* 装饰条 */}
-              <div className="absolute inset-x-0 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-[var(--gmp-end-accent)]/40 to-transparent scale-x-0 transition-transform duration-500 group-hover:scale-x-100" />
+              <div className="absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-transparent via-[var(--gmp-end-accent)]/60 to-transparent scale-x-0 transition-transform duration-300 ease-out group-hover:scale-x-100" />
             </article>
           );
         })}

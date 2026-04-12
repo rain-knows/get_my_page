@@ -28,7 +28,8 @@ export function EntryExperienceGate() {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
 
-  const duration = useMemo(() => (prefersReducedMotion ? 820 : 2520), [prefersReducedMotion]);
+  // 精简总展示时长，常规模式由 2520ms 下调至 1600ms，避免视觉疲劳
+  const duration = useMemo(() => (prefersReducedMotion ? 820 : 1600), [prefersReducedMotion]);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
