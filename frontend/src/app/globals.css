@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap');
+
 @import "tailwindcss";
 @import "../../node_modules/tw-animate-css/dist/tw-animate.css";
 @import "shadcn/tailwind.css";
@@ -5,17 +7,13 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-sans: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-archivo: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-sans: "Montserrat", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Montserrat", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 
-/* Minimal clean globals file for Tailwind V4 */
 @layer base {
-
-  html,
-  body {
+  html, body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -37,277 +35,88 @@
 }
 
 @theme inline {
-  --font-heading: var(--font-sans);
-  --font-sans: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
   --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+  --radius-4xl: var(--radius);
 }
 
 :root {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.91 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.26 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.25 0 0);
-  --muted-foreground: oklch(0.72 0 0);
-  --accent: oklch(0.26 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.8 0 0 / 35%);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.91 0 0);
-  --sidebar-primary-foreground: oklch(0.205 0 0);
-  --sidebar-accent: oklch(0.26 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 12%);
-  --sidebar-ring: oklch(0.8 0 0 / 35%);
+  --background: oklch(0.18 0 0); /* #0B0C10 */
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.22 0 0); /* #1A1B20 */
+  --card-foreground: oklch(0.98 0 0);
+  --popover: oklch(0.22 0 0);
+  --popover-foreground: oklch(0.98 0 0);
+  --primary: oklch(0.85 0.15 90); /* #FFCC00 */
+  --primary-foreground: oklch(0.1 0 0); 
+  --secondary: oklch(0.28 0 0);
+  --secondary-foreground: oklch(0.98 0 0);
+  --muted: oklch(0.28 0 0);
+  --muted-foreground: oklch(0.7 0 0);
+  --accent: oklch(0.85 0.15 90);
+  --accent-foreground: oklch(0.1 0 0);
+  --destructive: oklch(0.58 0.25 27);
+  --border: oklch(1 0 0 / 20%);
+  --input: oklch(1 0 0 / 20%);
+  --ring: oklch(0.85 0.15 90);
+  
+  /* Very sharp 0px or 2px rounding max */
+  --radius: 0rem; 
 
-  --gmp-bg-base: #0a0d12;
-  --gmp-bg-elevated: #111722;
-  --gmp-bg-panel: #171f2b;
-  --gmp-line-soft: #2f3a47;
-  --gmp-line-strong: #455464;
-  --gmp-text-primary: #e8edf5;
-  --gmp-text-secondary: #9ca9b9;
-  --gmp-accent: #d4c3a2;
-  --gmp-accent-dim: #9eb1c3;
-  --gmp-shadow-soft: 0 28px 60px -44px rgba(0, 0, 0, 0.82);
-  --gmp-end-bg: #090b0f;
-  --gmp-end-panel: rgba(6, 8, 11, 0.54);
-  --gmp-end-accent: #f8e64f;
-  --gmp-end-accent-soft: #ffe88a;
-  --gmp-end-danger: #cf1d12;
-  --gmp-end-timing-fast: 180ms;
-  --gmp-end-timing-mid: 280ms;
-  --gmp-end-timing-slow: 420ms;
-  --gmp-end-z-base: 1;
-  --gmp-end-z-overlay: 20;
-  --gmp-end-z-top: 40;
-
-  /* 微动效与层级令牌 */
-  --gmp-glow-yellow: 0 0 15px rgba(248, 230, 79, 0.4);
-  --gmp-glow-yellow-strong: 0 0 25px rgba(248, 230, 79, 0.6);
-  --gmp-glow-red: 0 0 15px rgba(207, 29, 18, 0.4);
-  --gmp-card-hover-bg: rgba(248, 230, 79, 0.03);
+  /* GMP Variables for Arknights style */
+  --gmp-bg-base: #0B0C10;
+  --gmp-bg-elevated: #16171B;
+  --gmp-bg-panel: #1A1B20;
+  --gmp-line-soft: #303338;
+  --gmp-line-strong: #4F535B;
+  --gmp-text-primary: #FFFFFF;
+  --gmp-text-secondary: #8E9297;
+  --gmp-accent: #FFCC00;
+  --gmp-accent-dim: #D1A800;
+  --gmp-accent-blue: #00C2FF;
+  
+  --gmp-end-bg: #0B0C10;
+  --gmp-end-panel: #1A1B20;
+  --gmp-end-accent: #FFCC00;
+  --gmp-end-danger: #FF3333;
+  --gmp-end-timing-fast: 150ms;
+  --gmp-end-timing-mid: 250ms;
+  
   --gmp-text-gray-contrast: #a1a1aa;
-  /* Ensures 4.5:1 on #090b0f */
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.91 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.26 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.25 0 0);
-  --muted-foreground: oklch(0.72 0 0);
-  --accent: oklch(0.26 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.8 0 0 / 35%);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.91 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.26 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 12%);
-  --sidebar-ring: oklch(0.8 0 0 / 35%);
-}
-
-.industrial-grid-bg {
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    radial-gradient(circle at 12% 0%, rgba(171, 183, 198, 0.16), transparent 34%),
-    linear-gradient(180deg, #090d13 0%, #0b1018 45%, #0a0f16 100%);
-  background-size: 42px 42px, 42px 42px, auto, auto;
-}
-
-.industrial-panel {
-  border: 1px solid color-mix(in srgb, var(--gmp-line-soft) 60%, transparent);
-  background: linear-gradient(165deg, rgba(255, 255, 255, 0.038), rgba(255, 255, 255, 0.01));
-  box-shadow: var(--gmp-shadow-soft);
-}
-
-.industrial-chip {
-  border: 1px solid color-mix(in srgb, var(--gmp-line-strong) 55%, transparent);
-  background: color-mix(in srgb, var(--gmp-bg-panel) 66%, transparent);
-  color: var(--gmp-text-secondary);
-}
-
-.gmp-endfield-loading-grid {
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 56px 56px, 56px 56px;
-  opacity: 0.28;
-}
-
-.gmp-endfield-loading-map {
-  background-image:
-    radial-gradient(circle at 26% 18%, rgba(255, 231, 94, 0.12), transparent 32%),
-    radial-gradient(circle at 72% 72%, rgba(199, 28, 17, 0.14), transparent 30%),
-    repeating-radial-gradient(circle at 68% 44%, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 18px),
-    linear-gradient(180deg, #080a0d 0%, #0b0d11 48%, #090b0f 100%);
-}
-
-.gmp-endfield-scanline {
-  background-image: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.05) 45%, transparent 100%);
-  animation: gmp-scanline 3.2s linear infinite;
-  mix-blend-mode: screen;
-}
-
-.gmp-kinetic-bg {
-  background-image:
-    radial-gradient(circle at 16% 12%, rgba(255, 231, 98, 0.24), transparent 36%),
-    radial-gradient(circle at 84% 86%, rgba(190, 28, 18, 0.2), transparent 33%),
-    linear-gradient(162deg, #080a0d 0%, #0c1016 46%, #090b0f 100%);
-}
-
-.gmp-kinetic-grid {
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.038) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.038) 1px, transparent 1px);
-  background-size: 44px 44px, 44px 44px;
-  opacity: 0.32;
-}
-
-.gmp-kinetic-geometry {
-  background-image:
-    repeating-radial-gradient(circle at 72% 48%, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 20px),
-    radial-gradient(circle at 64% 66%, rgba(255, 228, 88, 0.12), transparent 44%);
-  mix-blend-mode: screen;
-  opacity: 0.62;
-}
-
-.gmp-kinetic-geometry[data-module="scan"] {
-  background-image:
-    repeating-radial-gradient(circle at 72% 48%, rgba(255, 255, 255, 0.09) 0 1px, transparent 1px 18px),
-    radial-gradient(circle at 62% 64%, rgba(255, 228, 88, 0.17), transparent 42%);
-}
-
-.gmp-kinetic-geometry[data-module="forge"] {
-  background-image:
-    repeating-linear-gradient(132deg, rgba(255, 230, 89, 0.09) 0 1px, transparent 1px 16px),
-    radial-gradient(circle at 70% 60%, rgba(255, 203, 94, 0.14), transparent 46%);
-}
-
-.gmp-kinetic-geometry[data-module="shield"] {
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    radial-gradient(circle at 70% 62%, rgba(255, 66, 66, 0.14), transparent 48%);
-  background-size: 22px 22px, 22px 22px, auto;
-}
-
-.gmp-module-stage__aura {
-  transition:
-    background var(--gmp-end-timing-mid) ease,
-    opacity var(--gmp-end-timing-mid) ease;
-}
-
-.gmp-module-stage__aura--scan {
-  background:
-    radial-gradient(circle at 26% 24%, rgba(255, 230, 94, 0.24), transparent 44%),
-    radial-gradient(circle at 80% 24%, rgba(190, 32, 20, 0.18), transparent 40%),
-    linear-gradient(114deg, rgba(87, 10, 10, 0.64) 0%, rgba(12, 14, 18, 0.8) 36%, rgba(11, 12, 16, 0.54) 100%);
-}
-
-.gmp-module-stage__aura--forge {
-  background:
-    linear-gradient(132deg, rgba(255, 227, 96, 0.17) 0%, transparent 36%),
-    linear-gradient(36deg, rgba(177, 39, 27, 0.32) 0%, transparent 50%),
-    linear-gradient(120deg, rgba(18, 22, 31, 0.82) 0%, rgba(9, 11, 14, 0.68) 100%);
-}
-
-.gmp-module-stage__aura--shield {
-  background:
-    linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.07) 1px, transparent 1px),
-    radial-gradient(circle at 72% 28%, rgba(229, 35, 23, 0.2), transparent 46%),
-    linear-gradient(116deg, rgba(14, 18, 26, 0.86) 0%, rgba(8, 10, 13, 0.84) 100%);
-  background-size: 30px 30px, 30px 30px, auto, auto;
-}
-
-@keyframes gmp-scanline {
-  from {
-    transform: translateY(-100%);
-  }
-
-  to {
-    transform: translateY(100%);
-  }
+  --background: oklch(0.18 0 0);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.22 0 0);
+  --card-foreground: oklch(0.98 0 0);
+  --popover: oklch(0.22 0 0);
+  --popover-foreground: oklch(0.98 0 0);
+  --primary: oklch(0.85 0.15 90);
+  --primary-foreground: oklch(0.1 0 0);
+  --secondary: oklch(0.28 0 0);
+  --secondary-foreground: oklch(0.98 0 0);
+  --muted: oklch(0.28 0 0);
+  --muted-foreground: oklch(0.7 0 0);
+  --accent: oklch(0.85 0.15 90);
+  --accent-foreground: oklch(0.1 0 0);
+  --destructive: oklch(0.58 0.25 27);
+  --border: oklch(1 0 0 / 20%);
+  --input: oklch(1 0 0 / 20%);
+  --ring: oklch(0.85 0.15 90);
 }
 
 @media (prefers-reduced-motion: reduce) {
-
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -315,169 +124,127 @@
   }
 }
 
-/* --- 大胆优化：视觉表现增强层 --- */
+/* --- Arknights Industrial Aesthetics --- */
 
-/* 1. 动态纹理：静态微粒 + 扫读光带 (V2 高级工业风) */
+.gmp-industrial-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+.gmp-industrial-dot-grid {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Clip-path corner cuts (Standard Arknights look) */
+.gmp-cut-corner-l {
+  clip-path: polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px);
+}
+
+.gmp-cut-corner-r {
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+}
+
+.gmp-cut-corner-bl {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+
+.gmp-cut-corner-br {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+}
+
+.gmp-cut-corner-double {
+  clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+}
+
+.gmp-cut-corner-double-reverse {
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+}
+
+/* Hard borders & specific accents */
+.gmp-sharp-border {
+  border: 1px solid var(--gmp-line-soft);
+}
+
+.gmp-sharp-border-accent {
+  border: 1px solid var(--gmp-accent);
+}
+
+.gmp-tech-accent-b {
+  border-bottom: 2px solid var(--gmp-accent);
+}
+
+.gmp-tech-accent-l {
+  border-left: 2px solid var(--gmp-accent);
+}
+
+/* Panel Backgrounds stripped of gradients and shadows */
+.gmp-panel-matte {
+  background-color: var(--gmp-bg-panel);
+}
+
+.gmp-panel-pure {
+  background-color: var(--gmp-bg-elevated);
+}
+
+/* Replaced noise layer with a much lighter, static minimal texture if absolutely needed, or purely stripped */
 .gmp-noise-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.012;
-  /* 极其微弱，仅增加质感 */
+  display: none;
+}
+
+/* Override previous complex backgrounds to minimal states */
+.gmp-kinetic-bg {
+  display: none;
 }
 
 .gmp-fluid-scan {
-  position: fixed;
-  inset: 0;
-  z-index: 5;
-  pointer-events: none;
-  background: linear-gradient(to bottom,
-      transparent 0%,
-      rgba(248, 230, 79, 0.015) 45%,
-      rgba(248, 230, 79, 0.03) 50%,
-      rgba(248, 230, 79, 0.015) 55%,
-      transparent 100%);
-  background-size: 100% 200%;
-  animation: gmp-fluid-scan 12s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  display: none;
 }
 
-@keyframes gmp-fluid-scan {
-  0% {
-    background-position: 0 100%;
-  }
-
-  100% {
-    background-position: 0 -100%;
-  }
-}
-
-/* 视差几何背景层 */
 .gmp-parallax-geometry {
-  position: fixed;
-  inset: -10%;
+  display: none;
+}
+
+/* Hover fill animations */
+.gmp-hover-fill {
+  position: relative;
+  overflow: hidden;
   z-index: 1;
-  pointer-events: none;
-  background-image:
-    radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.02) 0, transparent 40%),
-    repeating-radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.015) 0 1px, transparent 1px 40px);
-  filter: blur(1px);
-  animation: gmp-parallax-float 60s linear infinite;
 }
 
-@keyframes gmp-parallax-float {
-  0% {
-    transform: rotate(0deg) scale(1);
-  }
-
-  50% {
-    transform: rotate(1deg) scale(1.02);
-  }
-
-  100% {
-    transform: rotate(0deg) scale(1);
-  }
-}
-
-/* 2. CRT 故障文字动效 */
-.gmp-glitch-text {
-  position: relative;
-  text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75),
-    -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
-    0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
-  animation: gmp-glitch 500ms infinite;
-}
-
-@keyframes gmp-glitch {
-  0% {
-    text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75), -0.05em -0.025em 0 rgba(0, 255, 0, 0.75), -0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
-  }
-
-  14% {
-    text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75), -0.05em -0.025em 0 rgba(0, 255, 0, 0.75), -0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
-  }
-
-  15% {
-    text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75), 0.025em 0.025em 0 rgba(0, 255, 0, 0.75), -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
-  }
-
-  49% {
-    text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75), 0.025em 0.025em 0 rgba(0, 255, 0, 0.75), -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
-  }
-
-  50% {
-    text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75), 0.05em 0 0 rgba(0, 255, 0, 0.75), 0 -0.05em 0 rgba(0, 0, 255, 0.75);
-  }
-
-  99% {
-    text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75), 0.05em 0 0 rgba(0, 255, 0, 0.75), 0 -0.05em 0 rgba(0, 0, 255, 0.75);
-  }
-
-  100% {
-    text-shadow: -0.025em 0 0 rgba(255, 0, 0, 0.75), -0.025em -0.025em 0 rgba(0, 255, 0, 0.75), -0.025em -0.05em 0 rgba(0, 0, 255, 0.75);
-  }
-}
-
-/* 3. 工业转角装饰筋 */
-.gmp-corner-border {
-  position: relative;
-}
-
-.gmp-corner-border::before,
-.gmp-corner-border::after {
+.gmp-hover-fill::before {
   content: "";
   position: absolute;
-  width: 10px;
-  height: 10px;
-  border-color: var(--gmp-end-accent);
-  border-style: solid;
-  pointer-events: none;
-  opacity: 0.8;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: var(--gmp-end-accent);
+  transition: transform 0.3s cubic-bezier(0.2, 1, 0.2, 1);
+  z-index: -1;
+  transform-origin: left;
 }
 
-.gmp-corner-border--tl::before {
-  top: -1px;
-  left: -1px;
-  border-width: 2px 0 0 2px;
+.gmp-hover-fill:hover::before {
+  transform: translateX(100%);
 }
 
-.gmp-corner-border--tr::after {
-  top: -1px;
-  right: -1px;
-  border-width: 2px 2px 0 0;
+.gmp-hover-fill:hover {
+  color: var(--gmp-bg-base) !important;
 }
 
-.gmp-corner-border--bl::before {
-  bottom: -1px;
-  left: -1px;
-  border-width: 0 0 2px 2px;
+/* Strip complex stage layers from older kinetic shells */
+.gmp-module-stage__aura {
+  display: none;
 }
 
-.gmp-corner-border--br::after {
-  bottom: -1px;
-  right: -1px;
-  border-width: 0 2px 2px 0;
+/* Hard Drop Shadow */
+.gmp-hard-shadow {
+  box-shadow: 4px 4px 0 0 var(--gmp-line-soft);
 }
 
-/* 4. 面板深度增强 (V2 Premium) */
-.gmp-panel-premium {
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow:
-    inset 0 0 30px rgba(0, 0, 0, 0.4),
-    0 10px 40px -10px rgba(0, 0, 0, 0.6);
-  background: linear-gradient(135deg, rgba(15, 18, 24, 0.8) 0%, rgba(9, 11, 15, 0.9) 100%);
-}
-
-.gmp-inner-glow {
-  position: relative;
-}
-
-.gmp-inner-glow::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border: 1px solid rgba(248, 230, 79, 0.03);
-  mask-image: linear-gradient(to bottom, black, transparent);
+.gmp-hard-shadow-accent {
+  box-shadow: 4px 4px 0 0 var(--gmp-accent);
 }

@@ -1,16 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, BookOpenText, Compass, DatabaseZap, ScanSearch, ShieldCheck } from "lucide-react";
+import { ArrowRight, BookOpenText, Compass, DatabaseZap, ScanSearch, ShieldCheck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { KineticPageShell } from "@/features/surface/components/KineticPageShell";
-import { getNextInteractionModule, type InteractionModuleKey } from "@/types/interaction-module";
-
-interface HomeModeNarrative {
-  title: string;
-  description: string;
-}
 
 interface HomeContentCard {
   id: string;
@@ -21,148 +14,103 @@ interface HomeContentCard {
   icon: LucideIcon;
 }
 
-/**
- * 功能：维护首页三种背景模式下的标题与说明文本映射。
- * 关键参数：键为模式标识，值包含中间面板标题与说明文本。
- * 返回值/副作用：返回静态映射对象，无副作用。
- */
-const modeNarratives: Record<InteractionModuleKey, HomeModeNarrative> = {
-  scan: {
-    title: "内容侦测面板",
-    description: "中间区域聚合最新内容流，占位卡片用于承载后续真实数据与推荐策略。",
-  },
-  forge: {
-    title: "内容构建面板",
-    description: "保持同一信息结构，通过模式切换改变背景语义与视觉节奏，不影响内容布局。",
-  },
-  shield: {
-    title: "内容防护面板",
-    description: "在低噪声背景下强调信息边界，中间区域持续作为内容展示核心，不承载跳转杂项。",
-  },
-};
-
 const homeCards: readonly HomeContentCard[] = [
   {
     id: "01",
-    title: "创作周报占位",
-    summary: "每周结构化更新内容摘要，后续将接入真实文章与作者信息。",
-    status: "准备中",
+    title: "WEEKLY REPORT",
+    summary: "Structured chronological log of recent activity and strategic findings.",
+    status: "STANDBY",
     href: "/blog",
     icon: BookOpenText,
   },
   {
     id: "02",
-    title: "专题索引占位",
-    summary: "用于聚合系列内容入口，支持按主题维度拓展检索链路。",
-    status: "规划中",
+    title: "INDEX SEARCH",
+    summary: "Query the centralized archive for historical procedures and intelligence.",
+    status: "PLANNING",
     href: "/search",
     icon: Compass,
   },
   {
     id: "03",
-    title: "知识库条目占位",
-    summary: "沉淀可复用结论与实践步骤，后续将增加标签与关联关系。",
-    status: "待接入",
+    title: "KNOWLEDGE BASE",
+    summary: "Stored protocols and reusable strategic patterns for deployment.",
+    status: "OFFLINE",
     href: "/blog",
     icon: DatabaseZap,
   },
   {
     id: "04",
-    title: "信号观察记录",
-    summary: "保留轻量占位用于展示实时动态，后续可替换为活动流组件。",
-    status: "草稿",
+    title: "SIGNAL MONITOR",
+    summary: "Real-time feed of local node activities and anomalous transmissions.",
+    status: "DRAFT",
     href: "/",
     icon: ScanSearch,
   },
   {
     id: "05",
-    title: "发布校验清单",
-    summary: "用于承载发布前检查点，后续可接入协作与审批流程。",
-    status: "待定义",
+    title: "LAUNCH CHECKLIST",
+    summary: "Pre-flight authorization and verification parameters.",
+    status: "UNDEFINED",
     href: "/login",
     icon: ShieldCheck,
   },
 ];
 
-/**
- * 功能：根据当前模式获取首页中间面板的叙事文案。
- * 关键参数：mode 表示当前背景模式键值。
- * 返回值/副作用：返回标题与说明文本对象，无副作用。
- */
-function resolveNarrative(mode: InteractionModuleKey): HomeModeNarrative {
-  return modeNarratives[mode];
-}
-
-/**
- * 功能：渲染首页内容主场景，提供页面导航、核心功能占位与中间内容流展示。
- * 关键参数：无外部参数，内部维护背景模式切换状态。
- * 返回值/副作用：返回首页展示节点，无副作用。
- */
 export function HomeLandingSurface() {
-  const [mode, setMode] = useState<InteractionModuleKey>("scan");
-  const narrative = useMemo(() => resolveNarrative(mode), [mode]);
-
-  /**
-   * 功能：响应右上角模式按钮点击并循环切换背景模式。
-   * 关键参数：无外部参数。
-   * 返回值/副作用：无返回值；会更新当前背景模式状态。
-   */
-  const handleModeCycle = () => {
-    setMode((previous) => getNextInteractionModule(previous));
-  };
-
   return (
     <KineticPageShell
       currentPath="/"
-      mode={mode}
-      onModeCycle={handleModeCycle}
-      centerTitle={narrative.title}
-      centerDescription={narrative.description}
+      centerTitle="OPERATOR OVERVIEW"
+      centerDescription="AGGREGATING CURRENT REGIONAL DATA AND PENDING OPERATIONS. STAND BY FOR ASSIGNMENT."
     >
-      <div className="grid gap-4 md:grid-cols-2 lg:gap-5">
+      <div className="grid gap-6 lg:gap-8 lg:grid-cols-2">
         {homeCards.map((card, index) => {
           const CardIcon = card.icon;
+          const isPrimary = index < 2;
+          
           return (
             <article
               key={card.id}
-              className={`gmp-corner-border gmp-corner-border--tl gmp-corner-border--br gmp-inner-glow group relative overflow-hidden transition-all duration-200 ${index < 2 ? "bg-white/3 border-white/20 shadow-lg shadow-black/50" : "bg-black/40 border-white/10 opacity-80 hover:opacity-100"} p-6 hover:border-(--gmp-end-accent)/50 hover:bg-(--gmp-card-hover-bg)`}
+              className={`gmp-hover-fill group relative border border-[var(--gmp-line-soft)] flex flex-col justify-between ${
+                isPrimary 
+                  ? "bg-[var(--gmp-bg-elevated)]" 
+                  : "bg-[var(--gmp-bg-panel)]"
+              } p-5 gmp-cut-corner-br transition-colors min-h-[160px]`}
             >
-              <div className="pointer-events-none absolute top-3 right-4 font-mono text-[9px] tracking-[0.3em] text-white/10 uppercase opacity-0 transition-opacity group-hover:opacity-100 md:block hidden">
-                P_Node: 0x{index + 1} SYNC
-              </div>
-
-              <div className="relative z-10">
-                <p className="mb-4 font-mono text-[11px] font-bold tracking-[0.3em] text-(--gmp-end-accent) uppercase">
-                  {card.id}
-                  <span className="ml-3 inline-block h-1 w-1 bg-(--gmp-end-accent) animate-pulse" />
-                </p>
-
-                <h2 className={`flex items-center gap-3 text-xl font-heading font-semibold transition-colors duration-200 ${index < 2 ? "text-white" : "text-gray-300"} group-hover:text-(--gmp-end-accent) group-hover:text-shadow-(--gmp-glow-yellow)`}>
-                  <CardIcon className="h-5 w-5 text-(--gmp-end-accent) opacity-80 group-hover:opacity-100 transition-opacity" />
-                  {card.title}
-                </h2>
-
-                <p className="mt-4 text-sm leading-relaxed text-(--gmp-text-gray-contrast) group-hover:text-gray-200 transition-colors duration-200">
-                  {card.summary}
-                </p>
-
-                <div className="mt-8 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className={`h-1.5 w-1.5 rounded-full ${index < 2 ? "bg-(--gmp-end-accent)" : "bg-white/20 group-hover:bg-(--gmp-end-accent)/50"} transition-colors`} />
-                    <span className="rounded-xs border border-white/8 bg-black/40 px-3 py-1 font-mono text-[10px] tracking-widest text-[#a1a1aa] uppercase">{card.status}</span>
-                  </div>
-                  <Link
-                    href={card.href}
-                    className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 rounded-xs border border-white/5 bg-black/20 px-4 py-2 font-mono text-[11px] font-bold tracking-widest text-(--gmp-end-accent) transition-all duration-200 hover:border-(--gmp-end-accent)/50 hover:bg-(--gmp-end-accent)/10 hover:shadow-(--gmp-glow-yellow) group"
-                  >
-                    ACCESS
-                    <ArrowUpRight className="h-4 w-4 transition-transform duration-200 group-hover:-translate-y-[2px] group-hover:translate-x-[2px]" />
-                  </Link>
+              {/* Card Meta Top */}
+              <div className="flex justify-between items-start mb-3">
+                <div className="font-mono text-[11px] font-black tracking-[0.3em] text-[var(--gmp-accent)] group-hover:text-black uppercase flex items-center gap-2 transition-colors">
+                  <span className="w-2 h-2 bg-[var(--gmp-accent)] gmp-cut-corner-l group-hover:bg-[#000] inline-block transition-colors" />
+                  NO. {card.id}
+                </div>
+                <div className="font-mono text-[9px] font-bold tracking-[0.2em] px-2 py-0.5 bg-[var(--gmp-bg-base)] border border-[var(--gmp-line-strong)] text-[var(--gmp-text-secondary)] group-hover:bg-[#000] group-hover:text-[var(--gmp-accent)] group-hover:border-black transition-colors uppercase">
+                  {card.status}
                 </div>
               </div>
 
-              {/* 装饰条 */}
-              <div className="absolute inset-x-0 bottom-0 h-0.5 bg-linear-to-r from-transparent via-(--gmp-end-accent)/60 to-transparent scale-x-0 transition-transform duration-300 ease-out group-hover:scale-x-100" />
+              {/* Card Content Core */}
+              <div className="flex-1 flex flex-col justify-center">
+                <h2 className="font-heading text-lg lg:text-xl font-black uppercase text-white group-hover:text-black mb-2 flex items-center gap-3 transition-colors">
+                  <CardIcon className="h-5 w-5 text-[var(--gmp-text-secondary)] group-hover:text-black transition-colors" />
+                  {card.title}
+                </h2>
+                <p className="text-xs font-medium leading-relaxed text-[var(--gmp-text-secondary)] group-hover:text-[#333] transition-colors max-w-sm line-clamp-2">
+                  {card.summary}
+                </p>
+              </div>
+
+              {/* Card Action Target */}
+              <footer className="mt-4 flex justify-between items-end">
+                  <div className="w-6 border-b-2 border-[var(--gmp-line-soft)] group-hover:border-black transition-colors mb-2" />
+                  <Link
+                    href={card.href}
+                    className="inline-flex h-8 items-center justify-center gap-2 bg-[var(--gmp-bg-base)] group-hover:bg-black border border-[var(--gmp-line-strong)] group-hover:border-transparent px-4 font-mono text-[10px] font-bold tracking-[0.2em] text-[var(--gmp-accent)] transition-all gmp-cut-corner-l"
+                  >
+                    ACCESS
+                    <ArrowRight className="h-3 w-3 relative transition-transform" />
+                  </Link>
+              </footer>
             </article>
           );
         })}

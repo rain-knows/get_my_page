@@ -1,15 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { KineticPageShell } from "@/features/surface/components/KineticPageShell";
 import { Button } from "@/components/ui";
-import { getNextInteractionModule, type InteractionModuleKey } from "@/types/interaction-module";
-
-interface SearchModeNarrative {
-  title: string;
-  description: string;
-}
 
 interface SearchResultItem {
   id: string;
@@ -18,26 +12,6 @@ interface SearchResultItem {
   type: string;
   updatedAt: string;
 }
-
-/**
- * 功能：定义搜索页在不同背景模式下的展示文案。
- * 关键参数：键为背景模式标识，值为搜索工作台标题与说明。
- * 返回值/副作用：返回静态文案映射对象，无副作用。
- */
-const searchNarratives: Record<InteractionModuleKey, SearchModeNarrative> = {
-  scan: {
-    title: "搜索工作台",
-    description: "提供输入、筛选和结果占位结构，后续可直接接入真实检索接口。",
-  },
-  forge: {
-    title: "搜索构建台",
-    description: "保留同一工作台布局，通过模式切换强化不同视觉语义。",
-  },
-  shield: {
-    title: "搜索防护台",
-    description: "在稳态背景中保留检索上下文，突出结果边界与可读性。",
-  },
-};
 
 const filterOptions = ["全部", "文章", "专题", "知识库"] as const;
 
@@ -65,34 +39,9 @@ const resultMocks: readonly SearchResultItem[] = [
   },
 ];
 
-/**
- * 功能：根据当前模式解析搜索页标题与说明文本。
- * 关键参数：mode 表示当前背景模式。
- * 返回值/副作用：返回模式对应文案对象，无副作用。
- */
-function resolveSearchNarrative(mode: InteractionModuleKey): SearchModeNarrative {
-  return searchNarratives[mode];
-}
-
-/**
- * 功能：渲染搜索页工作台，复用统一壳层并提供搜索输入、筛选区与结果列表占位。
- * 关键参数：无外部参数，内部维护背景模式、关键词与筛选状态。
- * 返回值/副作用：返回搜索页展示节点，无副作用。
- */
 export function SearchWorkbenchPage() {
-  const [mode, setMode] = useState<InteractionModuleKey>("scan");
   const [keyword, setKeyword] = useState("");
   const [activeFilter, setActiveFilter] = useState<(typeof filterOptions)[number]>("全部");
-  const narrative = useMemo(() => resolveSearchNarrative(mode), [mode]);
-
-  /**
-   * 功能：响应背景模式按钮点击并循环切换背景模式。
-   * 关键参数：无外部参数。
-   * 返回值/副作用：无返回值；会更新当前模式状态。
-   */
-  const handleModeCycle = () => {
-    setMode((previous) => getNextInteractionModule(previous));
-  };
 
   /**
    * 功能：处理搜索关键词输入，更新当前工作台中的关键词状态。
@@ -106,10 +55,8 @@ export function SearchWorkbenchPage() {
   return (
     <KineticPageShell
       currentPath="/search"
-      mode={mode}
-      onModeCycle={handleModeCycle}
-      centerTitle={narrative.title}
-      centerDescription={narrative.description}
+      centerTitle="搜索工作台"
+      centerDescription="提供输入、筛选和结果占位结构，后续可直接接入真实检索接口。"
     >
       <section className="space-y-4">
         <div className="rounded-sm border border-white/16 bg-black/44 p-4 backdrop-blur-sm">

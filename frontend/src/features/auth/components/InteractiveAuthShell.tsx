@@ -15,7 +15,7 @@ interface InteractiveAuthShellProps {
 }
 
 /**
- * 功能：渲染认证页统一壳层，提供居中单卡片布局与平滑背景位移效果。
+ * 功能：渲染认证页统一壳层，提供居中单卡片布局，极简实心背景和硬切角工业风格。
  * 关键参数：mode 用于显示当前登录/注册语义；children 为表单主体；footer 为底部切换入口。
  * 返回值/副作用：返回认证页壳层节点，无副作用。
  */
@@ -23,68 +23,72 @@ export function InteractiveAuthShell({ title, description, mode, footer, childre
 
   return (
     <section
-      className="relative isolate min-h-dvh overflow-hidden bg-[var(--gmp-end-bg)] px-4 py-8 text-white md:px-6 md:py-10"
-      data-module="scan"
+      className="relative min-h-dvh overflow-hidden bg-[var(--gmp-bg-base)] px-4 py-8 text-[var(--gmp-text-primary)] md:px-6 md:py-10 flex flex-col justify-center"
+      data-module="auth"
     >
-      {/* 增强层：V2 高级工业背景 */}
-      <div className="gmp-noise-overlay" />
-      <div className="gmp-fluid-scan" />
-      <div className="gmp-parallax-geometry" />
-      <div className="gmp-kinetic-bg pointer-events-none absolute inset-0 opacity-40" />
+      {/* 背景工业斜线极简网格 */}
+      <div className="absolute inset-0 gmp-industrial-grid opacity-[0.04] pointer-events-none" />
+
+      {/* 左侧巨大的安全域标识水印 */}
+      <div className="absolute -left-32 top-1/2 -translate-y-1/2 font-heading text-[240px] font-black tracking-tighter text-white opacity-[0.02] select-none pointer-events-none rotate-90 xl:rotate-0 xl:left-0 z-0">
+        AUTH
+      </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
-        className={cn("relative z-10 mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-xl flex-col justify-center", className)}
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3, ease: [0.2, 1, 0.2, 1] }}
+        className={cn("relative z-10 mx-auto flex w-full max-w-xl flex-col justify-center", className)}
       >
-        <div className="mb-4 flex items-center justify-between md:mb-5">
-          <Link href="/" className="group flex items-center gap-2 rounded-sm border border-white/20 bg-black/45 px-2.5 py-1.5 transition-all hover:border-[var(--gmp-end-accent)]/50">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-xs border border-white/22 bg-black/55 font-heading text-xs font-semibold tracking-[0.14em] text-[var(--gmp-end-accent)] shadow-[0_0_10px_rgba(248,230,79,0.15)] transition-transform group-hover:scale-110">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <Link href="/" className="group inline-flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center bg-[var(--gmp-bg-base)] border border-[var(--gmp-accent)] font-heading text-sm font-black tracking-widest text-[var(--gmp-accent)] shadow-[2px_2px_0_0_var(--gmp-line-soft)] group-hover:bg-[var(--gmp-accent)] group-hover:text-[var(--gmp-bg-base)] transition-colors">
               GMP
             </span>
-            <span className="font-heading text-sm text-white/85 group-hover:text-white transition-colors">GetMyPage</span>
-          </Link>
-          <div className="flex flex-col items-end gap-1">
-            <span className="font-mono text-[9px] tracking-[0.2em] text-white/30 uppercase">
-              Secure_Channel: Active
+            <span className="font-heading text-lg font-black tracking-widest text-white group-hover:text-[var(--gmp-text-secondary)] transition-colors uppercase">
+              GetMyPage
             </span>
-            <span className="font-mono text-[10px] tracking-[0.18em] text-[var(--gmp-end-accent)] uppercase">
-              {mode === "login" ? "Auth // Login" : "Auth // Register"}
+          </Link>
+          <div className="flex flex-col items-start sm:items-end gap-1 border-l-2 sm:border-l-0 sm:border-r-2 border-[var(--gmp-line-strong)] pl-3 sm:pl-0 sm:pr-3">
+            <span className="font-mono text-[10px] font-bold tracking-[0.2em] text-[var(--gmp-text-secondary)] uppercase">
+              SECURE_CHANNEL
+            </span>
+            <span className="font-mono text-[10px] font-bold tracking-[0.2em] text-[var(--gmp-accent)] uppercase">
+              {mode === "login" ? "SESSION // LOGIN" : "SESSION // REGISTER"}
             </span>
           </div>
         </div>
 
         <motion.div 
-          className="gmp-corner-border gmp-corner-border--tl gmp-corner-border--br gmp-panel-premium gmp-inner-glow relative overflow-hidden bg-black/42 p-5 backdrop-blur-[4px] md:p-8 lg:p-10"
+          className="relative bg-[var(--gmp-bg-panel)] border-2 border-[var(--gmp-line-strong)] p-8 md:p-12 gmp-cut-corner-l shadow-[8px_8px_0_0_#000]"
           layout
         >
-          <header className="mb-6 border-b border-white/10 pb-5 text-center md:mb-8">
-            <div className="mb-3 inline-block rounded-xs border border-[var(--gmp-end-accent)]/20 bg-[var(--gmp-end-accent)]/5 px-2 py-0.5 font-mono text-[9px] tracking-widest text-[var(--gmp-end-accent)] uppercase animate-pulse">
-              Identity Verification Required
+          {/* 左上角提示刻度 */}
+          <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[var(--gmp-accent)] -ml-2 -mt-2 pointer-events-none" />
+          
+          <header className="mb-8 border-b-2 border-[var(--gmp-line-soft)] pb-6">
+            <div className="mb-4 inline-flex items-center gap-2 bg-[var(--gmp-bg-base)] border border-[var(--gmp-line-soft)] px-3 py-1 font-mono text-[10px] font-bold tracking-[0.2em] text-[var(--gmp-accent)] uppercase">
+              <span className="w-1.5 h-1.5 bg-[var(--gmp-accent)] block animate-pulse" />
+              IDENTITY VERIFICATION REQUIRED
             </div>
-            <h1 className="font-heading text-3xl font-semibold tracking-tight text-white md:text-4xl">{title}</h1>
-            <p className="mt-2 text-sm text-white/55">{description}</p>
+            <h1 className="font-heading text-3xl font-black tracking-widest text-white md:text-5xl uppercase">{title}</h1>
+            <p className="mt-3 text-sm font-medium text-[var(--gmp-text-secondary)]">{description}</p>
           </header>
 
-          <div className="relative">
+          <div className="relative z-10 w-full mb-8">
             {children}
           </div>
 
-          <footer className="mt-5 border-t border-white/10 pt-4 text-center text-sm text-white/55 md:mt-6">
+          <footer className="border-t-2 border-[var(--gmp-line-soft)] pt-6 text-center text-sm font-medium text-[var(--gmp-text-secondary)]">
             {footer}
           </footer>
 
-          {/* 装饰条 */}
-          <div className="absolute top-0 right-0 h-16 w-px bg-gradient-to-b from-[var(--gmp-end-accent)]/30 to-transparent" />
-          <div className="absolute bottom-0 left-0 h-16 w-px bg-gradient-to-t from-[var(--gmp-end-accent)]/30 to-transparent" />
+          {/* 表单内部右下角切割装饰 */}
+          <div className="absolute bottom-4 right-4 font-mono text-[9px] font-bold tracking-[0.2em] text-[var(--gmp-line-strong)] uppercase select-none pointer-events-none">
+            BLOCK: 0x2A
+          </div>
         </motion.div>
 
-        <div className="mt-6 flex justify-center opacity-40">
-          <p className="font-mono text-[9px] tracking-[0.3em] text-white uppercase">
-            Over the frontier // Into the signal
-          </p>
-        </div>
       </motion.div>
     </section>
   );
