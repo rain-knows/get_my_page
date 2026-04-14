@@ -40,18 +40,6 @@ const defaultTopActions: readonly ShellActionItem[] = [
 ];
 
 /**
- * 功能：根据当前路径判断左侧导航项是否处于激活态，提升页面跳转可见性。
- * 关键参数：currentPath 为当前路由路径；href 为导航目标路径。
- * 返回值/副作用：返回是否激活的布尔值，无副作用。
- */
-function isNavActive(currentPath: string, href: string): boolean {
-  if (href === "/") {
-    return currentPath === "/";
-  }
-  return currentPath.startsWith(href);
-}
-
-/**
  * 功能：渲染 Home/Search 共用的三栏动效壳层，承载左导航、右功能区与中间内容区，极简硬核风格。
  * 关键参数：children 为中间内容主体。
  * 返回值/副作用：返回页面壳层结构节点，无副作用。

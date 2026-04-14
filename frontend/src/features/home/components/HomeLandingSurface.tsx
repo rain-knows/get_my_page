@@ -16,7 +16,7 @@ export function HomeLandingSurface() {
         {/* Top Hero Panel - The Main Visual Statement */}
         <section className="relative w-full border border-(--gmp-line-soft) bg-(--gmp-bg-panel) overflow-hidden gmp-cut-corner-br min-h-65 md:min-h-70 flex flex-col justify-end p-6 md:p-8 gmp-hard-shadow drop-shadow-xl group">
           <div className="absolute top-0 right-0 bottom-0 left-1/2 gmp-industrial-dot-grid opacity-[0.04] pointer-events-none" />
-          <div className="absolute right-0 -bottom-5 font-heading text-[120px] md:text-[180px] font-black leading-none text-white/2 select-none group-hover:text-white/4 transition-colors duration-1000">
+          <div className="absolute right-0 -bottom-5 font-heading text-[120px] md:text-[180px] font-black leading-none text-white select-none group-hover:text-white opacity-10 transition-colors duration-1000">
             PRTS
           </div>
           <div className="absolute left-0 top-0 w-1.5 h-full bg-(--gmp-accent) opacity-80" />
@@ -87,7 +87,7 @@ export function HomeLandingSurface() {
                 >
                   <div className="flex flex-col gap-1.5 flex-1 relative z-10">
                     <div className="flex items-center gap-3">
-                      <span className="font-mono text-[9px] font-bold text-(--gmp-text-secondary) uppercase tracking-widest">{item.category} // {item.id}</span>
+                      <span className="font-mono text-[9px] font-bold text-(--gmp-text-secondary) uppercase tracking-widest">{item.category} {"//"} {item.id}</span>
                     </div>
                     <h4 className="font-heading text-sm font-black text-white group-hover/item:text-black uppercase truncate max-w-70 md:max-w-90 transition-colors">{item.title}</h4>
                   </div>
