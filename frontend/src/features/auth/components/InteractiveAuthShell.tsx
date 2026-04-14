@@ -23,7 +23,7 @@ export function InteractiveAuthShell({ title, description, mode, footer, childre
 
   return (
     <section
-      className="relative min-h-dvh overflow-hidden bg-[var(--gmp-bg-base)] px-4 py-8 text-[var(--gmp-text-primary)] md:px-6 md:py-10 flex flex-col justify-center"
+      className="relative min-h-dvh overflow-hidden bg-(--gmp-bg-base) px-4 py-8 text-(--gmp-text-primary) md:px-6 md:py-10 flex flex-col justify-center"
       data-module="auth"
     >
       {/* 背景工业斜线极简网格 */}
@@ -42,49 +42,49 @@ export function InteractiveAuthShell({ title, description, mode, footer, childre
       >
         <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <Link href="/" className="group inline-flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center bg-[var(--gmp-bg-base)] border border-[var(--gmp-accent)] font-heading text-sm font-black tracking-widest text-[var(--gmp-accent)] shadow-[2px_2px_0_0_var(--gmp-line-soft)] group-hover:bg-[var(--gmp-accent)] group-hover:text-[var(--gmp-bg-base)] transition-colors">
+            <span className="flex h-10 w-10 items-center justify-center bg-(--gmp-bg-base) border border-(--gmp-accent) font-heading text-sm font-black tracking-widest text-(--gmp-accent) shadow-[2px_2px_0_0_var(--gmp-line-soft)] group-hover:bg-(--gmp-accent) group-hover:text-(--gmp-bg-base) transition-colors">
               GMP
             </span>
-            <span className="font-heading text-lg font-black tracking-widest text-white group-hover:text-[var(--gmp-text-secondary)] transition-colors uppercase">
+            <span className="font-heading text-lg font-black tracking-widest text-white group-hover:text-(--gmp-text-secondary) transition-colors uppercase">
               GetMyPage
             </span>
           </Link>
-          <div className="flex flex-col items-start sm:items-end gap-1 border-l-2 sm:border-l-0 sm:border-r-2 border-[var(--gmp-line-strong)] pl-3 sm:pl-0 sm:pr-3">
-            <span className="font-mono text-[10px] font-bold tracking-[0.2em] text-[var(--gmp-text-secondary)] uppercase">
+          <div className="flex flex-col items-start sm:items-end gap-1 border-l-2 sm:border-l-0 sm:border-r-2 border-(--gmp-line-strong) pl-3 sm:pl-0 sm:pr-3">
+            <span className="font-mono text-[10px] font-bold tracking-[0.2em] text-(--gmp-text-secondary) uppercase">
               SECURE_CHANNEL
             </span>
-            <span className="font-mono text-[10px] font-bold tracking-[0.2em] text-[var(--gmp-accent)] uppercase">
+            <span className="font-mono text-[10px] font-bold tracking-[0.2em] text-(--gmp-accent) uppercase">
               {mode === "login" ? "SESSION // LOGIN" : "SESSION // REGISTER"}
             </span>
           </div>
         </div>
 
         <motion.div 
-          className="relative bg-[var(--gmp-bg-panel)] border-2 border-[var(--gmp-line-strong)] p-8 md:p-12 gmp-cut-corner-l shadow-[8px_8px_0_0_#000]"
+          className="relative bg-(--gmp-bg-panel) border-2 border-(--gmp-line-strong) p-8 md:p-12 gmp-cut-corner-l shadow-[8px_8px_0_0_#000]"
           layout
         >
           {/* 左上角提示刻度 */}
-          <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[var(--gmp-accent)] -ml-2 -mt-2 pointer-events-none" />
+          <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-(--gmp-accent) -ml-2 -mt-2 pointer-events-none" />
           
-          <header className="mb-8 border-b-2 border-[var(--gmp-line-soft)] pb-6">
-            <div className="mb-4 inline-flex items-center gap-2 bg-[var(--gmp-bg-base)] border border-[var(--gmp-line-soft)] px-3 py-1 font-mono text-[10px] font-bold tracking-[0.2em] text-[var(--gmp-accent)] uppercase">
-              <span className="w-1.5 h-1.5 bg-[var(--gmp-accent)] block animate-pulse" />
+          <header className="mb-8 border-b-2 border-(--gmp-line-soft) pb-6">
+            <div className="mb-4 inline-flex items-center gap-2 bg-(--gmp-bg-base) border border-(--gmp-line-soft) px-3 py-1 font-mono text-[10px] font-bold tracking-[0.2em] text-(--gmp-accent) uppercase">
+              <span className="w-1.5 h-1.5 bg-(--gmp-accent) block animate-pulse" />
               IDENTITY VERIFICATION REQUIRED
             </div>
             <h1 className="font-heading text-3xl font-black tracking-widest text-white md:text-5xl uppercase">{title}</h1>
-            <p className="mt-3 text-sm font-medium text-[var(--gmp-text-secondary)]">{description}</p>
+            <p className="mt-3 text-sm font-medium text-(--gmp-text-secondary)">{description}</p>
           </header>
 
           <div className="relative z-10 w-full mb-8">
             {children}
           </div>
 
-          <footer className="border-t-2 border-[var(--gmp-line-soft)] pt-6 text-center text-sm font-medium text-[var(--gmp-text-secondary)]">
+          <footer className="border-t-2 border-(--gmp-line-soft) pt-6 text-center text-sm font-medium text-(--gmp-text-secondary)">
             {footer}
           </footer>
 
           {/* 表单内部右下角切割装饰 */}
-          <div className="absolute bottom-4 right-4 font-mono text-[9px] font-bold tracking-[0.2em] text-[var(--gmp-line-strong)] uppercase select-none pointer-events-none">
+          <div className="absolute bottom-4 right-4 font-mono text-[9px] font-bold tracking-[0.2em] text-(--gmp-line-strong) uppercase select-none pointer-events-none">
             BLOCK: 0x2A
           </div>
         </motion.div>

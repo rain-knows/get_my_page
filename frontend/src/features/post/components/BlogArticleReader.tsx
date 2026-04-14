@@ -24,10 +24,10 @@ export function BlogArticleReader({ slug }: BlogArticleReaderProps) {
     >
       <div className="mx-auto w-full max-w-4xl">
         {/* 文章元数据仪表盘 - 极度机能风 */}
-        <section className="mb-12 bg-[var(--gmp-bg-panel)] p-1 gmp-cut-corner-l">
-          <div className="border border-[var(--gmp-line-soft)] bg-[var(--gmp-bg-base)] p-6 md:p-8">
-            <div className="mb-4 inline-flex items-center gap-2 bg-[var(--gmp-bg-panel)] px-2 py-1 font-mono text-[9px] font-bold text-[var(--gmp-accent)] uppercase tracking-widest border border-[var(--gmp-line-strong)]">
-              <span className="h-1.5 w-1.5 bg-[var(--gmp-accent)] animate-pulse" />
+        <section className="mb-12 bg-(--gmp-bg-panel) p-1 gmp-cut-corner-l">
+          <div className="border border-(--gmp-line-soft) bg-(--gmp-bg-base) p-6 md:p-8">
+            <div className="mb-4 inline-flex items-center gap-2 bg-(--gmp-bg-panel) px-2 py-1 font-mono text-[9px] font-bold text-(--gmp-accent) uppercase tracking-widest border border-(--gmp-line-strong)">
+              <span className="h-1.5 w-1.5 bg-(--gmp-accent) animate-pulse" />
               SLUG: {slug}
             </div>
             
@@ -35,32 +35,32 @@ export function BlogArticleReader({ slug }: BlogArticleReaderProps) {
               {mockArticleData.title}
             </h1>
             
-            <dl className="grid grid-cols-2 gap-4 border-t border-dashed border-[var(--gmp-line-strong)] pt-6 sm:grid-cols-4">
-              <div className="flex flex-col gap-2 border-l-2 border-[var(--gmp-accent)] pl-4">
+            <dl className="grid grid-cols-2 gap-4 border-t border-dashed border-(--gmp-line-strong) pt-6 sm:grid-cols-4">
+              <div className="flex flex-col gap-2 border-l-2 border-(--gmp-accent) pl-4">
                 <dt className="flex items-center gap-2 font-mono text-[10px] font-bold text-white/50 uppercase tracking-widest">
-                  <UserCheck className="w-3.5 h-3.5 text-[var(--gmp-accent)]" />
+                  <UserCheck className="w-3.5 h-3.5 text-(--gmp-accent)" />
                   AUTHOR
                 </dt>
                 <dd className="font-mono text-[11px] font-black text-white uppercase tracking-wider">{mockArticleData.author}</dd>
               </div>
 
-              <div className="flex flex-col gap-2 border-l-2 border-[var(--gmp-line-strong)] pl-4">
+              <div className="flex flex-col gap-2 border-l-2 border-(--gmp-line-strong) pl-4">
                 <dt className="flex items-center gap-2 font-mono text-[10px] font-bold text-white/50 uppercase tracking-widest">
                   <Clock className="w-3.5 h-3.5" />
                   TIMESTAMP
                 </dt>
-                <dd className="font-mono text-[11px] font-bold text-[var(--gmp-text-secondary)] uppercase tracking-wider">{mockArticleData.publishDate}</dd>
+                <dd className="font-mono text-[11px] font-bold text-(--gmp-text-secondary) uppercase tracking-wider">{mockArticleData.publishDate}</dd>
               </div>
 
-              <div className="flex flex-col gap-2 border-l-2 border-[var(--gmp-line-strong)] pl-4">
+              <div className="flex flex-col gap-2 border-l-2 border-(--gmp-line-strong) pl-4">
                 <dt className="flex items-center gap-2 font-mono text-[10px] font-bold text-white/50 uppercase tracking-widest">
                   <HardDrive className="w-3.5 h-3.5" />
                   SECTOR
                 </dt>
-                <dd className="font-mono text-[11px] font-bold text-[var(--gmp-text-secondary)] uppercase tracking-wider">{mockArticleData.category}</dd>
+                <dd className="font-mono text-[11px] font-bold text-(--gmp-text-secondary) uppercase tracking-wider">{mockArticleData.category}</dd>
               </div>
               
-              <div className="flex flex-col gap-2 border-l-2 border-[var(--gmp-line-strong)] pl-4">
+              <div className="flex flex-col gap-2 border-l-2 border-(--gmp-line-strong) pl-4">
                 <dt className="flex items-center gap-2 font-mono text-[10px] font-bold text-white/50 uppercase tracking-widest">
                   CLEARANCE
                 </dt>
@@ -72,19 +72,19 @@ export function BlogArticleReader({ slug }: BlogArticleReaderProps) {
 
         {/* 工业排版内容区 */}
         <article className="prose prose-invert max-w-none pr-4">
-          <p className="font-mono text-sm text-[var(--gmp-accent)] font-bold mb-8 uppercase tracking-widest border-b border-[var(--gmp-line-soft)] pb-4 inline-flex items-center gap-4">
-            <span className="w-2 h-2 bg-[var(--gmp-accent)]" />
+          <p className="font-mono text-sm text-(--gmp-accent) font-bold mb-8 uppercase tracking-widest border-b border-(--gmp-line-soft) pb-4 inline-flex items-center gap-4">
+            <span className="w-2 h-2 bg-(--gmp-accent)" />
              [{mockArticleData.category}] SYSTEM DOCUMENTATION INITIALIZED.
           </p>
           
-          <div className="text-[var(--gmp-text-secondary)] leading-8 space-y-6">
+          <div className="text-(--gmp-text-secondary) leading-8 space-y-6">
             <p className="text-white">
               This is a sandbox visualization of the reading dashboard. The structure is heavily customized for high contrast readability while maintaining the strict geometric boundaries of the Arknights industrial aesthetics. Notice the lack of standard rounded corners; every block quote, code block, and informational panel relies on deep cuts or sharp angular highlights.
             </p>
             
-            <blockquote className="border-l-4 border-[var(--gmp-accent)] bg-[var(--gmp-bg-panel)] pt-8 pb-6 px-6 my-8 font-mono text-sm text-[var(--gmp-text-primary)] relative gmp-cut-corner-br">
-              <div className="absolute top-0 right-0 p-2 px-4 bg-[var(--gmp-bg-base)] text-[var(--gmp-accent)] text-[9px] font-bold uppercase tracking-widest border-b border-l border-[var(--gmp-line-soft)] gmp-cut-corner-bl flex gap-2 items-center">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--gmp-accent)] animate-pulse" />
+            <blockquote className="border-l-4 border-(--gmp-accent) bg-(--gmp-bg-panel) pt-8 pb-6 px-6 my-8 font-mono text-sm text-(--gmp-text-primary) relative gmp-cut-corner-br">
+              <div className="absolute top-0 right-0 p-2 px-4 bg-(--gmp-bg-base) text-(--gmp-accent) text-[9px] font-bold uppercase tracking-widest border-b border-l border-(--gmp-line-soft) gmp-cut-corner-bl flex gap-2 items-center">
+                <span className="w-1.5 h-1.5 rounded-full bg-(--gmp-accent) animate-pulse" />
                 ATTENTION
               </div>
               <p className="mt-2 text-[13px] leading-relaxed tracking-wide">ALL LOGS MUST BE STRICTLY FORMATTED. NO DEVIATIONS ALLOWED. ANY UNAUTHORIZED ACCESS WILL BE TRACKED AND REPORTED TO SECTOR CONTROL IMMEDIATE.</p>
@@ -96,21 +96,21 @@ export function BlogArticleReader({ slug }: BlogArticleReaderProps) {
 
             <ul className="list-none space-y-3 mt-8 font-medium">
               <li className="flex items-start gap-3">
-                <span className="font-mono text-[10px] text-[var(--gmp-accent)] mt-1.5">01 //</span>
+                <span className="font-mono text-[10px] text-(--gmp-accent) mt-1.5">01 //</span>
                 <span className="text-white">Optimal resolution matrix initialized.</span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="font-mono text-[10px] text-[var(--gmp-accent)] mt-1.5">02 //</span>
+                <span className="font-mono text-[10px] text-(--gmp-accent) mt-1.5">02 //</span>
                 <span className="text-white">Telemetry modules synced and broadcasting.</span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="font-mono text-[10px] text-[var(--gmp-accent)] mt-1.5">03 //</span>
+                <span className="font-mono text-[10px] text-(--gmp-accent) mt-1.5">03 //</span>
                 <span className="text-white">Primary payload encrypted and loaded into RAM.</span>
               </li>
             </ul>
              
-             <div className="mt-20 pt-8 border-t border-dashed border-[var(--gmp-line-strong)] flex justify-center">
-                <span className="bg-[var(--gmp-bg-panel)] px-6 py-2 border border-[var(--gmp-line-soft)] font-mono text-[10px] text-[var(--gmp-text-secondary)] tracking-widest font-black uppercase gmp-cut-corner-l">
+             <div className="mt-20 pt-8 border-t border-dashed border-(--gmp-line-strong) flex justify-center">
+                <span className="bg-(--gmp-bg-panel) px-6 py-2 border border-(--gmp-line-soft) font-mono text-[10px] text-(--gmp-text-secondary) tracking-widest font-black uppercase gmp-cut-corner-l">
                   [ END OF RECORD // CONNECTION TERMINATED ]
                 </span>
              </div>

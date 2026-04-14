@@ -62,7 +62,7 @@ export function RegisterForm() {
       footer={
         <>
           已有账户？{" "}
-          <Link href="/login" className="font-medium text-[var(--gmp-end-accent)] transition-colors hover:text-white">
+          <Link href="/login" className="font-medium text-(--gmp-end-accent) transition-colors hover:text-white">
             立即登录
           </Link>
         </>
@@ -95,7 +95,7 @@ export function RegisterForm() {
               minLength={3}
               maxLength={50}
               required
-              className="h-11 rounded-xs border-white/18 bg-black/42 pl-9 text-white placeholder:text-white/38 focus-visible:border-[var(--gmp-end-accent)] focus-visible:ring-[var(--gmp-end-accent)]/30"
+              className="h-11 rounded-xs border-white/18 bg-black/42 pl-9 text-white placeholder:text-white/38 focus-visible:border-(--gmp-end-accent) focus-visible:ring-(--gmp-end-accent)/30"
             />
           </div>
         </div>
@@ -112,7 +112,7 @@ export function RegisterForm() {
               placeholder="显示昵称"
               maxLength={100}
               required
-              className="h-11 rounded-xs border-white/18 bg-black/42 pl-9 text-white placeholder:text-white/38 focus-visible:border-[var(--gmp-end-accent)] focus-visible:ring-[var(--gmp-end-accent)]/30"
+              className="h-11 rounded-xs border-white/18 bg-black/42 pl-9 text-white placeholder:text-white/38 focus-visible:border-(--gmp-end-accent) focus-visible:ring-(--gmp-end-accent)/30"
             />
           </div>
         </div>
@@ -128,7 +128,7 @@ export function RegisterForm() {
               onChange={(event) => setEmail(event.target.value)}
               placeholder="your@email.com"
               autoComplete="email"
-              className="h-11 rounded-xs border-white/18 bg-black/42 pl-9 text-white placeholder:text-white/38 focus-visible:border-[var(--gmp-end-accent)] focus-visible:ring-[var(--gmp-end-accent)]/30"
+              className="h-11 rounded-xs border-white/18 bg-black/42 pl-9 text-white placeholder:text-white/38 focus-visible:border-(--gmp-end-accent) focus-visible:ring-(--gmp-end-accent)/30"
             />
           </div>
         </div>
@@ -146,7 +146,7 @@ export function RegisterForm() {
               autoComplete="new-password"
               minLength={6}
               required
-              className="h-11 rounded-xs border-white/18 bg-black/42 pr-10 pl-9 text-white placeholder:text-white/38 focus-visible:border-[var(--gmp-end-accent)] focus-visible:ring-[var(--gmp-end-accent)]/30"
+              className="h-11 rounded-xs border-white/18 bg-black/42 pr-10 pl-9 text-white placeholder:text-white/38 focus-visible:border-(--gmp-end-accent) focus-visible:ring-(--gmp-end-accent)/30"
             />
             <Button
               type="button"
@@ -164,7 +164,7 @@ export function RegisterForm() {
         <Button
           type="submit"
           disabled={loading}
-          className="h-11 w-full rounded-xs border border-black/20 bg-[var(--gmp-end-accent)] font-medium text-black hover:bg-[var(--gmp-end-accent-soft)]"
+          className="h-11 w-full rounded-xs border border-black/20 bg-(--gmp-end-accent) font-medium text-black hover:bg-(--gmp-end-accent-soft)"
         >
           {currentSubmitState === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : currentSubmitState === "success" ? <CheckCircle2 className="h-4 w-4" /> : null}
           {currentSubmitState === "loading" ? "注册中..." : currentSubmitState === "success" ? "创建完成" : "注册"}

@@ -54,23 +54,23 @@ export default function FlowShowcase() {
   return (
     <section id="flow" className="mx-auto w-full max-w-6xl px-4 pb-9 md:px-6">
       <div className="industrial-panel relative overflow-hidden rounded-3xl px-5 py-6 md:px-7 md:py-8">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--gmp-line-strong)] to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-(--gmp-line-strong) to-transparent" />
 
         <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
-            <Badge variant="outline" className="border-[var(--gmp-line-strong)] bg-[var(--gmp-bg-panel)] font-mono text-[11px] tracking-[0.16em] text-[var(--gmp-accent)] uppercase">
+            <Badge variant="outline" className="border-(--gmp-line-strong) bg-(--gmp-bg-panel) font-mono text-[11px] tracking-[0.16em] text-(--gmp-accent) uppercase">
               Workflow
             </Badge>
-            <h2 className="font-heading text-xl tracking-tight text-[var(--gmp-text-primary)] md:text-2xl">从灵感到上线的标准化流程</h2>
+            <h2 className="font-heading text-xl tracking-tight text-(--gmp-text-primary) md:text-2xl">从灵感到上线的标准化流程</h2>
           </div>
-          <p className="max-w-sm text-sm leading-relaxed text-[var(--gmp-text-secondary)]">流程区只保留关键状态和有效反馈，减少无意义的视觉修饰。</p>
+          <p className="max-w-sm text-sm leading-relaxed text-(--gmp-text-secondary)">流程区只保留关键状态和有效反馈，减少无意义的视觉修饰。</p>
         </div>
 
         <div className="mb-5 hidden grid-cols-3 gap-3 md:grid">
           {flowItems.map((item, index) => (
             <div key={`track-${item.id}`} className="flex items-center gap-2">
-              <span className="font-mono text-[11px] tracking-[0.14em] text-[var(--gmp-text-secondary)]">0{index + 1}</span>
-              <div className="h-px w-full bg-[var(--gmp-line-soft)]" />
+              <span className="font-mono text-[11px] tracking-[0.14em] text-(--gmp-text-secondary)">0{index + 1}</span>
+              <div className="h-px w-full bg-(--gmp-line-soft)" />
             </div>
           ))}
         </div>
@@ -84,22 +84,22 @@ export default function FlowShowcase() {
         >
           {flowItems.map((item, index) => (
             <motion.div key={item.id} variants={flowItemVariants}>
-              <Card className="h-full border border-[var(--gmp-line-soft)] bg-[rgba(14,19,28,0.65)] py-0 transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--gmp-line-strong)] hover:bg-[rgba(18,24,35,0.78)]">
-                <CardHeader className="gap-3 border-b border-[var(--gmp-line-soft)] px-4 py-4">
+              <Card className="h-full border border-(--gmp-line-soft) bg-[rgba(14,19,28,0.65)] py-0 transition-all duration-200 hover:-translate-y-0.5 hover:border-(--gmp-line-strong) hover:bg-[rgba(18,24,35,0.78)]">
+                <CardHeader className="gap-3 border-b border-(--gmp-line-soft) px-4 py-4">
                   <div className="flex items-center justify-between">
-                    <span className="inline-flex size-10 items-center justify-center rounded-xl border border-[var(--gmp-line-strong)] bg-[var(--gmp-bg-panel)] text-[var(--gmp-accent)]">
+                    <span className="inline-flex size-10 items-center justify-center rounded-xl border border-(--gmp-line-strong) bg-(--gmp-bg-panel) text-(--gmp-accent)">
                       <item.icon className="size-[18px]" />
                     </span>
-                    <span className="inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.14em] text-[var(--gmp-text-secondary)]">
+                    <span className="inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.14em] text-(--gmp-text-secondary)">
                       0{index + 1}
                       <ArrowUpRight className="size-3.5" />
                     </span>
                   </div>
-                  <CardTitle className="text-lg text-[var(--gmp-text-primary)]">{item.title}</CardTitle>
+                  <CardTitle className="text-lg text-(--gmp-text-primary)">{item.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 px-4 py-4">
-                  <p className="text-sm leading-relaxed text-[var(--gmp-text-secondary)]">{item.description}</p>
-                  <p className="font-mono text-[11px] tracking-[0.12em] text-[var(--gmp-accent-dim)] uppercase">{item.metric}</p>
+                  <p className="text-sm leading-relaxed text-(--gmp-text-secondary)">{item.description}</p>
+                  <p className="font-mono text-[11px] tracking-[0.12em] text-(--gmp-accent-dim) uppercase">{item.metric}</p>
                 </CardContent>
               </Card>
             </motion.div>

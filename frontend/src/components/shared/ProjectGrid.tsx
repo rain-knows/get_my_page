@@ -93,10 +93,10 @@ export default function ProjectGrid() {
       <div id="projects" className="sr-only" aria-hidden="true" />
       <div className="mb-8 flex items-end justify-between gap-4">
         <div className="space-y-2">
-          <h2 className="font-heading text-2xl font-semibold tracking-tight text-[var(--gmp-text-primary)] md:text-3xl">近期动态</h2>
-          <p className="text-sm text-[var(--gmp-text-secondary)]">项目进展与博客文章的混合流。</p>
+          <h2 className="font-heading text-2xl font-semibold tracking-tight text-(--gmp-text-primary) md:text-3xl">近期动态</h2>
+          <p className="text-sm text-(--gmp-text-secondary)">项目进展与博客文章的混合流。</p>
         </div>
-        <Badge variant="outline" className="border-[var(--gmp-line-strong)] bg-[var(--gmp-bg-panel)] font-mono text-[11px] tracking-[0.14em] text-[var(--gmp-text-secondary)] uppercase">
+        <Badge variant="outline" className="border-(--gmp-line-strong) bg-(--gmp-bg-panel) font-mono text-[11px] tracking-[0.14em] text-(--gmp-text-secondary) uppercase">
           Mixed Feed
         </Badge>
       </div>
@@ -111,32 +111,32 @@ export default function ProjectGrid() {
         {feedItems.map((item) => (
           <motion.div key={item.id} variants={itemVariants}>
             <motion.div initial="rest" whileHover="hover" animate="rest" variants={cardInteractionVariants}>
-              <Card className="group relative h-full overflow-hidden border border-[var(--gmp-line-soft)] bg-[rgba(15,20,30,0.7)] py-0 shadow-[var(--gmp-shadow-soft)] transition-[border-color,background-color] duration-200 hover:border-[var(--gmp-line-strong)] hover:bg-[rgba(20,27,39,0.78)]">
-                <CardHeader className="space-y-3 border-b border-[var(--gmp-line-soft)] px-5 py-5 transition-colors duration-200 group-hover:border-[var(--gmp-line-strong)]">
+              <Card className="group relative h-full overflow-hidden border border-(--gmp-line-soft) bg-[rgba(15,20,30,0.7)] py-0 shadow-(--gmp-shadow-soft) transition-[border-color,background-color] duration-200 hover:border-(--gmp-line-strong) hover:bg-[rgba(20,27,39,0.78)]">
+                <CardHeader className="space-y-3 border-b border-(--gmp-line-soft) px-5 py-5 transition-colors duration-200 group-hover:border-(--gmp-line-strong)">
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="gap-1.5 border border-[var(--gmp-line-soft)] bg-[var(--gmp-bg-panel)] text-xs text-[var(--gmp-text-secondary)] transition-colors group-hover:border-[var(--gmp-line-strong)] group-hover:text-[var(--gmp-text-primary)]">
+                    <Badge variant="secondary" className="gap-1.5 border border-(--gmp-line-soft) bg-(--gmp-bg-panel) text-xs text-(--gmp-text-secondary) transition-colors group-hover:border-(--gmp-line-strong) group-hover:text-(--gmp-text-primary)">
                       {item.type === "project" ? <FolderGit2 className="size-3.5" /> : <BookOpen className="size-3.5" />}
                       {item.type}
                     </Badge>
-                    <span className="font-mono text-[11px] tracking-[0.08em] text-[var(--gmp-text-secondary)]">{item.date}</span>
+                    <span className="font-mono text-[11px] tracking-[0.08em] text-(--gmp-text-secondary)">{item.date}</span>
                   </div>
-                  <CardTitle className="text-xl leading-snug text-[var(--gmp-text-primary)]">{item.title}</CardTitle>
+                  <CardTitle className="text-xl leading-snug text-(--gmp-text-primary)">{item.title}</CardTitle>
                 </CardHeader>
 
                 <CardContent className="px-5 py-4">
-                  <p className="line-clamp-3 text-sm leading-relaxed text-[var(--gmp-text-secondary)]">{item.description}</p>
+                  <p className="line-clamp-3 text-sm leading-relaxed text-(--gmp-text-secondary)">{item.description}</p>
                 </CardContent>
 
-                <Separator className="mx-5 w-auto bg-[var(--gmp-line-soft)]" />
+                <Separator className="mx-5 w-auto bg-(--gmp-line-soft)" />
                 <CardFooter className="mt-auto flex items-center justify-between px-5 py-4">
                   <div className="flex flex-wrap gap-1.5">
                     {item.tags.map((tag) => (
-                      <Badge key={tag} variant="outline" className="border-[var(--gmp-line-soft)] bg-[rgba(255,255,255,0.01)] font-mono text-[10px] tracking-[0.1em] text-[var(--gmp-text-secondary)] uppercase">
+                      <Badge key={tag} variant="outline" className="border-(--gmp-line-soft) bg-[rgba(255,255,255,0.01)] font-mono text-[10px] tracking-[0.1em] text-(--gmp-text-secondary) uppercase">
                         {tag}
                       </Badge>
                     ))}
                   </div>
-                  <Button asChild variant="ghost" size="icon-sm" className="border border-transparent text-[var(--gmp-text-secondary)] hover:border-[var(--gmp-line-soft)] hover:bg-[var(--gmp-bg-panel)] hover:text-[var(--gmp-text-primary)]" aria-label={`查看 ${item.title}`}>
+                  <Button asChild variant="ghost" size="icon-sm" className="border border-transparent text-(--gmp-text-secondary) hover:border-(--gmp-line-soft) hover:bg-(--gmp-bg-panel) hover:text-(--gmp-text-primary)" aria-label={`查看 ${item.title}`}>
                     <Link href={item.link}>
                       <motion.span variants={arrowMotionVariants} className="inline-flex">
                         <ArrowUpRight className="size-4" />
