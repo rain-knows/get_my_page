@@ -40,7 +40,7 @@ export function LoginForm() {
       await login({ username, password });
       setSubmitState("success");
       window.setTimeout(() => {
-        router.push("/");
+        router.push("/?from=auth");
       }, 220);
     } catch {
       setSubmitState("error");

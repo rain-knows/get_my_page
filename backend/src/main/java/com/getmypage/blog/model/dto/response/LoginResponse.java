@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * 登录响应 DTO。
  */
@@ -32,6 +34,8 @@ public class LoginResponse {
         private Long id;
         private String username;
         private String nickname;
+
+        @Schema(description = "头像 URL，可为空", nullable = true)
         private String avatarUrl;
         private String role;
     }

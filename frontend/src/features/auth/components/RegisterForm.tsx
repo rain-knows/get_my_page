@@ -98,7 +98,7 @@ export function RegisterForm() {
       await register(buildNormalizedPayload());
       setSubmitState("success");
       window.setTimeout(() => {
-        router.push("/");
+        router.push("/?from=auth");
       }, 220);
     } catch {
       setSubmitState("error");
