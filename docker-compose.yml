@@ -51,10 +51,12 @@ services:
     restart: unless-stopped
     ports:
       - "8080:8080"
-      - "5005:5005"  # 远程调试端口
+      - "5005:5005" # 远程调试端口
     volumes:
       # 源码挂载
       - ./backend:/app
+      # 隔离 target 目录防止宿主机 IDE（如 VSCode）与容器内的编译热重载冲突
+      - backend_target:/app/target
       # Maven 本地仓库缓存
       - maven_cache:/root/.m2
     environment:
@@ -80,7 +82,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       interval: 15s
       timeout: 5s
       retries: 10
@@ -104,11 +106,9 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     command: >
-      --character-set-server=utf8mb4
-      --collation-server=utf8mb4_unicode_ci
-      --max-connections=200
+      --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --max-connections=200
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -125,7 +125,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -158,7 +158,7 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin_password_change_me}
     ports:
       - "9000:9000"
-      - "9001:9001"  # Web Console
+      - "9001:9001" # Web Console
     volumes:
       - minio_data:/data
     command: server /data --console-address ":9001"
@@ -169,6 +169,7 @@ volumes:
   meili_data:
   minio_data:
   maven_cache:
-  # 前端依赖与构建缓存 (命名 volume，防止被宿主机挂载覆盖)
+  backend_target: # 前端依赖与构建缓存 (命名 volume，防止被宿主机挂载覆盖)
+
   frontend_node_modules:
   frontend_next_cache:
