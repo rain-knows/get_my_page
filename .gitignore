@@ -113,6 +113,7 @@ skills-lock.json
 .codex
 AGENTS.md
 CLAUDE.md
+copilot-instructions.md
 
 # learn artifacts (documents tracked, generated artifacts ignored)
 learn/**/.cache/
