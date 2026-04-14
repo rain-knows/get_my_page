@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, ChevronRight } from "lucide-react";
 import { KineticPageShell } from "@/features/surface/components/KineticPageShell";
-import { Button } from "@/components/ui";
 
 interface SearchResultItem {
   id: string;
@@ -43,52 +42,61 @@ export function SearchWorkbenchPage() {
   const [keyword, setKeyword] = useState("");
   const [activeFilter, setActiveFilter] = useState<(typeof filterOptions)[number]>("全部");
 
-  /**
-   * 功能：处理搜索关键词输入，更新当前工作台中的关键词状态。
-   * 关键参数：value 为输入框最新文本值。
-   * 返回值/副作用：无返回值；会更新关键词状态。
-   */
-  const handleKeywordChange = (value: string) => {
-    setKeyword(value);
-  };
-
   return (
     <KineticPageShell
       currentPath="/search"
-      centerTitle="搜索工作台"
-      centerDescription="提供输入、筛选和结果占位结构，后续可直接接入真实检索接口。"
+      centerTitle="INDEX PROTOCOL"
+      centerDescription="QUERY THE CENTRALIZED ARCHIVE FOR HISTORICAL DATA."
     >
-      <section className="space-y-4">
-        <div className="rounded-sm border border-white/16 bg-black/44 p-4 backdrop-blur-sm">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="relative w-full md:max-w-xl">
-              <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/62" />
-              <input
-                value={keyword}
-                onChange={(event) => handleKeywordChange(event.target.value)}
-                placeholder="输入关键词进行检索"
-                className="h-11 w-full rounded-xs border border-white/18 bg-black/42 pr-3 pl-9 text-sm text-white placeholder:text-white/36 focus:border-[var(--gmp-end-accent)] focus:outline-none"
-              />
-            </div>
-            <Button variant="ghost" className="h-11 rounded-xs border border-white/16 bg-black/46 text-white hover:border-[var(--gmp-end-accent)] hover:bg-black/60">
-              <SlidersHorizontal className="h-4 w-4 text-[var(--gmp-end-accent)]" />
-              高级筛选
-            </Button>
+      <section className="space-y-6 max-w-5xl mx-auto px-2">
+        {/* Search Control Panel */}
+        <div className="border-2 border-(--gmp-line-strong) bg-(--gmp-bg-elevated) p-6 gmp-cut-corner-br relative shadow-xl">
+          <div className="absolute top-0 right-0 p-1 px-3 bg-(--gmp-accent) text-black font-mono text-[9px] font-bold tracking-widest uppercase gmp-cut-corner-bl">
+            SEARCH // ENGINE ACTIVE
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mb-6 mt-4 flex flex-col gap-4 md:flex-row md:items-end">
+            <div className="relative w-full flex-1">
+              <label className="mb-2 block font-mono text-[10px] font-bold text-(--gmp-accent) tracking-widest uppercase">
+                QUERY KEYWORD_
+              </label>
+              <div className="relative flex items-center">
+                <div className="absolute left-0 top-0 bottom-0 w-12 flex items-center justify-center bg-(--gmp-bg-panel) border-r border-(--gmp-line-soft) pointer-events-none">
+                  <Search className="h-4 w-4 text-(--gmp-text-secondary)" />
+                </div>
+                <input
+                  value={keyword}
+                  onChange={(event) => setKeyword(event.target.value)}
+                  placeholder="AWAITING INPUT..."
+                  className="h-14 w-full bg-(--gmp-bg-base) border border-(--gmp-line-soft) pl-16 pr-4 font-mono text-sm text-white placeholder:text-(--gmp-line-strong) focus:border-(--gmp-accent) focus:ring-1 focus:ring-(--gmp-accent) focus:outline-none transition-colors"
+                />
+              </div>
+            </div>
+            
+            <button
+              className="group relative flex h-14 items-center justify-center gap-2 border border-(--gmp-line-soft) bg-(--gmp-bg-panel) hover:bg-(--gmp-bg-base) hover:border-white px-8 font-heading text-xs font-bold tracking-widest text-white transition-all uppercase gmp-cut-corner-br"
+            >
+              <SlidersHorizontal className="h-4 w-4 text-(--gmp-accent) group-hover:animate-pulse" />
+              <span>ADVANCED</span>
+            </button>
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-wrap gap-4 mt-6 border-t border-(--gmp-line-soft) pt-6">
+            <span className="flex items-center font-heading text-xs font-black tracking-widest text-(--gmp-text-secondary) uppercase mr-2 border-l-2 border-(--gmp-accent) pl-2 h-6">
+              TARGET_
+            </span>
             {filterOptions.map((item) => {
               const active = item === activeFilter;
               return (
                 <button
                   key={item}
-                  type="button"
                   onClick={() => setActiveFilter(item)}
-                  className={
+                  className={`relative flex h-8 items-center justify-center border px-4 font-mono text-[11px] font-bold tracking-widest uppercase transition-all gmp-cut-corner-br ${
                     active
-                      ? "h-8 rounded-xs border border-[var(--gmp-end-accent)] bg-black/70 px-3 text-xs text-[var(--gmp-end-accent)]"
-                      : "h-8 rounded-xs border border-white/16 bg-black/46 px-3 text-xs text-white/72 hover:border-white/28"
-                  }
+                      ? "border-(--gmp-accent) bg-(--gmp-accent) text-black shadow-[0_0_10px_rgba(255,204,0,0.3)]"
+                      : "border-(--gmp-line-soft) bg-(--gmp-bg-base) text-(--gmp-text-secondary) hover:border-white hover:text-white"
+                  }`}
                 >
                   {item}
                 </button>
@@ -97,15 +105,41 @@ export function SearchWorkbenchPage() {
           </div>
         </div>
 
-        <div className="grid gap-3">
+        {/* Results Matrix */}
+        <div className="grid gap-4 pt-4">
+          <div className="flex items-center gap-4 mb-2">
+            <div className="flex-1 h-px bg-(--gmp-line-soft)" />
+            <span className="font-mono text-[10px] font-bold tracking-widest text-(--gmp-text-secondary) uppercase">
+              FOUND {resultMocks.length} RECORDS
+            </span>
+          </div>
+
           {resultMocks.map((item) => (
-            <article key={item.id} className="rounded-sm border border-white/16 bg-black/44 p-4 backdrop-blur-sm">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-base font-semibold text-white">{item.title}</h2>
-                <span className="rounded-xs border border-white/16 bg-black/52 px-2 py-1 text-xs text-white/72">{item.type}</span>
+            <article 
+              key={item.id} 
+              className="gmp-hover-fill group relative border border-(--gmp-line-soft) bg-(--gmp-bg-panel) p-5 md:pr-16 pb-12 md:pb-5 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-6 gmp-cut-corner-l"
+            >
+              <div className="flex gap-4 md:gap-6 items-start">
+                <div className="font-mono text-[14px] font-black tracking-widest text-(--gmp-line-strong) mt-1 drop-shadow-md group-hover:text-black transition-colors">
+                  {item.id}
+                </div>
+                <div>
+                  <h2 className="text-lg font-heading font-black text-white group-hover:text-black mb-2 transition-colors">{item.title}</h2>
+                  <p className="text-xs font-medium leading-relaxed text-(--gmp-text-secondary) group-hover:text-[#333] transition-colors max-w-2xl">{item.summary}</p>
+                </div>
               </div>
-              <p className="mt-2 text-sm leading-relaxed text-white/68">{item.summary}</p>
-              <p className="mt-3 font-mono text-[11px] tracking-[0.12em] text-white/52 uppercase">更新于 {item.updatedAt}</p>
+              
+              <div className="flex flex-row md:flex-col items-center md:items-end justify-between gap-3 min-w-35">
+                <span className="border border-(--gmp-line-strong) bg-(--gmp-bg-base) px-3 py-1 font-mono text-[9px] font-bold tracking-widest text-white group-hover:border-black group-hover:bg-black group-hover:text-(--gmp-accent) uppercase transition-colors">
+                  {item.type}
+                </span>
+                <p className="font-mono text-[10px] tracking-widest text-(--gmp-text-secondary) group-hover:text-black transition-colors">
+                  {item.updatedAt}
+                </p>
+                <button className="hidden md:flex absolute right-4 bottom-4 w-8 h-8 items-center justify-center border border-(--gmp-line-soft) group-hover:border-black group-hover:bg-black transition-colors z-20">
+                  <ChevronRight className="w-4 h-4 text-white group-hover:text-(--gmp-accent)" />
+                </button>
+              </div>
             </article>
           ))}
         </div>

@@ -70,26 +70,26 @@ export function KineticPageShell({
 
   return (
     <section
-      className={cn("relative min-h-dvh bg-[var(--gmp-bg-base)] text-white overflow-hidden", className)}
+      className={cn("relative min-h-dvh bg-(--gmp-bg-base) text-white overflow-hidden", className)}
     >
       {/* 极简网格底纹 */}
       <div className="absolute inset-0 gmp-industrial-dot-grid opacity-[0.03] pointer-events-none" />
 
       <main className="relative z-10 mx-auto grid min-h-dvh w-full grid-cols-1 gap-0 md:grid-cols-[100px_1fr] xl:grid-cols-[100px_1fr_360px] xl:gap-8 px-4 md:px-0">
-        
+
         {/* 左侧工业导航 */}
-        <aside className="hidden h-full flex-col items-center justify-between bg-[var(--gmp-bg-elevated)] border-r border-[var(--gmp-line-soft)] py-8 md:flex">
+        <aside className="hidden h-full flex-col items-center justify-between bg-(--gmp-bg-elevated) border-r border-(--gmp-line-soft) py-8 md:flex">
           <div className="flex flex-col items-center gap-12 w-full">
             {/* Logo区 */}
             <Link href="/" className="group flex flex-col items-center gap-2">
-              <span className="flex h-12 w-12 items-center justify-center bg-[var(--gmp-bg-base)] border border-[var(--gmp-accent)] font-heading text-lg font-black tracking-widest text-[var(--gmp-accent)] shadow-[2px_2px_0_0_var(--gmp-line-soft)] group-hover:bg-[var(--gmp-accent)] group-hover:text-[var(--gmp-bg-base)] transition-colors">
+              <span className="flex h-12 w-12 items-center justify-center bg-(--gmp-bg-base) border border-(--gmp-accent) font-heading text-lg font-black tracking-widest text-(--gmp-accent) shadow-[2px_2px_0_0_var(--gmp-line-soft)] group-hover:bg-(--gmp-accent) group-hover:text-(--gmp-bg-base) transition-colors">
                 GMP
               </span>
-              <span className="font-mono text-[9px] font-bold tracking-[0.2em] text-[var(--gmp-text-secondary)] uppercase group-hover:text-white transition-colors">
+              <span className="font-mono text-[9px] font-bold tracking-[0.2em] text-(--gmp-text-secondary) uppercase group-hover:text-white transition-colors">
                 Sys.v3
               </span>
             </Link>
-            
+
             {/* 导航列表区 */}
             <nav className="flex w-full flex-1 flex-col justify-center" aria-label="Main system navigation">
               <ul className="relative flex w-full flex-col" onMouseLeave={() => setHoveredPath(null)}>
@@ -105,14 +105,14 @@ export function KineticPageShell({
                         className={cn(
                           "group relative flex w-full flex-col items-center justify-center gap-1 py-5 transition-all text-center",
                           "font-heading text-xs font-black tracking-widest uppercase outline-none",
-                          isHighlighted ? "text-white" : "text-[var(--gmp-text-secondary)] hover:text-white"
+                          isHighlighted ? "text-white" : "text-(--gmp-text-secondary) hover:text-white"
                         )}
                       >
                         {/* 异形模块延伸突出 —— 精准对齐切割边缘与侧栏边缘 */}
                         {isHighlighted && (
                           <motion.div
                             layoutId="navTrackerBg"
-                            className="absolute -top-1 -bottom-1 left-0 -right-3 z-0 bg-[var(--gmp-bg-panel)] border-y border-r border-[var(--gmp-line-strong)] border-l-0 gmp-cut-corner-br shadow-[4px_4px_0_0_rgba(0,0,0,0.5)]"
+                            className="absolute -top-1 -bottom-1 left-0 -right-3 z-0 bg-(--gmp-bg-panel) border-y border-r border-(--gmp-line-strong) border-l-0 gmp-cut-corner-br shadow-[4px_4px_0_0_rgba(0,0,0,0.5)]"
                             transition={{ type: "spring", stiffness: 400, damping: 35 }}
                           />
                         )}
@@ -121,15 +121,15 @@ export function KineticPageShell({
                         {isHighlighted && (
                           <motion.div
                             layoutId="navTrackerLine"
-                            className="absolute left-0 -top-1 -bottom-1 w-1.5 bg-[var(--gmp-accent)] z-[60] shadow-[0_0_8px_var(--gmp-accent)]"
+                            className="absolute left-0 -top-1 -bottom-1 w-1.5 bg-(--gmp-accent) z-60 shadow-[0_0_8px_var(--gmp-accent)]"
                             transition={{ type: "spring", stiffness: 400, damping: 35 }}
                           />
                         )}
 
                         <span className="relative z-10">{item.label}</span>
-                        
+
                         {isActive && (
-                          <span className="relative z-10 font-mono text-[9px] tracking-widest text-[var(--gmp-accent)] scale-90">
+                          <span className="relative z-10 font-mono text-[9px] tracking-widest text-(--gmp-accent) scale-90">
                             SELECTED
                           </span>
                         )}
@@ -143,8 +143,8 @@ export function KineticPageShell({
 
           {/* 底部保留状态指示 */}
           <div className="flex flex-col items-center gap-6">
-            <div className="h-24 w-[1px] bg-[var(--gmp-line-soft)]" />
-            <span className="font-mono text-[10px] font-bold tracking-[0.3em] text-[var(--gmp-text-secondary)] uppercase [writing-mode:vertical-rl]">
+            <div className="h-24 w-px bg-(--gmp-line-soft)" />
+            <span className="font-mono text-[10px] font-bold tracking-[0.3em] text-(--gmp-text-secondary) uppercase [writing-mode:vertical-rl]">
               LINK // ONLINE
             </span>
           </div>
@@ -155,21 +155,21 @@ export function KineticPageShell({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.2, 1, 0.2, 1] }}
-          className="relative flex flex-col justify-start pt-8 pb-12 overflow-hidden"
+          className="relative flex flex-col justify-start pt-6 pb-6 overflow-hidden"
         >
           {/* 主标题栏 */}
-          <header className="mb-10 flex flex-wrap items-end justify-between gap-6 border-b-2 border-[var(--gmp-line-soft)] pb-6 pr-4">
-            <div className="space-y-4">
-              <div className="inline-flex items-center gap-3 bg-[var(--gmp-bg-panel)] border border-[var(--gmp-line-strong)] px-3 py-1.5 font-mono text-[10px] font-bold tracking-[0.2em] text-[#FFF] uppercase gmp-cut-corner-l">
-                <Layers3 className="h-4 w-4 text-[var(--gmp-accent)]" />
+          <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b-2 border-(--gmp-line-soft) pb-4 pr-4">
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-3 bg-(--gmp-bg-panel) border border-(--gmp-line-strong) px-3 py-1.5 font-mono text-[10px] font-bold tracking-[0.2em] text-[#FFF] uppercase gmp-cut-corner-l">
+                <Layers3 className="h-4 w-4 text-(--gmp-accent)" />
                 <span>TERMINAL_CORE</span>
-                <span className="ml-1 h-1.5 w-1.5 bg-[var(--gmp-accent)] animate-pulse" />
+                <span className="ml-1 h-1.5 w-1.5 bg-(--gmp-accent) animate-pulse" />
               </div>
               <div>
                 <h1 className="font-heading text-4xl font-black tracking-widest text-[#FFF] md:text-5xl uppercase drop-shadow-[2px_2px_0_var(--gmp-line-soft)]">
                   {centerTitle}
                 </h1>
-                <p className="mt-4 max-w-xl text-sm font-medium leading-relaxed text-[var(--gmp-text-secondary)]">
+                <p className="mt-2 max-w-xl text-sm font-medium leading-relaxed text-(--gmp-text-secondary)">
                   {centerDescription}
                 </p>
               </div>
@@ -177,8 +177,8 @@ export function KineticPageShell({
 
             {/* 顶栏静默指示器 */}
             <div className="flex items-center gap-4">
-              <div className="group relative inline-flex h-10 items-center bg-[var(--gmp-bg-panel)] border border-[var(--gmp-line-soft)] px-5 font-mono text-[10px] font-bold tracking-[0.2em] text-[var(--gmp-text-secondary)] uppercase gmp-cut-corner-r">
-                <span className="w-1.5 h-1.5 bg-[var(--gmp-accent)] mr-3 inline-block opacity-80" />
+              <div className="group relative inline-flex h-10 items-center bg-(--gmp-bg-panel) border border-(--gmp-line-soft) px-5 font-mono text-[10px] font-bold tracking-[0.2em] text-(--gmp-text-secondary) uppercase gmp-cut-corner-r">
+                <span className="w-1.5 h-1.5 bg-(--gmp-accent) mr-3 inline-block opacity-80" />
                 <span>UPLINK: SECURED</span>
               </div>
             </div>
@@ -187,18 +187,18 @@ export function KineticPageShell({
           <div className="min-h-0 flex-1 overflow-y-auto pr-4 custom-scrollbar">
             {children}
           </div>
-          
-          <footer className="mt-8 flex items-center justify-start border-t border-[var(--gmp-line-soft)] pt-4 font-mono text-[10px] font-bold tracking-[0.3em] text-[var(--gmp-text-secondary)] uppercase">
-              MODULE_ID: 0xFD42A // SYS_v3.0.0
+
+          <footer className="mt-4 flex items-center justify-start border-t border-(--gmp-line-soft) pt-4 font-mono text-[10px] font-bold tracking-[0.3em] text-(--gmp-text-secondary) uppercase">
+            MODULE_ID: 0xFD42A // SYS_v3.0.0
           </footer>
         </motion.section>
 
         {/* 右侧边栏区 */}
-        <aside className="hidden flex-col gap-8 pt-8 pb-12 pr-8 xl:flex">
+        <aside className="hidden flex-col gap-6 pt-6 pb-6 pr-8 xl:flex">
           {/* Action Panel */}
-          <section className="bg-[var(--gmp-bg-panel)] border border-[var(--gmp-line-soft)] p-6 gmp-cut-corner-br gmp-hard-shadow box-border">
-            <h3 className="mb-5 font-mono text-[11px] font-bold tracking-[0.2em] text-[var(--gmp-accent)] uppercase flex items-center gap-2 border-b border-[var(--gmp-line-strong)] pb-2">
-              <span className="w-2 h-2 bg-[var(--gmp-accent)] inline-block" />
+          <section className="bg-(--gmp-bg-panel) border border-(--gmp-line-soft) p-5 gmp-cut-corner-br gmp-hard-shadow box-border">
+            <h3 className="mb-5 font-mono text-[11px] font-bold tracking-[0.2em] text-(--gmp-accent) uppercase flex items-center gap-2 border-b border-(--gmp-line-strong) pb-2">
+              <span className="w-2 h-2 bg-(--gmp-accent) inline-block" />
               QUICK_ACTIONS
             </h3>
             <div className="flex flex-col gap-3">
@@ -206,25 +206,25 @@ export function KineticPageShell({
                 <Link
                   key={item.label}
                   href={item.href}
-                  className="group relative flex h-14 w-full items-center justify-between border-2 border-[var(--gmp-line-soft)] bg-[var(--gmp-bg-base)] px-4 font-heading text-sm font-bold tracking-widest text-white transition-all hover:border-[var(--gmp-accent)] hover:bg-[var(--gmp-accent)] hover:text-[var(--gmp-bg-base)] gmp-cut-corner-l"
+                  className="group relative flex h-14 w-full items-center justify-between border-2 border-(--gmp-line-soft) bg-(--gmp-bg-base) px-4 font-heading text-sm font-bold tracking-widest text-white transition-all hover:border-(--gmp-accent) hover:bg-(--gmp-accent) hover:text-(--gmp-bg-base) gmp-cut-corner-l"
                 >
                   <span>{item.label}</span>
-                  <ArrowUpRight className="h-5 w-5 text-[var(--gmp-text-secondary)] group-hover:text-[var(--gmp-bg-base)] group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
+                  <ArrowUpRight className="h-5 w-5 text-(--gmp-text-secondary) group-hover:text-(--gmp-bg-base) group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
                 </Link>
               ))}
             </div>
           </section>
 
           {/* Reserved / Telemetry Panel */}
-          <section className="bg-[var(--gmp-bg-panel)] border border-[var(--gmp-line-soft)] p-6 flex-1 flex flex-col">
+          <section className="bg-(--gmp-bg-panel) border border-(--gmp-line-soft) p-6 flex-1 flex flex-col">
             <h3 className="mb-4 font-mono text-[11px] font-bold tracking-[0.2em] text-white/50 uppercase flex items-center gap-2">
-               SYS_TELEMETRY
+              SYS_TELEMETRY
             </h3>
-            <div className="flex-1 border-2 border-dashed border-[var(--gmp-line-soft)] bg-[var(--gmp-bg-base)] flex items-center justify-center p-4 min-h-[160px]">
+            <div className="flex-1 border-2 border-dashed border-(--gmp-line-soft) bg-(--gmp-bg-base) flex items-center justify-center p-4 min-h-40">
               {rightBottom ?? (
                 <div className="flex flex-col items-center text-center gap-2">
-                  <span className="block h-3 w-3 bg-[var(--gmp-accent)] animate-pulse" />
-                  <p className="font-mono text-[10px] font-bold tracking-widest text-[var(--gmp-text-secondary)] uppercase">
+                  <span className="block h-3 w-3 bg-(--gmp-accent) animate-pulse" />
+                  <p className="font-mono text-[10px] font-bold tracking-widest text-(--gmp-text-secondary) uppercase">
                     AWAITING FEED...
                   </p>
                 </div>
