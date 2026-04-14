@@ -131,7 +131,7 @@ export default function ProjectGrid() {
                 <CardFooter className="mt-auto flex items-center justify-between px-5 py-4">
                   <div className="flex flex-wrap gap-1.5">
                     {item.tags.map((tag) => (
-                      <Badge key={tag} variant="outline" className="border-(--gmp-line-soft) bg-[rgba(255,255,255,0.01)] font-mono text-[10px] tracking-[0.1em] text-(--gmp-text-secondary) uppercase">
+                      <Badge key={tag} variant="outline" className="border-(--gmp-line-soft) bg-[rgba(255,255,255,0.01)] font-mono text-[10px] tracking-widest text-(--gmp-text-secondary) uppercase">
                         {tag}
                       </Badge>
                     ))}

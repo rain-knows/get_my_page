@@ -27,7 +27,7 @@ export function InteractiveAuthShell({ title, description, mode, footer, childre
       data-module="auth"
     >
       {/* 背景工业斜线极简网格 */}
-      <div className="absolute inset-0 gmp-industrial-grid opacity-[0.04] pointer-events-none" />
+      <div className="absolute inset-0 gmp-industrial-grid opacity-100 pointer-events-none" />
 
       {/* 左侧巨大的安全域标识水印 */}
       <div className="absolute -left-32 top-1/2 -translate-y-1/2 font-heading text-[240px] font-black tracking-tighter text-white opacity-[0.02] select-none pointer-events-none rotate-90 xl:rotate-0 xl:left-0 z-0">
@@ -59,13 +59,13 @@ export function InteractiveAuthShell({ title, description, mode, footer, childre
           </div>
         </div>
 
-        <motion.div 
+        <motion.div
           className="relative bg-(--gmp-bg-panel) border-2 border-(--gmp-line-strong) p-8 md:p-12 gmp-cut-corner-l shadow-[8px_8px_0_0_#000]"
           layout
         >
           {/* 左上角提示刻度 */}
           <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-(--gmp-accent) -ml-2 -mt-2 pointer-events-none" />
-          
+
           <header className="mb-8 border-b-2 border-(--gmp-line-soft) pb-6">
             <div className="mb-4 inline-flex items-center gap-2 bg-(--gmp-bg-base) border border-(--gmp-line-soft) px-3 py-1 font-mono text-[10px] font-bold tracking-[0.2em] text-(--gmp-accent) uppercase">
               <span className="w-1.5 h-1.5 bg-(--gmp-accent) block animate-pulse" />

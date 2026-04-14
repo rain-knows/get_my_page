@@ -54,7 +54,7 @@ export default function FlowShowcase() {
   return (
     <section id="flow" className="mx-auto w-full max-w-6xl px-4 pb-9 md:px-6">
       <div className="industrial-panel relative overflow-hidden rounded-3xl px-5 py-6 md:px-7 md:py-8">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-(--gmp-line-strong) to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-(--gmp-line-strong) to-transparent" />
 
         <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-2">
@@ -88,7 +88,7 @@ export default function FlowShowcase() {
                 <CardHeader className="gap-3 border-b border-(--gmp-line-soft) px-4 py-4">
                   <div className="flex items-center justify-between">
                     <span className="inline-flex size-10 items-center justify-center rounded-xl border border-(--gmp-line-strong) bg-(--gmp-bg-panel) text-(--gmp-accent)">
-                      <item.icon className="size-[18px]" />
+                      <item.icon className="size-4.5" />
                     </span>
                     <span className="inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.14em] text-(--gmp-text-secondary)">
                       0{index + 1}

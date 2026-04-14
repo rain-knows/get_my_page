@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { FormEvent } from "react";
+import type { SubmitEventHandler } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
@@ -81,7 +81,7 @@ export function RegisterForm() {
    * 关键参数：event 为表单提交事件，用于阻止默认行为。
    * 返回值/副作用：无返回值；会触发注册请求、错误提示更新与路由跳转。
    */
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
     setLocalError("");
     clearError();

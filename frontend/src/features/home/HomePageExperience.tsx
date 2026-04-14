@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { EntryExperienceGate } from "@/features/home/components/EntryExperienceGate";
 
 /**
@@ -8,5 +9,9 @@ import { EntryExperienceGate } from "@/features/home/components/EntryExperienceG
  * 返回值/副作用：返回首页体验节点，无副作用。
  */
 export function HomePageExperience() {
-  return <EntryExperienceGate />;
+  return (
+    <Suspense fallback={null}>
+      <EntryExperienceGate />
+    </Suspense>
+  );
 }

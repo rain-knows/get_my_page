@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { FormEvent } from "react";
+import type { SubmitEventHandler } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
@@ -31,7 +31,7 @@ export function LoginForm() {
    * 关键参数：event 为表单提交事件，用于阻止浏览器默认刷新行为。
    * 返回值/副作用：无返回值；成功时跳转首页，失败时更新错误状态。
    */
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
     clearError();
     setSubmitState("loading");
