@@ -71,7 +71,7 @@ export function BlogListWorkbench() {
             <Link 
               key={post.id} 
               href={`/blog/${post.slug}`}
-              className="gmp-hover-fill group block relative border border-(--gmp-line-soft) bg-(--gmp-bg-elevated) p-6 md:p-8 transition-colors min-h-[140px] gmp-cut-corner-br"
+              className="gmp-hover-fill group block relative border border-(--gmp-line-soft) bg-(--gmp-bg-elevated) p-6 md:p-8 transition-colors min-h-35 gmp-cut-corner-br"
             >
               <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center relative z-10 w-full md:pr-12">
                 <div className="flex-1">
@@ -89,7 +89,7 @@ export function BlogListWorkbench() {
                   </p>
                 </div>
                 
-                <div className="flex flex-row flex-wrap md:flex-col items-center md:items-end gap-3 mt-4 md:mt-0 font-mono text-[10px] font-bold tracking-widest uppercase text-(--gmp-text-secondary) group-hover:text-black transition-colors md:min-w-[120px]">
+                <div className="flex flex-row flex-wrap md:flex-col items-center md:items-end gap-3 mt-4 md:mt-0 font-mono text-[10px] font-bold tracking-widest uppercase text-(--gmp-text-secondary) group-hover:text-black transition-colors md:min-w-30">
                    <span>{post.id}</span>
                    <span>{post.date}</span>
                    <span className="border border-(--gmp-line-strong) group-hover:border-black px-2 mt-1">{post.author}</span>
