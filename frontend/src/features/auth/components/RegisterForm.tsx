@@ -23,28 +23,79 @@ export function RegisterForm() {
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [localError, setLocalError] = useState("");
   const [submitState, setSubmitState] = useState<"idle" | "loading" | "success" | "error">("idle");
 
-  const currentSubmitState = loading ? "loading" : error ? "error" : submitState;
+  const currentError = localError || error;
+  const currentSubmitState = loading ? "loading" : currentError ? "error" : submitState;
 
   /**
-   * 功能：处理注册提交并调用注册 API，成功后写入状态并跳转首页。
+   * 功能：在输入字段变更时清理本地校验错误和远端错误提示。
+   * 关键参数：无。
+   * 返回值/副作用：无返回值；会更新组件内部错误状态。
+   */
+  const resetErrorsForInput = () => {
+    if (localError) {
+      setLocalError("");
+    }
+    if (error) {
+      clearError();
+    }
+  };
+
+  /**
+   * 功能：执行提交前本地校验，确保密码复杂度与确认密码一致性。
+   * 关键参数：无。
+   * 返回值/副作用：返回错误消息或 null；无副作用。
+   */
+  const validateBeforeSubmit = (): string | null => {
+    const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d).{8,64}$/;
+    if (!passwordPattern.test(password)) {
+      return "密码必须为 8-64 位且同时包含字母和数字";
+    }
+    if (password !== confirmPassword) {
+      return "两次输入的密码不一致";
+    }
+    return null;
+  };
+
+  /**
+   * 功能：构建标准化后的注册请求体，统一去除空白并格式化邮箱。
+   * 关键参数：无。
+   * 返回值/副作用：返回可直接提交到注册 API 的请求对象；无副作用。
+   */
+  const buildNormalizedPayload = () => {
+    const normalizedEmail = email.trim().toLowerCase();
+    return {
+      username: username.trim(),
+      nickname: nickname.trim(),
+      password,
+      email: normalizedEmail ? normalizedEmail : undefined,
+    };
+  };
+
+  /**
+   * 功能：处理注册提交，先执行本地校验，再调用注册 API。
    * 关键参数：event 为表单提交事件，用于阻止默认行为。
-   * 返回值/副作用：无返回值；会触发注册请求与路由跳转。
+   * 返回值/副作用：无返回值；会触发注册请求、错误提示更新与路由跳转。
    */
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setLocalError("");
     clearError();
-    setSubmitState("loading");
+
+    const validationMessage = validateBeforeSubmit();
+    if (validationMessage) {
+      setLocalError(validationMessage);
+      setSubmitState("error");
+      return;
+    }
 
     try {
-      await register({
-        username,
-        nickname,
-        password,
-        email: email || undefined,
-      });
+      setSubmitState("loading");
+      await register(buildNormalizedPayload());
       setSubmitState("success");
       window.setTimeout(() => {
         router.push("/");
@@ -68,7 +119,7 @@ export function RegisterForm() {
         </>
       }
     >
-      {error && (
+      {currentError && (
         <motion.div
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
@@ -76,7 +127,7 @@ export function RegisterForm() {
           role="alert"
           aria-live="polite"
         >
-          {error}
+          {currentError}
         </motion.div>
       )}
 
@@ -89,7 +140,10 @@ export function RegisterForm() {
               id="register-username"
               type="text"
               value={username}
-              onChange={(event) => setUsername(event.target.value)}
+              onChange={(event) => {
+                resetErrorsForInput();
+                setUsername(event.target.value);
+              }}
               placeholder="3-50 个字符"
               autoComplete="username"
               minLength={3}
@@ -108,7 +162,10 @@ export function RegisterForm() {
               id="register-nickname"
               type="text"
               value={nickname}
-              onChange={(event) => setNickname(event.target.value)}
+              onChange={(event) => {
+                resetErrorsForInput();
+                setNickname(event.target.value);
+              }}
               placeholder="显示昵称"
               maxLength={100}
               required
@@ -125,7 +182,10 @@ export function RegisterForm() {
               id="register-email"
               type="email"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => {
+                resetErrorsForInput();
+                setEmail(event.target.value);
+              }}
               placeholder="your@email.com"
               autoComplete="email"
               className="h-11 rounded-xs border-white/18 bg-black/42 pl-9 text-white placeholder:text-white/38 focus-visible:border-(--gmp-end-accent) focus-visible:ring-(--gmp-end-accent)/30"
@@ -141,10 +201,14 @@ export function RegisterForm() {
               id="register-password"
               type={showPassword ? "text" : "password"}
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="至少 6 个字符"
+              onChange={(event) => {
+                resetErrorsForInput();
+                setPassword(event.target.value);
+              }}
+              placeholder="8-64 位，需含字母+数字"
               autoComplete="new-password"
-              minLength={6}
+              minLength={8}
+              maxLength={64}
               required
               className="h-11 rounded-xs border-white/18 bg-black/42 pr-10 pl-9 text-white placeholder:text-white/38 focus-visible:border-(--gmp-end-accent) focus-visible:ring-(--gmp-end-accent)/30"
             />
@@ -158,6 +222,28 @@ export function RegisterForm() {
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </Button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="register-password-confirm" className="text-white">确认密码</Label>
+          <div className="relative">
+            <Lock className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-white/60" />
+            <Input
+              id="register-password-confirm"
+              type={showPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(event) => {
+                resetErrorsForInput();
+                setConfirmPassword(event.target.value);
+              }}
+              placeholder="再次输入密码"
+              autoComplete="new-password"
+              minLength={8}
+              maxLength={64}
+              required
+              className="h-11 rounded-xs border-white/18 bg-black/42 pr-10 pl-9 text-white placeholder:text-white/38 focus-visible:border-(--gmp-end-accent) focus-visible:ring-(--gmp-end-accent)/30"
+            />
           </div>
         </div>
 

@@ -2,6 +2,7 @@ package com.getmypage.blog.model.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -16,7 +17,8 @@ public class RegisterRequest {
     private String username;
 
     @NotBlank(message = "密码不能为空")
-    @Size(min = 6, message = "密码长度不能少于 6 位")
+    @Size(min = 8, max = 64, message = "密码长度必须在 8-64 位之间")
+    @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).{8,64}$", message = "密码必须同时包含字母和数字")
     private String password;
 
     @NotBlank(message = "昵称不能为空")

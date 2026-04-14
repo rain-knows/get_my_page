@@ -24,7 +24,8 @@ public enum ErrorCode {
     USERNAME_OR_PASSWORD_ERROR(40010, "用户名或密码错误"),
     USER_DISABLED(40011, "用户已被禁用"),
     USERNAME_ALREADY_EXISTS(40012, "用户名已存在"),
-    REFRESH_TOKEN_INVALID(40013, "Refresh Token 无效");
+    REFRESH_TOKEN_INVALID(40013, "Refresh Token 无效"),
+    EMAIL_ALREADY_EXISTS(40014, "邮箱已存在");
 
     private final int code;
     private final String message;

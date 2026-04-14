@@ -8,4 +8,12 @@
         WHERE username = #{username} AND deleted = 0
     </select>
 
+    <select id="findByEmailIgnoreCase" resultType="com.getmypage.blog.model.entity.User">
+        SELECT id, username, password, nickname, avatar_url, email, bio, role, status, created_at, updated_at
+        FROM user
+        WHERE email IS NOT NULL
+          AND LOWER(email) = LOWER(#{email})
+          AND deleted = 0
+    </select>
+
 </mapper>

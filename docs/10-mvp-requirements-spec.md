@@ -47,7 +47,7 @@
 
 | 需求ID | 优先级 | 需求描述 | 约束 | 验收方式 |
 |---|---|---|---|---|
-| FR-AUTH-001 | P0 | 支持用户注册并返回 token 信息 | 遵循统一响应结构与错误码 | 调用注册接口成功/非法参数失败 |
+| FR-AUTH-001 | P0 | 支持用户注册并返回 token 信息 | 邮箱可选但唯一；密码需 8-64 位且包含字母+数字；遵循统一响应结构与错误码 | 调用注册接口成功/重复邮箱失败/弱密码失败 |
 | FR-AUTH-002 | P0 | 支持用户名密码登录并返回 token | 错误密码不可返回 500 | 登录成功与错误密码双路径 |
 | FR-AUTH-003 | P0 | 支持 refresh token 刷新 access token | 无效 refresh token 必须拒绝 | refresh 成功/无效失败 |
 | FR-AUTH-004 | P1 | 支持登出后 token 撤销策略 | 需有黑名单或等效机制 | 登出后旧 token 不可继续访问 |
@@ -78,7 +78,7 @@
 
 | 验收ID | 覆盖需求 | 验收命令示例 | 通过标准 |
 |---|---|---|---|
-| AC-AUTH-01 | FR-AUTH-001/002/003 | `curl -X POST /api/auth/register`、`/login`、`/refresh` | 成功返回统一结构，失败返回预期错误码 |
+| AC-AUTH-01 | FR-AUTH-001/002/003 | `curl -X POST /api/auth/register`、`/login`、`/refresh` | 注册成功返回统一结构；重复邮箱返回 40014；弱密码返回参数校验失败 |
 | AC-POST-01 | FR-POST-001/002 | `curl /api/posts?page=1&size=10`、`curl /api/posts/{slug}` | 列表与详情可用，不存在返回错误 |
 | AC-POST-02 | FR-POST-003 | `curl -X POST /api/posts`（带/不带管理员令牌） | 管理员成功，未授权失败 |
 | AC-COMMENT-01 | FR-COMMENT-001/002 | `curl -X POST /api/comments`、`curl /api/posts/{id}/comments` | 评论可写可读，结构正确 |
@@ -120,3 +120,4 @@
 | 版本 | 日期 | 变更内容 |
 |---|---|---|
 | v1.0.0 | 2026-04-12 | 首次建立 MVP 需规基线，继承编号 `10` |
+| v1.1.0 | 2026-04-14 | 补充注册链路失败路径：重复邮箱与弱密码验收标准 |
