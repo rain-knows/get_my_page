@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = localFont({
   src: [
@@ -51,6 +52,7 @@ export default function RootLayout({
         className={`${spaceGrotesk.className} ${archivo.variable} ${spaceGrotesk.variable} min-h-screen bg-[#0a0d12] text-neutral-100 antialiased selection:bg-[#d4c3a2]/30 selection:text-[#f4ecdc] overscroll-none`}
       >
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );
