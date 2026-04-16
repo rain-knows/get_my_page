@@ -84,10 +84,21 @@ public class SecurityConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
+    /**
+     * 功能：注册安全链路使用的 CORS 配置源，放行本地开发、Vercel 部署域名和业务正式域名。
+     * 关键参数：无外部参数；内部维护允许来源列表、方法与请求头策略。
+     * 返回值/副作用：返回 Spring Security 使用的 `CorsConfigurationSource`，影响 `/api/**` 的跨域访问行为。
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:3000",
+                "https://get-my-page.vercel.app",
+                "https://*.vercel.app",
+                "https://rainknows.cn",
+                "https://www.rainknows.cn"
+        ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
