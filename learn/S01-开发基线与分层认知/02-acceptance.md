@@ -1,32 +1,25 @@
 # S01-开发基线与分层认知 / 02-acceptance
 
-## 学习目标
-- 通过命令级验证，确认本 Step 不是看起来完成，而是可重复完成。
+## 5 分钟验收
 
-## 完成定义（DoD）
-- [ ] 至少 1 条构建或测试命令通过
-- [ ] 至少 1 条成功路径接口命令通过
-- [ ] 至少 1 条失败路径接口命令通过
+## 命令
+```bash
+# 成功路径
+docker compose ps
 
-## 执行命令
-- curl -sS http://localhost:8080/api/users/me
-- curl -sS -o /dev/null -w "%{http_code}" http://localhost:9999
-- ./backend/mvnw -f backend/pom.xml test（如当前 Step 涉及后端改动）
-- npm --prefix frontend run build（如当前 Step 涉及前端改动）
+# 失败路径
+curl -sS http://localhost:8080/api/unknown
 
-## 验收结果
-| 项目 | 命令 | 期望 | 实际 | 是否通过 |
-|---|---|---|---|---|
-| 成功路径 | curl -sS http://localhost:8080/api/users/me | 返回 code=200 或可预期成功结构 | 待填写 | 待填写 |
-| 失败路径 | curl -sS -o /dev/null -w "%{http_code}" http://localhost:9999 | 返回明确错误码或失败状态 | 待填写 | 待填写 |
-| 构建/测试 | ./backend/mvnw -f backend/pom.xml test / npm --prefix frontend run build | 命令成功退出 | 待填写 | 待填写 |
+# 构建或测试
+./backend/mvnw -f backend/pom.xml test
+```
 
-## 架构决策记录（ADR-Style）
-- 决策：每个 Step 强制成功+失败+构建三段式验收。
-- 背景：只验证成功路径会掩盖多数线上问题。
-- 备选方案：仅跑 happy path。
-- 取舍原因：三段式能最小化回归风险。
-- 影响面：执行时间增加，但质量显著提升。
+## 通过标准
+- [ ] 成功路径返回符合预期。
+- [ ] 失败路径返回明确错误。
+- [ ] 构建或测试命令成功退出。
 
-## 下一步
-- 验收通过后，把关键输出归档到 evidence/ 并更新复盘。
+## 记录
+- 命令输出摘要：待填写
+- 结论：待填写
+- 下一步：待填写
