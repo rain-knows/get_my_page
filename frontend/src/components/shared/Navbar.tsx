@@ -16,9 +16,10 @@ export default function Navbar() {
       initial={{ y: -18, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-      className="industrial-panel sticky top-3 z-50 mx-auto mt-3 flex w-[min(1100px,calc(100%-1.5rem))] items-center justify-between rounded-2xl px-4 py-3 backdrop-blur-sm md:px-5"
+      className="industrial-panel sticky top-3 z-50 mx-auto mt-3 flex w-[min(1100px,calc(100%-1.5rem))] items-center justify-between rounded-2xl px-4 py-3 backdrop-blur-sm md:px-5 overflow-hidden"
     >
-      <div className="flex items-center gap-3">
+      <div className="absolute inset-0 gmp-halftone-card opacity-50 pointer-events-none" />
+      <div className="relative z-10 flex items-center gap-3">
         <Link href="/" className="inline-flex items-center gap-2.5">
           <span className="inline-flex size-8 items-center justify-center rounded-md border border-(--gmp-line-strong) bg-(--gmp-bg-panel) font-mono text-xs font-semibold tracking-[0.18em] text-(--gmp-accent)">
             GMP

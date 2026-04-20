@@ -67,12 +67,16 @@ A complete visual overhaul shifting from a heavily textured "dark noise/terminal
 **背景纹理**:
 - `.gmp-industrial-grid`: 工业方格网底 (50x50)
 - `.gmp-industrial-dot-grid`: 点状阵列网底 (20x20)
+- `.gmp-halftone-pattern`: 边缘虚化的点阵渐变半调纹理 (8x8)
 
 **示例**:
 ```tsx
 <div className="bg-(--gmp-bg-panel) gmp-cut-corner-br relative overflow-hidden p-6">
   {/* 必须配合低透明度才能作为点缀 */}
   <div className="absolute inset-0 gmp-industrial-dot-grid opacity-[0.04] pointer-events-none" />
+  
+  {/* 或者使用半调装饰卡片 */}
+  <div className="absolute inset-0 gmp-halftone-pattern opacity-20 pointer-events-none" />
   Content
 </div>
 ```
@@ -121,3 +125,28 @@ A complete visual overhaul shifting from a heavily textured "dark noise/terminal
 </div>
 ```
 
+
+### 6. 半调点阵增强 (Halftone / Industrial Dots)
+在纯色方块不足以提供足够的质感时，使用 CSS `radial-gradient` 生成静态防滑金属板质感的半调效果。
+**核心原则与禁忌**:
+- **禁止渐隐渐现交互**：半调图层必须是固定的、静态的底层组件风格化（`pointer-events-none`），严禁使用 `hover:opacity-100` 或结合 `transition` 进行变色或透明度补间交互。这会破坏点阵的“坚固”与“重工作用”质感，显得廉价。
+- **层级管理**：作为背景层，`z-index: 0` 且置于文字与交互按钮底面，有时结合 `mix-blend-overlay` 融入底色，或者调节整体 `opacity` 达到克制但清晰的质感。
+
+**核心 CSS 变体 (`globals.css`)**：
+- `.gmp-halftone-btn`: 针对按钮的细密防滑纹高对比度点阵 (4x4px，配合 `mix-blend-overlay` 与底色如黄黑融合)。
+- `.gmp-halftone-card`: 针对卡片与通用面板的稀疏防滑金属大点阵 (10x10px，用于深灰背景增加厚重感边界使用 `mask-image` 进行单角渐隐)。
+- `.gmp-halftone-hero`: 针对首页 PRTS 巨幕级重工网底（使用极密 6x6 点阵，结合生硬对角 `linear-gradient` 切割，与警告斜线纹组合使用）。
+- `.gmp-halftone-sidebar`: 针对主导航侧边栏垂直大跨度专用 (从左向右渐隐)。
+
+**示例**：
+```tsx
+<div className="relative overflow-hidden border border-(--gmp-line-strong) bg-(--gmp-bg-panel) p-8">
+  {/* 静态重工点阵，永远作为底物 */}
+  <div className="absolute inset-0 gmp-halftone-card opacity-[0.35] pointer-events-none z-0" />
+  
+  <div className="relative z-10 w-full text-white">
+    <h2 className="text-xl">SYSTEM RECORD</h2>
+    <p className="text-(--gmp-text-secondary)">This is a static structural panel.</p>
+  </div>
+</div>
+```

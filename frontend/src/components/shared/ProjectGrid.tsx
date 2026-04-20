@@ -111,8 +111,9 @@ export default function ProjectGrid() {
         {feedItems.map((item) => (
           <motion.div key={item.id} variants={itemVariants}>
             <motion.div initial="rest" whileHover="hover" animate="rest" variants={cardInteractionVariants}>
-              <Card className="group relative h-full overflow-hidden border border-(--gmp-line-soft) bg-[rgba(15,20,30,0.7)] py-0 shadow-(--gmp-shadow-soft) transition-[border-color,background-color] duration-200 hover:border-(--gmp-line-strong) hover:bg-[rgba(20,27,39,0.78)]">
-                <CardHeader className="space-y-3 border-b border-(--gmp-line-soft) px-5 py-5 transition-colors duration-200 group-hover:border-(--gmp-line-strong)">
+              <Card className="group relative h-full overflow-hidden border border-(--gmp-line-soft) bg-(--gmp-bg-panel) py-0 shadow-(--gmp-shadow-soft) transition-[border-color,background-color] duration-200 hover:border-(--gmp-line-strong) hover:bg-(--gmp-bg-elevated)">
+                <div className="absolute inset-0 gmp-halftone-card opacity-[0.35] pointer-events-none" />
+                <CardHeader className="relative z-10 space-y-3 border-b border-(--gmp-line-soft) px-5 py-5 transition-colors duration-200 group-hover:border-(--gmp-line-strong)">
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="gap-1.5 border border-(--gmp-line-soft) bg-(--gmp-bg-panel) text-xs text-(--gmp-text-secondary) transition-colors group-hover:border-(--gmp-line-strong) group-hover:text-(--gmp-text-primary)">
                       {item.type === "project" ? <FolderGit2 className="size-3.5" /> : <BookOpen className="size-3.5" />}

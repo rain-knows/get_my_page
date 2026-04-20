@@ -42,9 +42,9 @@ export function InteractiveAuthShell({ title, description, mode, footer, childre
       >
         <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <Link href="/" className="group inline-flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center bg-(--gmp-bg-base) border border-(--gmp-accent) font-heading text-sm font-black tracking-widest text-(--gmp-accent) shadow-[2px_2px_0_0_var(--gmp-line-soft)] group-hover:bg-(--gmp-accent) group-hover:text-(--gmp-bg-base) transition-colors">
-              GMP
-            </span>
+            <div className="flex h-12 w-12 items-center justify-center bg-(--gmp-bg-base) border border-(--gmp-accent) p-1.5 shadow-[2px_2px_0_0_var(--gmp-line-soft)] transition-colors group-hover:bg-(--gmp-bg-panel)">
+              <img src="/gmp-logo.svg" alt="GetMyPage Logo" className="w-full h-full object-contain" />
+            </div>
             <span className="font-heading text-lg font-black tracking-widest text-white group-hover:text-(--gmp-text-secondary) transition-colors uppercase">
               GetMyPage
             </span>
@@ -60,11 +60,13 @@ export function InteractiveAuthShell({ title, description, mode, footer, childre
         </div>
 
         <motion.div
-          className="relative bg-(--gmp-bg-panel) border-2 border-(--gmp-line-strong) p-8 md:p-12 gmp-cut-corner-l shadow-[8px_8px_0_0_#000]"
+          className="relative overflow-hidden bg-(--gmp-bg-panel) border-2 border-(--gmp-line-strong) p-8 md:p-12 gmp-cut-corner-l shadow-[8px_8px_0_0_#000]"
           layout
         >
+          <div className="absolute inset-0 gmp-halftone-card mix-blend-overlay pointer-events-none" />
+
           {/* 左上角提示刻度 */}
-          <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-(--gmp-accent) -ml-2 -mt-2 pointer-events-none" />
+          <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-(--gmp-accent) -ml-2 -mt-2 pointer-events-none z-10" />
 
           <header className="mb-8 border-b-2 border-(--gmp-line-soft) pb-6">
             <div className="mb-4 inline-flex items-center gap-2 bg-(--gmp-bg-base) border border-(--gmp-line-soft) px-3 py-1 font-mono text-[10px] font-bold tracking-[0.2em] text-(--gmp-accent) uppercase">

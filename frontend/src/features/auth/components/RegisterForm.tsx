@@ -250,10 +250,13 @@ export function RegisterForm() {
         <Button
           type="submit"
           disabled={loading}
-          className="h-11 w-full rounded-xs border border-black/20 bg-(--gmp-end-accent) font-medium text-black hover:bg-(--gmp-end-accent-soft)"
+          className="relative overflow-hidden group h-12 w-full border border-(--gmp-line-strong) bg-(--gmp-accent) text-black font-heading font-black tracking-widest uppercase hover:bg-white hover:text-black transition-colors rounded-none"
         >
-          {currentSubmitState === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : currentSubmitState === "success" ? <CheckCircle2 className="h-4 w-4" /> : null}
-          {currentSubmitState === "loading" ? "注册中..." : currentSubmitState === "success" ? "创建完成" : "注册"}
+          <div className="absolute inset-0 gmp-halftone-btn pointer-events-none opacity-40 mix-blend-overlay" />
+          <span className="relative z-10 flex items-center justify-center gap-2">
+            {currentSubmitState === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : currentSubmitState === "success" ? <CheckCircle2 className="h-4 w-4" /> : null}
+            {currentSubmitState === "loading" ? "CREATING..." : currentSubmitState === "success" ? "ACCOUNT CREATED" : "REGISTER / 注册"}
+          </span>
         </Button>
       </motion.form>
     </InteractiveAuthShell>

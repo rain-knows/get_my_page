@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <!-- Outer glowing border -->
+  <path d="M 16 16 L 208 16 L 240 48 L 240 240 L 48 240 L 16 208 Z" fill="#1A1B20" stroke="#FFCC00" stroke-width="4" stroke-opacity="0.3"/>
+  
+  <!-- Solid tech base -->
+  <path d="M 28 28 L 200 28 L 228 56 L 228 228 L 56 228 L 28 200 Z" fill="#0B0C10" stroke="#FFFFFF" stroke-width="2"/>
+  
+  <!-- Main Inner Block (Yellow) -->
+  <path d="M 52 52 L 180 52 L 204 76 L 204 204 L 76 204 L 52 180 Z" fill="#FFCC00"/>
+  
+  <!-- Sharp Cutouts creating 'G'/'M' tech logic -->
+  <path d="M 76 76 L 150 76 L 150 110 L 120 110 L 120 130 L 170 130 L 180 180 L 100 180 Z" fill="#0B0C10"/>
+  
+  <!-- Dot matrix highlight in bottom left -->
+  <circle cx="80" cy="180" r="4" fill="#FFFFFF"/>
+  <circle cx="100" cy="180" r="4" fill="#FFFFFF"/>
+  <circle cx="120" cy="180" r="4" fill="#FFFFFF"/>
+  
+  <!-- Diagnostic Text overlay (conceptual) -->
+  <rect x="180" y="32" width="20" height="4" fill="#0B0C10"/>
+  <rect x="204" y="100" width="8" height="24" fill="#FFCC00"/>
+  <rect x="204" y="132" width="8" height="12" fill="#FFCC00"/>
+  
+  <path d="M 20 200 L 44 224" stroke="#FFCC00" stroke-width="6"/>
+</svg>

@@ -34,6 +34,9 @@ const archivo = localFont({
 export const metadata: Metadata = {
   title: "Get My Page | 高质感数字博客",
   description: "采用 Next.js 驱动的现代化内容创造者平台",
+  icons: {
+    icon: "/gmp-logo.svg",
+  },
 };
 
 /**
@@ -49,9 +52,11 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className={cn("dark", "font-sans", inter.variable)}>
       <body
-        className={`${spaceGrotesk.className} ${archivo.variable} ${spaceGrotesk.variable} min-h-screen bg-[#0a0d12] text-neutral-100 antialiased selection:bg-[#d4c3a2]/30 selection:text-[#f4ecdc] overscroll-none`}
+        className={`${spaceGrotesk.className} ${archivo.variable} ${spaceGrotesk.variable} min-h-screen bg-(--gmp-bg-base) text-(--gmp-text-primary) antialiased selection:bg-(--gmp-accent)/30 selection:text-(--gmp-accent) overscroll-none`}
       >
-        {children}
+        <div className="relative z-0 flex min-h-screen w-full flex-col">
+          {children}
+        </div>
         <SpeedInsights />
       </body>
     </html>

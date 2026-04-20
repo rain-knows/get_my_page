@@ -66,13 +66,14 @@ export function KineticPageShell({
       <main className="relative z-10 mx-auto grid min-h-dvh w-full grid-cols-1 gap-0 md:grid-cols-[100px_1fr] xl:grid-cols-[100px_1fr_360px] xl:gap-8 px-4 md:px-0">
 
         {/* 左侧工业导航 */}
-        <aside className="hidden h-full flex-col items-center justify-between bg-(--gmp-bg-elevated) border-r border-(--gmp-line-soft) py-8 md:flex">
-          <div className="flex flex-col items-center gap-12 w-full">
+        <aside className="relative hidden h-full flex-col items-center justify-between bg-(--gmp-bg-elevated) border-r border-(--gmp-line-soft) py-8 md:flex">
+          <div className="absolute inset-0 gmp-halftone-sidebar mix-blend-overlay pointer-events-none" />
+          <div className="relative z-10 flex flex-col items-center gap-12 w-full">
             {/* Logo区 */}
             <Link href="/" className="group flex flex-col items-center gap-2">
-              <span className="flex h-12 w-12 items-center justify-center bg-(--gmp-bg-base) border border-(--gmp-accent) font-heading text-lg font-black tracking-widest text-(--gmp-accent) shadow-[2px_2px_0_0_var(--gmp-line-soft)] group-hover:bg-(--gmp-accent) group-hover:text-(--gmp-bg-base) transition-colors">
-                GMP
-              </span>
+              <div className="flex z-20 h-16 w-16 items-center justify-center bg-(--gmp-bg-base) border border-(--gmp-accent) p-1.5 shadow-[2px_2px_0_0_var(--gmp-line-soft)] transition-colors group-hover:bg-(--gmp-bg-panel)">
+                <img src="/gmp-logo.svg" alt="GetMyPage Logo" className="w-full h-full object-contain" />
+              </div>
               <span className="font-mono text-[9px] font-bold tracking-[0.2em] text-(--gmp-text-secondary) uppercase group-hover:text-white transition-colors">
                 Sys.v3
               </span>
@@ -130,7 +131,7 @@ export function KineticPageShell({
           </div>
 
           {/* 底部保留状态指示 */}
-          <div className="flex flex-col items-center gap-6">
+          <div className="relative z-10 flex flex-col items-center gap-6">
             <div className="h-24 w-px bg-(--gmp-line-soft)" />
             <span className="font-mono text-[10px] font-bold tracking-[0.3em] text-(--gmp-text-secondary) uppercase [writing-mode:vertical-rl]">
               LINK // ONLINE

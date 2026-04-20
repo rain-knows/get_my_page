@@ -14,12 +14,32 @@ export function HomeLandingSurface() {
       <div className="flex flex-col gap-4 lg:gap-6 max-w-5xl mx-auto px-2 pb-12">
 
         {/* Top Hero Panel - The Main Visual Statement */}
-        <section className="relative w-full border border-(--gmp-line-soft) bg-(--gmp-bg-panel) overflow-hidden gmp-cut-corner-br min-h-65 md:min-h-70 flex flex-col justify-end p-6 md:p-8 gmp-hard-shadow drop-shadow-xl group">
-          <div className="absolute top-0 right-0 bottom-0 left-1/2 gmp-industrial-dot-grid opacity-[0.04] pointer-events-none" />
-          <div className="absolute right-0 -bottom-5 font-heading text-[120px] md:text-[180px] font-black leading-none text-white select-none group-hover:text-white opacity-10 transition-colors duration-1000">
+        <section className="relative w-full border-2 border-(--gmp-line-strong) bg-[#0A0B10] overflow-hidden gmp-cut-corner-br min-h-65 md:min-h-70 flex flex-col justify-end p-6 md:p-8 z-0">
+
+          {/* Dense Industrial Mesh Background (Halftone redesign) */}
+          <div className="absolute inset-0 gmp-halftone-hero pointer-events-none z-0" />
+
+          {/* Tactical Warning Stripes Overlay */}
+          <div className="absolute top-0 right-0 w-[50%] h-[150%] bg-[repeating-linear-gradient(45deg,transparent,transparent_4px,var(--gmp-line-strong)_4px,var(--gmp-line-strong)_6px)] opacity-20 pointer-events-none z-0 [mask-image:linear-gradient(to_bottom_left,black_20%,transparent_70%)]" />
+
+          {/* Coordinate / Frame Lines */}
+          <div className="absolute left-[5%] top-0 bottom-0 w-px bg-gradient-to-b from-(--gmp-line-strong) to-transparent opacity-60 z-0 pointer-events-none" />
+          <div className="absolute left-0 right-0 top-[20%] h-px bg-gradient-to-r from-(--gmp-line-strong) to-transparent opacity-60 z-0 pointer-events-none" />
+
+          {/* Holographic / Stroke PRTS Typography */}
+          <div
+            className="absolute right-0 -bottom-8 md:-bottom-12 font-heading text-[140px] md:text-[200px] font-black leading-none text-transparent select-none pointer-events-none z-0"
+            style={{ WebkitTextStroke: "2px var(--gmp-line-strong)", opacity: 0.4 }}
+          >
             PRTS
           </div>
-          <div className="absolute left-0 top-0 w-1.5 h-full bg-(--gmp-accent) opacity-80" />
+          <div className="absolute right-2 -bottom-6 md:-bottom-10 font-heading text-[140px] md:text-[200px] font-black leading-none text-white select-none pointer-events-none opacity-5 z-0">
+            PRTS
+          </div>
+
+          {/* Structural Anchor Points */}
+          <div className="absolute left-0 top-0 w-2 h-full bg-(--gmp-accent) opacity-90 z-10" />
+          <div className="absolute left-2 top-0 w-12 h-2 bg-(--gmp-accent) opacity-90 z-10" />
 
           <div className="relative z-10 max-w-2xl">
             <div className="flex items-center gap-3 mb-4">
