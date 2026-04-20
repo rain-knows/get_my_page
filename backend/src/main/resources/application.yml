@@ -80,6 +80,7 @@ blog:
   meilisearch:
     host: ${MEILI_HOST:http://localhost:7700}
     api-key: ${MEILI_API_KEY:masterKey}
+    post-index: ${MEILI_POST_INDEX:posts}
 
 # 日志输出配置
 logging:
