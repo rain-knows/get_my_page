@@ -1,5 +1,7 @@
 import type { ApiResponse } from '@/types/api';
 
+type QueryValue = string | number | boolean | null | undefined;
+
 /**
  * 统一 API 请求客户端。
  * 自动处理 Token 注入、错误拦截和响应解析。
@@ -14,10 +16,14 @@ class ApiClient {
   /**
    * 发起 GET 请求。
    */
-  async get<T>(path: string, params?: Record<string, string>): Promise<T> {
-    const url = new URL(path, this.baseUrl || window.location.origin);
+  async get<T>(path: string, params?: Record<string, QueryValue>): Promise<T> {
+    const url = this.buildUrl(path);
     if (params) {
-      Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) {
+          url.searchParams.set(k, String(v));
+        }
+      });
     }
 
     const res = await fetch(url.toString(), {
@@ -38,6 +44,23 @@ class ApiClient {
     });
 
     return this.handleResponse<T>(res);
+  }
+
+  /**
+   * 功能：构建完整请求地址，兼容浏览器与服务端运行环境。
+   * 关键参数：path 为 API 路径（支持相对路径）。
+   * 返回值/副作用：返回标准 URL 实例，无副作用。
+   */
+  private buildUrl(path: string): URL {
+    if (this.baseUrl) {
+      return new URL(path, this.baseUrl);
+    }
+
+    if (typeof window !== 'undefined') {
+      return new URL(path, window.location.origin);
+    }
+
+    throw new Error('缺少 NEXT_PUBLIC_API_URL，无法在服务端构建 API 请求地址');
   }
 
   /**
