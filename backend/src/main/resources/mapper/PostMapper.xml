@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.getmypage.blog.mapper.PostMapper">
+
+    <select id="findBySlug" resultType="com.getmypage.blog.model.entity.Post">
+        SELECT id, title, slug, summary, content, cover_url, category_id, author_id, status,
+               allow_comment, view_count, like_count, is_top, created_at, updated_at, deleted
+        FROM post
+        WHERE slug = #{slug}
+          AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <select id="selectPostPage" resultType="com.getmypage.blog.model.entity.Post">
+        SELECT id, title, slug, summary, content, cover_url, category_id, author_id, status,
+               allow_comment, view_count, like_count, is_top, created_at, updated_at, deleted
+        FROM post
+        WHERE deleted = 0
+        <if test="!includeDraft">
+            AND status = 1
+        </if>
+        ORDER BY is_top DESC, created_at DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPosts" resultType="long">
+        SELECT COUNT(1)
+        FROM post
+        WHERE deleted = 0
+        <if test="!includeDraft">
+            AND status = 1
+        </if>
+    </select>
+
+    <select id="findDetailBySlug" resultType="com.getmypage.blog.model.entity.Post">
+        SELECT id, title, slug, summary, content, cover_url, category_id, author_id, status,
+               allow_comment, view_count, like_count, is_top, created_at, updated_at, deleted
+        FROM post
+        WHERE slug = #{slug}
+          AND deleted = 0
+        <if test="!includeDraft">
+            AND status = 1
+        </if>
+        LIMIT 1
+    </select>
+
+    <select id="searchPublishedByKeyword" resultType="com.getmypage.blog.model.entity.Post">
+        SELECT id, title, slug, summary, content, cover_url, category_id, author_id, status,
+               allow_comment, view_count, like_count, is_top, created_at, updated_at, deleted
+        FROM post
+        WHERE deleted = 0
+          AND status = 1
+          AND (
+                title LIKE CONCAT('%', #{keyword}, '%')
+                OR summary LIKE CONCAT('%', #{keyword}, '%')
+                OR content LIKE CONCAT('%', #{keyword}, '%')
+              )
+        ORDER BY updated_at DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

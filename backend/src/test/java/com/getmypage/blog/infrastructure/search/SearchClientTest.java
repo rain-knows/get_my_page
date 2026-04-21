@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -27,17 +28,17 @@ class SearchClientTest {
     private RestTemplate restTemplate;
 
     /**
-     * 功能：验证文章发布后会向 Meilisearch 提交增量索引文档。
+     * 功能：验证已发布文章会向 Meilisearch 提交 upsert 文档，且附带 status=1。
      * 关键参数：无（测试内部固定 postId=7 且索引名为 posts）。
      * 返回值/副作用：无返回值；断言请求路径与文档体字段符合预期。
      */
     @Test
-    void updatePostIndexShouldSubmitDocumentToMeiliSearch() {
+    void syncPublicPostIndexShouldUpsertWhenPublished() {
         when(restTemplate.postForEntity(any(String.class), any(Object.class), eq(Map.class)))
                 .thenReturn(new ResponseEntity<>(Map.of("taskUid", 1), HttpStatus.ACCEPTED));
         SearchClient searchClient = new SearchClient(restTemplate, "posts");
 
-        searchClient.updatePostIndex(7L);
+        searchClient.syncPublicPostIndex(7L, 1, false);
 
         ArgumentCaptor<List<Map<String, Object>>> bodyCaptor = ArgumentCaptor.forClass(List.class);
         verify(restTemplate).postForEntity(
@@ -48,11 +49,28 @@ class SearchClientTest {
         List<Map<String, Object>> documents = bodyCaptor.getValue();
         assertEquals(1, documents.size());
         assertEquals(7L, documents.get(0).get("id"));
+        assertEquals(1, documents.get(0).get("status"));
         assertTrue(documents.get(0).containsKey("updatedAt"));
     }
 
     /**
-     * 功能：验证 postId 为空时不会触发 Meilisearch 请求，避免写入非法文档。
+     * 功能：验证草稿或删除文章会触发索引删除，避免进入公开检索。
+     * 关键参数：无（测试内部分别覆盖 status=0 与 deleted=true）。
+     * 返回值/副作用：无返回值；断言触发了删除接口调用。
+     */
+    @Test
+    void syncPublicPostIndexShouldDeleteWhenDraftOrDeleted() {
+        SearchClient searchClient = new SearchClient(restTemplate, "posts");
+
+        searchClient.syncPublicPostIndex(8L, 0, false);
+        searchClient.syncPublicPostIndex(9L, 1, true);
+
+        verify(restTemplate).delete("/indexes/posts/documents/8");
+        verify(restTemplate).delete("/indexes/posts/documents/9");
+    }
+
+    /**
+     * 功能：验证 postId 为空时不会触发搜索客户端请求。
      * 关键参数：无（直接传入 null）。
      * 返回值/副作用：无返回值；断言未调用外部搜索客户端。
      */
@@ -63,5 +81,46 @@ class SearchClientTest {
         searchClient.updatePostIndex(null);
 
         verifyNoInteractions(restTemplate);
+    }
+
+    /**
+     * 功能：验证搜索成功时会返回命中结果并标记 degraded=false。
+     * 关键参数：无（测试内部构造 Meilisearch 返回体）。
+     * 返回值/副作用：无返回值；断言命中数与降级标记符合预期。
+     */
+    @Test
+    void searchPublicPostsShouldReturnHitsWhenSuccess() {
+        Map<String, Object> meiliBody = Map.of(
+                "hits", List.of(Map.of("id", 1, "title", "hit")),
+                "estimatedTotalHits", 3,
+                "processingTimeMs", 2
+        );
+        when(restTemplate.postForEntity(eq("/indexes/posts/search"), any(Object.class), eq(Map.class)))
+                .thenReturn(new ResponseEntity<>(meiliBody, HttpStatus.OK));
+
+        SearchClient searchClient = new SearchClient(restTemplate, "posts");
+        SearchClient.SearchQueryResult result = searchClient.searchPublicPosts("nextjs");
+
+        assertFalse(result.isDegraded());
+        assertEquals(1, result.getHits().size());
+        assertEquals(3, result.getEstimatedTotalHits());
+    }
+
+    /**
+     * 功能：验证搜索引擎异常时会返回 degraded=true，供上层触发数据库降级。
+     * 关键参数：无（测试内部模拟查询抛出异常）。
+     * 返回值/副作用：无返回值；断言降级标记生效且命中为空。
+     */
+    @Test
+    void searchPublicPostsShouldReturnDegradedWhenEngineFails() {
+        when(restTemplate.postForEntity(eq("/indexes/posts/search"), any(Object.class), eq(Map.class)))
+                .thenThrow(new RuntimeException("meili down"));
+
+        SearchClient searchClient = new SearchClient(restTemplate, "posts");
+        SearchClient.SearchQueryResult result = searchClient.searchPublicPosts("nextjs");
+
+        assertTrue(result.isDegraded());
+        assertEquals(0, result.getHits().size());
+        assertEquals(0, result.getEstimatedTotalHits());
     }
 }

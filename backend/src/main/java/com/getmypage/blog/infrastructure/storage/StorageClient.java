@@ -11,6 +11,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayInputStream;
+import java.time.LocalDate;
+import java.util.Locale;
+import java.util.UUID;
 
 /**
  * 对象存储基础设施封装。
@@ -49,20 +52,40 @@ public class StorageClient {
             throw new BizException(ErrorCode.BAD_REQUEST, "上传内容不能为空");
         }
 
+        String normalizedObjectName = normalizeObjectName(objectName);
         String normalizedContentType = StringUtils.hasText(contentType) ? contentType : "application/octet-stream";
         ensureBucketExists();
 
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(content)) {
             minioClient.putObject(PutObjectArgs.builder()
                     .bucket(bucket)
-                    .object(objectName)
+                    .object(normalizedObjectName)
                     .stream(inputStream, content.length, -1)
                     .contentType(normalizedContentType)
                     .build());
-            return buildObjectUrl(objectName);
+            return buildObjectUrl(normalizedObjectName);
         } catch (Exception ex) {
             throw new BizException(ErrorCode.EXTERNAL_SERVICE_ERROR, "上传文件到对象存储失败");
         }
+    }
+
+    /**
+     * 功能：生成符合文章资源规范的对象 key，格式为 /articles/{yyyy}/{mm}/{postId}/{uuid}.{ext}。
+     * 关键参数：postId 为文章 ID；originalFilename 为原始文件名用于提取扩展名。
+     * 返回值/副作用：返回标准化对象 key；无副作用。
+     */
+    public String generateArticleObjectKey(Long postId, String originalFilename) {
+        long normalizedPostId = (postId == null || postId <= 0) ? 0L : postId;
+        LocalDate today = LocalDate.now();
+        String extension = extractExtension(originalFilename);
+        String uuid = UUID.randomUUID().toString().replace("-", "");
+        return "/articles/%d/%02d/%d/%s.%s".formatted(
+                today.getYear(),
+                today.getMonthValue(),
+                normalizedPostId,
+                uuid,
+                extension
+        );
     }
 
     /**
@@ -88,5 +111,30 @@ public class StorageClient {
      */
     private String buildObjectUrl(String objectName) {
         return "%s/%s/%s".formatted(endpoint, bucket, objectName);
+    }
+
+    /**
+     * 功能：标准化对象路径，去除前导斜杠以避免 URL 与 SDK 双斜杠问题。
+     * 关键参数：objectName 为原始对象路径。
+     * 返回值/副作用：返回标准化后的对象路径；无副作用。
+     */
+    private String normalizeObjectName(String objectName) {
+        return objectName.startsWith("/") ? objectName.substring(1) : objectName;
+    }
+
+    /**
+     * 功能：从原始文件名提取扩展名，缺失时使用 bin 兜底。
+     * 关键参数：originalFilename 为原始文件名。
+     * 返回值/副作用：返回小写扩展名；无副作用。
+     */
+    private String extractExtension(String originalFilename) {
+        if (!StringUtils.hasText(originalFilename)) {
+            return "bin";
+        }
+        int lastDot = originalFilename.lastIndexOf('.');
+        if (lastDot < 0 || lastDot == originalFilename.length() - 1) {
+            return "bin";
+        }
+        return originalFilename.substring(lastDot + 1).toLowerCase(Locale.ROOT);
     }
 }
