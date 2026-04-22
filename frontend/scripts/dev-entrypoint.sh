@@ -78,4 +78,10 @@ if [ "$CURRENT_HASH" != "$SAVED_HASH" ] || [ ! -d "$APP_DIR/node_modules/.bin" ]
   printf '%s' "$CURRENT_HASH" > "$HASH_FILE"
 fi
 
-exec npm run dev
+# Next.js 16 在部分容器环境中无法加载 Turbopack 所需的原生绑定，这里默认切到 webpack。
+# 如需临时启用 Turbopack，可在 compose 环境变量中设置 NEXT_DEV_USE_TURBOPACK=true。
+if [ "${NEXT_DEV_USE_TURBOPACK:-false}" = "true" ]; then
+  exec npm run dev
+fi
+
+exec npm run dev -- --webpack
