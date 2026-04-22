@@ -12,7 +12,7 @@ import type { PostListItem } from "@/features/post/types";
  * 返回值/副作用：返回标签字符串，无副作用。
  */
 function buildPostLabel(post: PostListItem): string {
-  const formatLabel = post.contentFormat === "gmp-block-v1" ? "BLOCK-V1" : "UNKNOWN";
+  const formatLabel = post.contentFormat === "tiptap-json" ? "TIPTAP-JSON" : "UNKNOWN";
   const statusLabel = post.status === 1 ? "PUBLISHED" : "DRAFT";
   return `${formatLabel} // ${statusLabel}`;
 }

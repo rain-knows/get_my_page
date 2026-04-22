@@ -28,20 +28,20 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class PostContentMigrationServiceImpl implements PostContentMigrationService {
 
-    private static final String TARGET_CONTENT_FORMAT = "gmp-block-v1";
-    private static final int TARGET_MIGRATION_VERSION = 1;
+    private static final String TARGET_CONTENT_FORMAT = "tiptap-json";
+    private static final int TARGET_MIGRATION_VERSION = 2;
 
     private final PostMapper postMapper;
     private final SecurityUtils securityUtils;
     private final ObjectMapper objectMapper;
 
     /**
-     * 功能：将历史文章正文批量迁移为 gmp-block-v1 块协议，并返回完整迁移统计与失败明细。
+     * 功能：将历史文章正文批量迁移为 tiptap-json 协议，并返回完整迁移统计与失败明细。
      * 关键参数：无。
      * 返回值/副作用：返回迁移报告；副作用为批量更新 post.content 字段。
      */
     @Override
-    public PostContentMigrationReportResponse migrateAllPostsToGmpBlockV1() {
+    public PostContentMigrationReportResponse migrateAllPostsToTiptapJson() {
         ensureAdminWritable();
 
         List<Post> posts = postMapper.selectList(new LambdaQueryWrapper<>());
@@ -51,12 +51,12 @@ public class PostContentMigrationServiceImpl implements PostContentMigrationServ
 
         for (Post post : posts) {
             try {
-                if (isGmpBlockV1Content(post.getContent())) {
+                if (isTiptapJsonContent(post.getContent())) {
                     skipped++;
                     continue;
                 }
 
-                String migratedContent = convertLegacyContentToGmpBlockContent(post.getContent());
+                String migratedContent = convertLegacyContentToTiptapJsonContent(post.getContent());
                 post.setContent(migratedContent);
                 postMapper.updateById(post);
                 migrated++;
@@ -64,7 +64,7 @@ public class PostContentMigrationServiceImpl implements PostContentMigrationServ
                 failedItems.add(PostContentMigrationReportResponse.FailedItem.builder()
                         .postId(post.getId())
                         .slug(post.getSlug())
-                        .reason(exception.getMessage())
+                        .reason(resolveMigrationFailureReason(exception))
                         .build());
             }
         }
@@ -90,48 +90,54 @@ public class PostContentMigrationServiceImpl implements PostContentMigrationServ
     }
 
     /**
-     * 功能：将单篇旧正文转换为 gmp-block-v1 JSON 字符串，自动识别 tiptap-json 与 mdx 语义。
+     * 功能：提取迁移失败原因文本，确保失败清单可读且稳定。
+     * 关键参数：exception 为迁移期间抛出的异常。
+     * 返回值/副作用：返回失败原因文本；无副作用。
+     */
+    private String resolveMigrationFailureReason(Exception exception) {
+        if (exception == null) {
+            return "未知错误";
+        }
+        if (StringUtils.hasText(exception.getMessage())) {
+            return exception.getMessage();
+        }
+        return exception.getClass().getSimpleName();
+    }
+
+    /**
+     * 功能：将单篇旧正文转换为 tiptap-json 字符串，自动识别 gmp-block-v1、mdx 与已是 tiptap 的内容。
      * 关键参数：legacyContent 为旧正文内容。
      * 返回值/副作用：返回新协议 JSON 字符串；转换失败时抛出参数异常。
      */
-    private String convertLegacyContentToGmpBlockContent(String legacyContent) {
+    private String convertLegacyContentToTiptapJsonContent(String legacyContent) {
         if (!StringUtils.hasText(legacyContent)) {
-            return buildGmpBlockDocument("empty", objectMapper.createArrayNode());
+            return buildTiptapDocument("empty", objectMapper.createArrayNode());
         }
 
         String trimmed = legacyContent.trim();
         if (looksLikeTiptapDocument(trimmed)) {
-            ArrayNode blocks = convertTiptapDocumentToBlocks(trimmed);
-            return buildGmpBlockDocument("tiptap-json", blocks);
+            ArrayNode nodes = convertTiptapDocumentToNodes(trimmed);
+            return buildTiptapDocument("tiptap-json", nodes);
         }
 
-        ArrayNode blocks = convertMdxLikeContentToBlocks(trimmed);
-        return buildGmpBlockDocument("mdx", blocks);
+        if (looksLikeGmpBlockDocument(trimmed)) {
+            ArrayNode nodes = convertGmpBlockDocumentToTiptapNodes(trimmed);
+            return buildTiptapDocument("gmp-block-v1", nodes);
+        }
+
+        ArrayNode nodes = convertMdxLikeContentToTiptapNodes(trimmed);
+        return buildTiptapDocument("mdx", nodes);
     }
 
     /**
-     * 功能：判断正文是否已是目标 gmp-block-v1 协议，避免重复迁移同一文章。
+     * 功能：判断正文是否已是目标 tiptap-json 协议，避免重复迁移同一文章。
      * 关键参数：content 为文章正文。
      * 返回值/副作用：返回布尔值；无副作用。
      */
-    private boolean isGmpBlockV1Content(String content) {
+    private boolean isTiptapJsonContent(String content) {
         if (!StringUtils.hasText(content)) {
             return false;
         }
-        try {
-            JsonNode root = objectMapper.readTree(content);
-            return root.isObject() && TARGET_CONTENT_FORMAT.equals(root.path("version").asText(""));
-        } catch (Exception ignored) {
-            return false;
-        }
-    }
-
-    /**
-     * 功能：判断正文是否为 tiptap 文档 JSON，以便走 tiptap 到块模型的转换链路。
-     * 关键参数：content 为正文字符串。
-     * 返回值/副作用：返回布尔值；无副作用。
-     */
-    private boolean looksLikeTiptapDocument(String content) {
         try {
             JsonNode root = objectMapper.readTree(content);
             return root.isObject()
@@ -143,12 +149,105 @@ public class PostContentMigrationServiceImpl implements PostContentMigrationServ
     }
 
     /**
-     * 功能：将 mdx 文本按块拆分并映射为 gmp-block-v1 的基础块类型。
-     * 关键参数：content 为 mdx 字符串。
-     * 返回值/副作用：返回块数组；无副作用。
+     * 功能：判断正文是否为 tiptap 文档 JSON，以便直接走标准化链路。
+     * 关键参数：content 为正文字符串。
+     * 返回值/副作用：返回布尔值；无副作用。
      */
-    private ArrayNode convertMdxLikeContentToBlocks(String content) {
-        ArrayNode blocks = objectMapper.createArrayNode();
+    private boolean looksLikeTiptapDocument(String content) {
+        return isTiptapJsonContent(content);
+    }
+
+    /**
+     * 功能：判断正文是否为 gmp-block-v1 文档，供一次性硬切迁移识别旧协议。
+     * 关键参数：content 为正文字符串。
+     * 返回值/副作用：返回布尔值；无副作用。
+     */
+    private boolean looksLikeGmpBlockDocument(String content) {
+        try {
+            JsonNode root = objectMapper.readTree(content);
+            return root.isObject()
+                    && "gmp-block-v1".equals(root.path("version").asText(""))
+                    && root.path("blocks").isArray();
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    /**
+     * 功能：将已是 tiptap-json 的文档标准化为节点数组，供统一迁移输出附加 meta。
+     * 关键参数：content 为 tiptap-json 文本。
+     * 返回值/副作用：返回节点数组；解析失败时抛出参数异常。
+     */
+    private ArrayNode convertTiptapDocumentToNodes(String content) {
+        try {
+            JsonNode root = objectMapper.readTree(content);
+            JsonNode nodes = root.path("content");
+            if (!nodes.isArray()) {
+                throw new BizException(ErrorCode.BAD_REQUEST, "tiptap-json content 节点缺失");
+            }
+            return (ArrayNode) nodes;
+        } catch (BizException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new BizException(ErrorCode.BAD_REQUEST, "tiptap-json 迁移失败");
+        }
+    }
+
+    /**
+     * 功能：将 gmp-block-v1 文档转换为 tiptap-json 节点数组，覆盖基础文本、图片、分割线与嵌入降级语义。
+     * 关键参数：content 为 gmp-block-v1 文本。
+     * 返回值/副作用：返回 tiptap 节点数组；解析失败时抛出参数异常。
+     */
+    private ArrayNode convertGmpBlockDocumentToTiptapNodes(String content) {
+        try {
+            JsonNode root = objectMapper.readTree(content);
+            JsonNode blocks = root.path("blocks");
+            if (!blocks.isArray()) {
+                throw new BizException(ErrorCode.BAD_REQUEST, "gmp-block-v1 blocks 节点缺失");
+            }
+
+            ArrayNode nodes = objectMapper.createArrayNode();
+            for (JsonNode block : blocks) {
+                if (!block.isObject()) {
+                    continue;
+                }
+                String type = block.path("type").asText("");
+                switch (type) {
+                    case "paragraph" -> nodes.add(buildParagraphNode(extractGmpInlineText(block.path("richText"), block.path("text").asText(""))));
+                    case "heading" -> nodes.add(buildHeadingNode(block.path("level").asInt(2), extractGmpInlineText(block.path("richText"), block.path("text").asText(""))));
+                    case "quote" -> nodes.add(buildBlockquoteNode(extractGmpInlineText(block.path("richText"), block.path("text").asText(""))));
+                    case "list" -> nodes.add(buildListNode(block.path("style").asText("bullet"), block.path("items")));
+                    case "code" -> nodes.add(buildCodeBlockNode(block.path("language").asText(""), block.path("code").asText("")));
+                    case "image" -> nodes.add(buildImageNode(block.path("url").asText(""), block.path("alt").asText(""), block.path("caption").asText("")));
+                    case "divider" -> nodes.add(buildHorizontalRuleNode());
+                    case "embed" -> nodes.add(buildParagraphNode(extractEmbedFallbackText(block)));
+                    default -> {
+                        String fallback = extractGmpInlineText(block.path("richText"), block.path("text").asText(""));
+                        if (StringUtils.hasText(fallback)) {
+                            nodes.add(buildParagraphNode(fallback));
+                        }
+                    }
+                }
+            }
+
+            if (nodes.isEmpty()) {
+                nodes.add(buildParagraphNode(""));
+            }
+            return nodes;
+        } catch (BizException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new BizException(ErrorCode.BAD_REQUEST, "gmp-block-v1 迁移失败");
+        }
+    }
+
+    /**
+     * 功能：将 mdx 文本按段落拆分并映射为 tiptap-json 节点数组。
+     * 关键参数：content 为 mdx 字符串。
+     * 返回值/副作用：返回 tiptap 节点数组；无副作用。
+     */
+    private ArrayNode convertMdxLikeContentToTiptapNodes(String content) {
+        ArrayNode nodes = objectMapper.createArrayNode();
         String[] paragraphs = content.split("\\n{2,}");
 
         for (String paragraph : paragraphs) {
@@ -158,104 +257,101 @@ public class PostContentMigrationServiceImpl implements PostContentMigrationServ
             }
 
             if (normalized.startsWith("```") && normalized.endsWith("```")) {
-                blocks.add(buildCodeBlockNode(normalized));
+                nodes.add(buildCodeBlockNodeFromMdx(normalized));
                 continue;
             }
             if (normalized.startsWith("# ")) {
-                blocks.add(buildHeadingBlockNode(1, normalized.substring(2).trim()));
+                nodes.add(buildHeadingNode(1, normalized.substring(2).trim()));
                 continue;
             }
             if (normalized.startsWith("## ")) {
-                blocks.add(buildHeadingBlockNode(2, normalized.substring(3).trim()));
+                nodes.add(buildHeadingNode(2, normalized.substring(3).trim()));
                 continue;
             }
             if (normalized.startsWith("### ")) {
-                blocks.add(buildHeadingBlockNode(3, normalized.substring(4).trim()));
+                nodes.add(buildHeadingNode(3, normalized.substring(4).trim()));
                 continue;
             }
             if (normalized.startsWith("> ")) {
-                blocks.add(buildQuoteBlockNode(normalized.replaceAll("(?m)^>\\s*", "").trim()));
+                nodes.add(buildBlockquoteNode(normalized.replaceAll("(?m)^>\\s*", "").trim()));
                 continue;
             }
             if (normalized.startsWith("- ")) {
-                blocks.add(buildListBlockNode("bullet", parseListItems(normalized, "- ")));
+                nodes.add(buildListNode("bullet", parseListItems(normalized, "- ")));
                 continue;
             }
             if (normalized.matches("(?s)^\\d+\\.\\s+.*")) {
-                blocks.add(buildListBlockNode("ordered", parseOrderedListItems(normalized)));
+                nodes.add(buildListNode("ordered", parseOrderedListItems(normalized)));
                 continue;
             }
-            blocks.add(buildParagraphBlockNode(normalized));
+            nodes.add(buildParagraphNode(normalized));
         }
 
-        if (blocks.isEmpty()) {
-            blocks.add(buildParagraphBlockNode(""));
+        if (nodes.isEmpty()) {
+            nodes.add(buildParagraphNode(""));
         }
-        return blocks;
+        return nodes;
     }
 
     /**
-     * 功能：将 tiptap 文档 JSON 转换为 gmp-block-v1 块数组，覆盖首期基础块与嵌入卡片块。
-     * 关键参数：tiptapJson 为 tiptap 文档字符串。
-     * 返回值/副作用：返回块数组；解析失败时抛出参数异常。
-     */
-    private ArrayNode convertTiptapDocumentToBlocks(String tiptapJson) {
-        try {
-            JsonNode root = objectMapper.readTree(tiptapJson);
-            ArrayNode nodes = (ArrayNode) root.path("content");
-            ArrayNode blocks = objectMapper.createArrayNode();
-
-            for (JsonNode node : nodes) {
-                String type = node.path("type").asText("");
-                switch (type) {
-                    case "paragraph" -> blocks.add(buildParagraphBlockNode(extractTextFromTiptapNode(node.path("content"))));
-                    case "heading" -> blocks.add(buildHeadingBlockNode(node.path("attrs").path("level").asInt(2), extractTextFromTiptapNode(node.path("content"))));
-                    case "bulletList" -> blocks.add(buildListBlockNode("bullet", extractListItemsFromTiptapNode(node.path("content"))));
-                    case "orderedList" -> blocks.add(buildListBlockNode("ordered", extractListItemsFromTiptapNode(node.path("content"))));
-                    case "blockquote" -> blocks.add(buildQuoteBlockNode(extractTextFromTiptapNode(node.path("content"))));
-                    case "codeBlock" -> blocks.add(buildCodeBlockNodeFromTiptap(node));
-                    case "horizontalRule", "divider" -> blocks.add(buildDividerBlockNode());
-                    case "image", "imageBlock" -> blocks.add(buildImageBlockNode(node.path("attrs")));
-                    case "embedGithub" -> blocks.add(buildEmbedBlockNode("github", node.path("attrs")));
-                    case "embedMusic" -> blocks.add(buildEmbedBlockNode("music", node.path("attrs")));
-                    case "embedVideo" -> blocks.add(buildEmbedBlockNode("video", node.path("attrs")));
-                    case "embedLink" -> blocks.add(buildEmbedBlockNode("link", node.path("attrs")));
-                    default -> {
-                        String fallbackText = extractTextFromTiptapNode(node.path("content"));
-                        if (StringUtils.hasText(fallbackText)) {
-                            blocks.add(buildParagraphBlockNode(fallbackText));
-                        }
-                    }
-                }
-            }
-
-            if (blocks.isEmpty()) {
-                blocks.add(buildParagraphBlockNode(""));
-            }
-            return blocks;
-        } catch (Exception exception) {
-            throw new BizException(ErrorCode.BAD_REQUEST, "tiptap-json 迁移失败");
-        }
-    }
-
-    /**
-     * 功能：构建 gmp-block-v1 文档字符串并写入迁移元数据（版本、来源、时间）。
-     * 关键参数：sourceFormat 为迁移来源格式；blocks 为目标块数组。
+     * 功能：构建 tiptap-json 文档字符串并写入迁移元数据（版本、来源、时间）。
+     * 关键参数：sourceFormat 为迁移来源格式；nodes 为目标节点数组。
      * 返回值/副作用：返回序列化后的 JSON 字符串；序列化失败时抛出参数异常。
      */
-    private String buildGmpBlockDocument(String sourceFormat, ArrayNode blocks) {
+    private String buildTiptapDocument(String sourceFormat, ArrayNode nodes) {
         try {
             ObjectNode root = objectMapper.createObjectNode();
-            root.put("version", TARGET_CONTENT_FORMAT);
+            root.put("type", "doc");
             ObjectNode meta = root.putObject("meta");
             meta.put("migrationVersion", TARGET_MIGRATION_VERSION);
             meta.put("sourceFormat", sourceFormat);
+            meta.put("targetFormat", TARGET_CONTENT_FORMAT);
             meta.put("migratedAt", OffsetDateTime.now().toString());
-            root.set("blocks", blocks);
+            root.set("content", nodes);
             return objectMapper.writeValueAsString(root);
         } catch (Exception exception) {
-            throw new BizException(ErrorCode.BAD_REQUEST, "构建 gmp-block-v1 文档失败");
+            throw new BizException(ErrorCode.BAD_REQUEST, "构建 tiptap-json 文档失败");
         }
+    }
+
+    /**
+     * 功能：从 gmp 富文本片段或回退文本中提取纯文本。
+     * 关键参数：richTextNode 为 richText 数组；fallback 为回退文本。
+     * 返回值/副作用：返回纯文本字符串；无副作用。
+     */
+    private String extractGmpInlineText(JsonNode richTextNode, String fallback) {
+        if (richTextNode != null && richTextNode.isArray()) {
+            StringBuilder builder = new StringBuilder();
+            for (JsonNode segment : richTextNode) {
+                String text = segment.path("text").asText("");
+                if (StringUtils.hasText(text)) {
+                    builder.append(text);
+                }
+            }
+            String merged = builder.toString().trim();
+            if (StringUtils.hasText(merged)) {
+                return merged;
+            }
+        }
+        return fallback == null ? "" : fallback.trim();
+    }
+
+    /**
+     * 功能：从 gmp embed 块提取可读回退文本，避免迁移后出现空段落。
+     * 关键参数：block 为 embed 块。
+     * 返回值/副作用：返回回退文本；无副作用。
+     */
+    private String extractEmbedFallbackText(JsonNode block) {
+        JsonNode snapshot = block.path("snapshot");
+        String title = snapshot.path("title").asText("");
+        if (StringUtils.hasText(title)) {
+            return title;
+        }
+        String description = snapshot.path("description").asText("");
+        if (StringUtils.hasText(description)) {
+            return description;
+        }
+        return block.path("url").asText("");
     }
 
     /**
@@ -294,121 +390,100 @@ public class PostContentMigrationServiceImpl implements PostContentMigrationServ
     }
 
     /**
-     * 功能：从 tiptap 列表节点中提取文本列表项，用于构建 gmp-block-v1 list 块。
-     * 关键参数：listItemsNode 为 tiptap listItem 节点数组。
-     * 返回值/副作用：返回列表项数组；无副作用。
-     */
-    private ArrayNode extractListItemsFromTiptapNode(JsonNode listItemsNode) {
-        ArrayNode items = objectMapper.createArrayNode();
-        if (!listItemsNode.isArray()) {
-            return items;
-        }
-
-        for (JsonNode listItem : listItemsNode) {
-            String itemText = extractTextFromTiptapNode(listItem.path("content"));
-            if (StringUtils.hasText(itemText)) {
-                items.add(itemText);
-            }
-        }
-        return items;
-    }
-
-    /**
-     * 功能：递归提取 tiptap 节点文本内容，作为块迁移时的纯文本兜底。
-     * 关键参数：node 为 tiptap 节点或节点数组。
-     * 返回值/副作用：返回拼接后的文本；无副作用。
-     */
-    private String extractTextFromTiptapNode(JsonNode node) {
-        if (node == null || node.isMissingNode() || node.isNull()) {
-            return "";
-        }
-        if (node.isArray()) {
-            StringBuilder builder = new StringBuilder();
-            for (JsonNode child : node) {
-                String text = extractTextFromTiptapNode(child);
-                if (!StringUtils.hasText(text)) {
-                    continue;
-                }
-                if (builder.length() > 0) {
-                    builder.append(' ');
-                }
-                builder.append(text.trim());
-            }
-            return builder.toString();
-        }
-        if (node.has("text")) {
-            return node.path("text").asText("");
-        }
-        if (node.has("content")) {
-            return extractTextFromTiptapNode(node.path("content"));
-        }
-        return "";
-    }
-
-    /**
-     * 功能：构建段落块节点。
+     * 功能：构建段落节点。
      * 关键参数：text 为段落文本。
-     * 返回值/副作用：返回段落块对象；无副作用。
+     * 返回值/副作用：返回段落节点对象；无副作用。
      */
-    private ObjectNode buildParagraphBlockNode(String text) {
+    private ObjectNode buildParagraphNode(String text) {
         ObjectNode node = objectMapper.createObjectNode();
         node.put("type", "paragraph");
-        node.set("richText", buildPlainRichTextArray(text));
+        node.set("content", buildTextContent(text));
         return node;
     }
 
     /**
-     * 功能：构建标题块节点。
+     * 功能：构建标题节点。
      * 关键参数：level 为标题等级；text 为标题文本。
-     * 返回值/副作用：返回标题块对象；无副作用。
+     * 返回值/副作用：返回标题节点对象；无副作用。
      */
-    private ObjectNode buildHeadingBlockNode(int level, String text) {
+    private ObjectNode buildHeadingNode(int level, String text) {
         ObjectNode node = objectMapper.createObjectNode();
         node.put("type", "heading");
-        node.put("level", Math.min(Math.max(level, 1), 3));
-        node.set("richText", buildPlainRichTextArray(text));
+        ObjectNode attrs = node.putObject("attrs");
+        attrs.put("level", Math.min(Math.max(level, 1), 3));
+        node.set("content", buildTextContent(text));
         return node;
     }
 
     /**
-     * 功能：构建列表块节点。
-     * 关键参数：style 为列表样式（bullet/ordered）；items 为列表项数组。
-     * 返回值/副作用：返回列表块对象；无副作用。
-     */
-    private ObjectNode buildListBlockNode(String style, ArrayNode items) {
-        ObjectNode node = objectMapper.createObjectNode();
-        node.put("type", "list");
-        node.put("style", style);
-        ArrayNode richTextItems = objectMapper.createArrayNode();
-        for (JsonNode item : items) {
-            if (item.isArray()) {
-                richTextItems.add(item);
-                continue;
-            }
-            richTextItems.add(buildPlainRichTextArray(item.asText("")));
-        }
-        node.set("items", richTextItems);
-        return node;
-    }
-
-    /**
-     * 功能：构建引用块节点。
+     * 功能：构建引用节点。
      * 关键参数：text 为引用文本。
-     * 返回值/副作用：返回引用块对象；无副作用。
+     * 返回值/副作用：返回引用节点对象；无副作用。
      */
-    private ObjectNode buildQuoteBlockNode(String text) {
+    private ObjectNode buildBlockquoteNode(String text) {
         ObjectNode node = objectMapper.createObjectNode();
-        node.put("type", "quote");
-        node.set("richText", buildPlainRichTextArray(text));
+        node.put("type", "blockquote");
+        ArrayNode content = objectMapper.createArrayNode();
+        content.add(buildParagraphNode(text));
+        node.set("content", content);
         return node;
     }
 
     /**
-     * 功能：从 mdx 代码块文本构建代码块节点。
-     * 关键参数：content 为包含 ``` 包裹的代码文本。
-     * 返回值/副作用：返回代码块对象；无副作用。
+     * 功能：构建列表节点（有序/无序）。
+     * 关键参数：style 为列表样式；itemsNode 为列表项数组。
+     * 返回值/副作用：返回列表节点对象；无副作用。
      */
-    private ObjectNode buildCodeBlockNode(String content) {
+    private ObjectNode buildListNode(String style, JsonNode itemsNode) {
+        ObjectNode node = objectMapper.createObjectNode();
+        node.put("type", "ordered".equalsIgnoreCase(style) ? "orderedList" : "bulletList");
+
+        ArrayNode content = objectMapper.createArrayNode();
+        if (itemsNode != null && itemsNode.isArray()) {
+            for (JsonNode item : itemsNode) {
+                ObjectNode listItemNode = objectMapper.createObjectNode();
+                listItemNode.put("type", "listItem");
+                String text = item.isArray() ? extractGmpInlineText(item, "") : item.asText("");
+                ArrayNode listItemContent = objectMapper.createArrayNode();
+                listItemContent.add(buildParagraphNode(text));
+                listItemNode.set("content", listItemContent);
+                content.add(listItemNode);
+            }
+        }
+
+        if (content.isEmpty()) {
+            ObjectNode emptyItem = objectMapper.createObjectNode();
+            emptyItem.put("type", "listItem");
+            ArrayNode emptyContent = objectMapper.createArrayNode();
+            emptyContent.add(buildParagraphNode(""));
+            emptyItem.set("content", emptyContent);
+            content.add(emptyItem);
+        }
+
+        node.set("content", content);
+        return node;
+    }
+
+    /**
+     * 功能：构建代码块节点。
+     * 关键参数：language 为代码语言；codeText 为代码文本。
+     * 返回值/副作用：返回代码块节点对象；无副作用。
+     */
+    private ObjectNode buildCodeBlockNode(String language, String codeText) {
+        ObjectNode node = objectMapper.createObjectNode();
+        node.put("type", "codeBlock");
+        ObjectNode attrs = node.putObject("attrs");
+        attrs.put("language", language);
+        node.set("content", buildTextContent(codeText));
+        return node;
+    }
+
+    /**
+     * 功能：从 mdx ``` 代码块构建代码块节点。
+     * 关键参数：content 为包含 ``` 包裹的代码文本。
+     * 返回值/副作用：返回代码块节点对象；无副作用。
+     */
+    private ObjectNode buildCodeBlockNodeFromMdx(String content) {
         String normalized = content.trim();
         String[] lines = normalized.split("\\n");
         String firstLine = lines.length > 0 ? lines[0] : "```";
@@ -417,85 +492,46 @@ public class PostContentMigrationServiceImpl implements PostContentMigrationServ
                 .replaceFirst("^```\\w*\\n?", "")
                 .replaceFirst("```$", "")
                 .trim();
-
-        ObjectNode node = objectMapper.createObjectNode();
-        node.put("type", "code");
-        node.put("language", language);
-        node.put("code", codeText);
-        return node;
+        return buildCodeBlockNode(language, codeText);
     }
 
     /**
-     * 功能：从 tiptap codeBlock 节点构建代码块对象。
-     * 关键参数：node 为 tiptap codeBlock 节点。
-     * 返回值/副作用：返回代码块对象；无副作用。
+     * 功能：构建图片节点，保留地址与基础可访问性字段。
+     * 关键参数：src 为图片地址；alt 为替代文本；caption 为图注。
+     * 返回值/副作用：返回图片节点对象；无副作用。
      */
-    private ObjectNode buildCodeBlockNodeFromTiptap(JsonNode node) {
-        ObjectNode blockNode = objectMapper.createObjectNode();
-        blockNode.put("type", "code");
-        blockNode.put("language", node.path("attrs").path("language").asText(""));
-        blockNode.put("code", extractTextFromTiptapNode(node.path("content")));
-        return blockNode;
-    }
-
-    /**
-     * 功能：构建仅含纯文本片段的 richText 数组，供 paragraph/heading/quote/list 统一复用。
-     * 关键参数：text 为纯文本内容。
-     * 返回值/副作用：返回 richText 数组；无副作用。
-     */
-    private ArrayNode buildPlainRichTextArray(String text) {
-        ArrayNode richTextArray = objectMapper.createArrayNode();
-        ObjectNode textSegment = objectMapper.createObjectNode();
-        textSegment.put("text", text);
-        richTextArray.add(textSegment);
-        return richTextArray;
-    }
-
-    /**
-     * 功能：从 tiptap 图片节点构建 image 块对象。
-     * 关键参数：attrs 为 tiptap 图片 attrs。
-     * 返回值/副作用：返回图片块对象；无副作用。
-     */
-    private ObjectNode buildImageBlockNode(JsonNode attrs) {
+    private ObjectNode buildImageNode(String src, String alt, String caption) {
         ObjectNode node = objectMapper.createObjectNode();
         node.put("type", "image");
-        node.put("url", attrs.path("src").asText(""));
-        node.put("alt", attrs.path("alt").asText(""));
-        node.put("caption", attrs.path("caption").asText(""));
+        ObjectNode attrs = node.putObject("attrs");
+        attrs.put("src", src);
+        attrs.put("alt", alt);
+        attrs.put("caption", caption);
         return node;
     }
 
     /**
-     * 功能：从 tiptap 嵌入节点构建统一 embed 块对象，保留卡片类型、链接与 snapshot。
-     * 关键参数：cardType 为目标卡片类型；attrs 为 tiptap 嵌入 attrs。
-     * 返回值/副作用：返回嵌入块对象；无副作用。
-     */
-    private ObjectNode buildEmbedBlockNode(String cardType, JsonNode attrs) {
-        ObjectNode node = objectMapper.createObjectNode();
-        node.put("type", "embed");
-        node.put("cardType", cardType);
-        node.put("provider", attrs.path("provider").asText(""));
-        String url = attrs.path("url").asText("");
-        if (!StringUtils.hasText(url)) {
-            url = attrs.path("fallbackUrl").asText("");
-        }
-        node.put("url", url);
-        if (attrs.has("snapshot")) {
-            node.set("snapshot", attrs.path("snapshot"));
-        } else {
-            node.set("snapshot", objectMapper.createObjectNode());
-        }
-        return node;
-    }
-
-    /**
-     * 功能：构建分割线块节点。
+     * 功能：构建分割线节点。
      * 关键参数：无。
-     * 返回值/副作用：返回分割线块对象；无副作用。
+     * 返回值/副作用：返回分割线节点对象；无副作用。
      */
-    private ObjectNode buildDividerBlockNode() {
+    private ObjectNode buildHorizontalRuleNode() {
         ObjectNode node = objectMapper.createObjectNode();
-        node.put("type", "divider");
+        node.put("type", "horizontalRule");
         return node;
+    }
+
+    /**
+     * 功能：构建 tiptap 文本 content 数组。
+     * 关键参数：text 为文本内容。
+     * 返回值/副作用：返回文本内容数组；无副作用。
+     */
+    private ArrayNode buildTextContent(String text) {
+        ArrayNode content = objectMapper.createArrayNode();
+        ObjectNode textNode = objectMapper.createObjectNode();
+        textNode.put("type", "text");
+        textNode.put("text", text == null ? "" : text);
+        content.add(textNode);
+        return content;
     }
 }

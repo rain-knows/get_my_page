@@ -234,8 +234,8 @@ class PostServiceImplTest {
         request.setTitle("New Post");
         request.setSlug("new-slug");
         request.setExcerpt("excerpt");
-        request.setContent(buildGmpBlockContent("content"));
-        request.setContentFormat("gmp-block-v1");
+        request.setContent(buildTiptapContent("content"));
+        request.setContentFormat("tiptap-json");
         request.setStatus(1);
         request.setCoverUrl("https://cdn.example.com/cover.png");
         return request;
@@ -251,20 +251,20 @@ class PostServiceImplTest {
         request.setTitle("Updated Title");
         request.setSlug("updated-slug");
         request.setExcerpt("updated excerpt");
-        request.setContent(buildGmpBlockContent("updated"));
-        request.setContentFormat("gmp-block-v1");
+        request.setContent(buildTiptapContent("updated"));
+        request.setContentFormat("tiptap-json");
         request.setStatus(1);
         request.setCoverUrl("https://cdn.example.com/new.png");
         return request;
     }
 
     /**
-     * 功能：构造 gmp-block-v1 格式正文 JSON，供创建/更新测试复用。
+     * 功能：构造 tiptap-json 格式正文 JSON，供创建/更新测试复用。
      * 关键参数：text 为段落文本。
      * 返回值/副作用：返回 JSON 字符串；无副作用。
      */
-    private String buildGmpBlockContent(String text) {
-        return "{\"version\":\"gmp-block-v1\",\"blocks\":[{\"type\":\"paragraph\",\"richText\":[{\"text\":\"" + text + "\"}]}]}";
+    private String buildTiptapContent(String text) {
+        return "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"" + text + "\"}]}]}";
     }
 
     /**

@@ -1,6 +1,6 @@
 # API 接口设计规范
 
-> **文档版本**: v1.2.1 | **最后更新**: 2026-04-17 | **适用范围**: 前后端开发人员
+> **文档版本**: v1.3.0 | **最后更新**: 2026-04-22 | **适用范围**: 前后端开发人员
 > 
 > **相关文档**: `docs/11-rich-editor-design.md`（富文本编辑器与卡片扩展接口增量）
 
@@ -184,15 +184,15 @@
   "title": "Next.js 入门指南",
   "slug": "nextjs-getting-started",
   "summary": "从零开始学习 Next.js...",
-  "content": "# 正文 MDX 内容...",
+  "excerpt": "从零开始学习 Next.js...",
+  "contentFormat": "tiptap-json",
+  "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"正文内容\"}]}]}",
   "coverUrl": "https://cdn.example.com/cover.webp",
-  "categoryId": 1,
-  "tagIds": [1, 3, 5],
   "status": 1
 }
 ```
 
-> 说明：上述请求体保持当前兼容基线。关于 `contentFormat`、卡片解析接口与富文本节点持久化的扩展方案，参见 `docs/11-rich-editor-design.md`。
+> 说明：文章写入接口当前仅接受 `contentFormat=tiptap-json`。`gmp-block-v1` 请求体为 breaking change 范畴，服务端将返回 40001。
 
 ---
 

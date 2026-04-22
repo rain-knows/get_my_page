@@ -13,7 +13,7 @@
 - `frontend/src/components/admin`：后台业务组件。
 - `frontend/src/components/shared`：跨板块复用展示组件。
 - `frontend/src/features/*`：按业务域聚合 API、hooks、types 与业务逻辑（优先放这里）。
-- `frontend/src/features/editor/*`：编辑器平台层（Novel 风格壳层、命令菜单、BubbleMenu、上传事件处理、入口模板 `EditorEntryTemplate`）；所有业务编辑入口优先复用该层。
+- `frontend/src/features/editor/*`：编辑器平台层（页面骨架模板、通用容器与状态展示）；Novel 运行时实例应在业务 feature 内直接接入。
 - `frontend/src/hooks`：跨业务通用 hook（如 `use-debounce`）。
 - `frontend/src/lib`：基础能力封装（如 `api-client`、`mdx`、`seo`），避免业务耦合。
 - `frontend/src/types`：跨 feature 共享的公共类型，feature 私有类型应放在 feature 内。
@@ -89,6 +89,7 @@
 - 默认保持对外 API（路径、响应结构、错误码）兼容。
 - 若必须 breaking change：在 PR/变更说明中显式声明迁移策略。
 - 架构变更必须同步更新本文档及相关 docs（至少 `README.md`、`docs/00/01/02`）。
+- 当前生效的显式 breaking change（2026-04-22）：文章内容协议硬切为 `tiptap-json`，不再保留 `gmp-block-v1` 双读兼容。
 
 ## 4. Agent 执行规范
 

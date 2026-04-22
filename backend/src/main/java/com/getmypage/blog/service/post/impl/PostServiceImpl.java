@@ -32,7 +32,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostServiceImpl implements PostService {
 
-    private static final String GMP_BLOCK_V1_FORMAT = "gmp-block-v1";
+    private static final String TIPTAP_JSON_FORMAT = "tiptap-json";
+    private static final int EXCERPT_MAX_LENGTH = 140;
     private static final int MAX_PAGE_SIZE = 50;
 
     private final PostMapper postMapper;
@@ -98,7 +99,7 @@ public class PostServiceImpl implements PostService {
         ensureAdminWritable();
         validatePostStatus(request.getStatus());
         validateContentFormat(request.getContentFormat());
-        validateGmpBlockContent(request.getContent());
+        validateTiptapJsonContent(request.getContent());
         ensureSlugUnique(request.getSlug(), null);
 
         Post post = new Post();
@@ -131,7 +132,7 @@ public class PostServiceImpl implements PostService {
         ensureAdminWritable();
         validatePostStatus(request.getStatus());
         validateContentFormat(request.getContentFormat());
-        validateGmpBlockContent(request.getContent());
+        validateTiptapJsonContent(request.getContent());
 
         Post existing = postMapper.selectById(postId);
         if (existing == null) {
@@ -198,7 +199,7 @@ public class PostServiceImpl implements PostService {
                 .slug(post.getSlug())
                 .excerpt(excerpt)
                 .summary(excerpt)
-                .contentFormat(GMP_BLOCK_V1_FORMAT)
+                .contentFormat(TIPTAP_JSON_FORMAT)
                 .status(post.getStatus())
                 .coverUrl(post.getCoverUrl())
                 .updatedAt(post.getUpdatedAt())
@@ -220,7 +221,7 @@ public class PostServiceImpl implements PostService {
                 .excerpt(excerpt)
                 .summary(excerpt)
                 .content(post.getContent())
-                .contentFormat(GMP_BLOCK_V1_FORMAT)
+                .contentFormat(TIPTAP_JSON_FORMAT)
                 .status(post.getStatus())
                 .coverUrl(post.getCoverUrl())
                 .createdAt(post.getCreatedAt())
@@ -247,20 +248,20 @@ public class PostServiceImpl implements PostService {
      */
     private void validateContentFormat(String contentFormat) {
         if (!StringUtils.hasText(contentFormat)) {
-            throw new BizException(ErrorCode.BAD_REQUEST, "contentFormat 必填且仅支持 gmp-block-v1");
+            throw new BizException(ErrorCode.BAD_REQUEST, "contentFormat 必填且仅支持 tiptap-json");
         }
         String normalized = contentFormat.trim();
-        if (!GMP_BLOCK_V1_FORMAT.equals(normalized)) {
-            throw new BizException(ErrorCode.BAD_REQUEST, "contentFormat 仅支持 gmp-block-v1");
+        if (!TIPTAP_JSON_FORMAT.equals(normalized)) {
+            throw new BizException(ErrorCode.BAD_REQUEST, "contentFormat 仅支持 tiptap-json");
         }
     }
 
     /**
-     * 功能：校验正文是否符合 gmp-block-v1 块协议结构，避免旧格式继续写入。
+     * 功能：校验正文是否符合 tiptap-json 协议结构，避免旧格式继续写入。
      * 关键参数：content 为请求中的正文 JSON 字符串。
      * 返回值/副作用：无返回值；结构不合法时抛出参数异常。
      */
-    private void validateGmpBlockContent(String content) {
+    private void validateTiptapJsonContent(String content) {
         if (!StringUtils.hasText(content)) {
             throw new BizException(ErrorCode.BAD_REQUEST, "content 不能为空");
         }
@@ -268,17 +269,17 @@ public class PostServiceImpl implements PostService {
         try {
             JsonNode root = objectMapper.readTree(content);
             if (root == null || !root.isObject()) {
-                throw new BizException(ErrorCode.BAD_REQUEST, "content 必须是 gmp-block-v1 JSON 对象");
+                throw new BizException(ErrorCode.BAD_REQUEST, "content 必须是 tiptap-json JSON 对象");
             }
 
-            String version = root.path("version").asText("");
-            if (!GMP_BLOCK_V1_FORMAT.equals(version)) {
-                throw new BizException(ErrorCode.BAD_REQUEST, "content.version 必须为 gmp-block-v1");
+            String type = root.path("type").asText("");
+            if (!"doc".equals(type)) {
+                throw new BizException(ErrorCode.BAD_REQUEST, "content.type 必须为 doc");
             }
 
-            JsonNode blocks = root.path("blocks");
-            if (!blocks.isArray()) {
-                throw new BizException(ErrorCode.BAD_REQUEST, "content.blocks 必须为数组");
+            JsonNode contentNodes = root.path("content");
+            if (!contentNodes.isArray()) {
+                throw new BizException(ErrorCode.BAD_REQUEST, "content.content 必须为数组");
             }
         } catch (BizException exception) {
             throw exception;
@@ -344,120 +345,138 @@ public class PostServiceImpl implements PostService {
         if (!StringUtils.hasText(content)) {
             return "";
         }
-        String fromBlocks = extractExcerptFromGmpBlockContent(content);
-        if (StringUtils.hasText(fromBlocks)) {
-            return fromBlocks;
+        String fromTiptap = extractExcerptFromTiptapContent(content);
+        if (StringUtils.hasText(fromTiptap)) {
+            return fromTiptap;
         }
         String normalized = content
                 .replaceAll("[#*`>\\[\\]{}()_~-]", " ")
                 .replaceAll("\\s+", " ")
                 .trim();
-        if (normalized.length() <= 140) {
+        if (normalized.length() <= EXCERPT_MAX_LENGTH) {
             return normalized;
         }
-        return normalized.substring(0, 140);
+        return normalized.substring(0, EXCERPT_MAX_LENGTH);
     }
 
     /**
-     * 功能：从 gmp-block-v1 正文中提取摘要文本，优先使用块文本而非原始 JSON 串。
+     * 功能：从 tiptap-json 正文中提取摘要文本，优先使用节点纯文本而非原始 JSON 串。
      * 关键参数：content 为正文 JSON 字符串。
      * 返回值/副作用：返回摘要文本；解析失败或无文本时返回空字符串。
      */
-    private String extractExcerptFromGmpBlockContent(String content) {
+    private String extractExcerptFromTiptapContent(String content) {
         if (!StringUtils.hasText(content)) {
             return "";
         }
 
         try {
             JsonNode root = objectMapper.readTree(content);
-            if (!root.isObject() || !GMP_BLOCK_V1_FORMAT.equals(root.path("version").asText())) {
+            if (!root.isObject() || !"doc".equals(root.path("type").asText(""))) {
                 return "";
             }
 
-            JsonNode blocks = root.path("blocks");
-            if (!blocks.isArray()) {
+            JsonNode nodes = root.path("content");
+            if (!nodes.isArray()) {
                 return "";
             }
 
             StringBuilder excerptBuilder = new StringBuilder();
-            for (JsonNode block : blocks) {
-                if (!block.isObject()) {
-                    continue;
-                }
-                appendBlockText(excerptBuilder, extractBlockPreviewText(block));
-                if (excerptBuilder.length() >= 140) {
-                    break;
-                }
-            }
+            appendTiptapNodeText(nodes, excerptBuilder, EXCERPT_MAX_LENGTH);
 
             String normalized = excerptBuilder.toString().replaceAll("\\s+", " ").trim();
             if (!StringUtils.hasText(normalized)) {
                 return "";
             }
-            if (normalized.length() <= 140) {
+            if (normalized.length() <= EXCERPT_MAX_LENGTH) {
                 return normalized;
             }
-            return normalized.substring(0, 140);
+            return normalized.substring(0, EXCERPT_MAX_LENGTH);
         } catch (Exception ignored) {
             return "";
         }
     }
 
     /**
-     * 功能：按块类型提取可用于摘要的文本，兼容 gmp-block-v1 新旧字段形态。
-     * 关键参数：block 为单个正文块节点。
-     * 返回值/副作用：返回块文本，缺失时返回空字符串。
+     * 功能：递归遍历 tiptap 节点树并抽取摘要文本，覆盖文本节点、图片与卡片节点标题。
+     * 关键参数：node 为当前节点或节点数组；builder 为摘要构造器；maxLength 为最大摘要长度。
+     * 返回值/副作用：无返回值；副作用为向 builder 追加摘要文本。
      */
-    private String extractBlockPreviewText(JsonNode block) {
-        String type = block.path("type").asText("");
-        if ("paragraph".equals(type) || "heading".equals(type) || "quote".equals(type)) {
-            String richTextValue = extractRichTextPlain(block.path("richText"));
-            return StringUtils.hasText(richTextValue) ? richTextValue : block.path("text").asText("");
+    private void appendTiptapNodeText(JsonNode node, StringBuilder builder, int maxLength) {
+        if (builder.length() >= maxLength || node == null || node.isMissingNode() || node.isNull()) {
+            return;
         }
-        if ("list".equals(type)) {
-            StringBuilder listBuilder = new StringBuilder();
-            JsonNode items = block.path("items");
-            if (items.isArray()) {
-                for (JsonNode item : items) {
-                    String itemText = item.isArray() ? extractRichTextPlain(item) : item.asText("");
-                    appendBlockText(listBuilder, itemText);
+        if (node.isArray()) {
+            for (JsonNode child : node) {
+                appendTiptapNodeText(child, builder, maxLength);
+                if (builder.length() >= maxLength) {
+                    return;
                 }
             }
-            return listBuilder.toString();
+            return;
         }
-        if ("code".equals(type)) {
-            String code = block.path("code").asText("");
-            return StringUtils.hasText(code) ? code : block.path("text").asText("");
+        if (!node.isObject()) {
+            return;
         }
-        if ("image".equals(type)) {
-            String caption = block.path("caption").asText("");
-            return StringUtils.hasText(caption) ? caption : block.path("alt").asText("");
+
+        if (node.has("text")) {
+            appendBlockText(builder, node.path("text").asText(""));
         }
-        if ("embed".equals(type)) {
-            JsonNode snapshot = block.path("snapshot");
-            String title = snapshot.path("title").asText("");
-            return StringUtils.hasText(title) ? title : block.path("url").asText("");
+
+        String fallbackText = extractTiptapNodeFallbackText(node);
+        if (StringUtils.hasText(fallbackText)) {
+            appendBlockText(builder, fallbackText);
         }
-        return block.path("text").asText("");
+
+        if (builder.length() >= maxLength) {
+            return;
+        }
+
+        if (node.has("content")) {
+            appendTiptapNodeText(node.path("content"), builder, maxLength);
+        }
     }
 
     /**
-     * 功能：将 richText 数组拼接为纯文本，供摘要构造复用。
-     * 关键参数：richTextArray 为块协议 richText 数组。
-     * 返回值/副作用：返回纯文本字符串；无副作用。
+     * 功能：提取特定 tiptap 节点的可读标题文本，补齐图片与卡片节点的摘要语义。
+     * 关键参数：node 为 tiptap 节点对象。
+     * 返回值/副作用：返回节点可读文本；无内容时返回空字符串。
      */
-    private String extractRichTextPlain(JsonNode richTextArray) {
-        if (!richTextArray.isArray()) {
-            return "";
-        }
-        StringBuilder textBuilder = new StringBuilder();
-        for (JsonNode segment : richTextArray) {
-            String text = segment.path("text").asText("");
-            if (StringUtils.hasText(text)) {
-                textBuilder.append(text);
+    private String extractTiptapNodeFallbackText(JsonNode node) {
+        String type = node.path("type").asText("");
+        if ("image".equals(type) || "imageBlock".equals(type)) {
+            JsonNode attrs = node.path("attrs");
+            String caption = attrs.path("caption").asText("");
+            if (StringUtils.hasText(caption)) {
+                return caption;
             }
+            return attrs.path("alt").asText("");
         }
-        return textBuilder.toString();
+
+        if ("embedGithub".equals(type)
+                || "embedMusic".equals(type)
+                || "embedVideo".equals(type)
+                || "embedLink".equals(type)) {
+            JsonNode attrs = node.path("attrs");
+            String title = attrs.path("title").asText("");
+            if (StringUtils.hasText(title)) {
+                return title;
+            }
+            String snapshotTitle = attrs.path("snapshot").path("title").asText("");
+            if (StringUtils.hasText(snapshotTitle)) {
+                return snapshotTitle;
+            }
+            return attrs.path("url").asText("");
+        }
+
+        if ("hardBreak".equals(type)) {
+            return " ";
+        }
+
+        if ("codeBlock".equals(type)) {
+            return node.path("text").asText("");
+        }
+
+        return "";
     }
 
     /**

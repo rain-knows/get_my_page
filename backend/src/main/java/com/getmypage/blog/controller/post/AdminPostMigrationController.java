@@ -22,13 +22,13 @@ public class AdminPostMigrationController {
     private final PostContentMigrationService postContentMigrationService;
 
     /**
-     * 功能：触发一次性正文协议迁移，将历史 mdx/tiptap-json 统一转换为 gmp-block-v1。
+     * 功能：触发一次性正文协议迁移，将历史正文统一转换为 tiptap-json。
      * 关键参数：无。
      * 返回值/副作用：返回迁移报告；副作用为批量更新文章正文内容。
      */
-    @Operation(summary = "迁移正文到 gmp-block-v1", description = "仅管理员可调用，返回成功/失败统计与失败明细")
+    @Operation(summary = "迁移正文到 tiptap-json", description = "仅管理员可调用，返回成功/失败统计与失败明细")
     @PostMapping("/migrate-content")
-    public ApiResponse<PostContentMigrationReportResponse> migrateContentToGmpBlockV1() {
-        return ApiResponse.success(postContentMigrationService.migrateAllPostsToGmpBlockV1());
+    public ApiResponse<PostContentMigrationReportResponse> migrateContentToTiptapJson() {
+        return ApiResponse.success(postContentMigrationService.migrateAllPostsToTiptapJson());
     }
 }

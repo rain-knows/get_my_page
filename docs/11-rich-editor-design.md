@@ -1,6 +1,6 @@
 # 11. Tiptap Notion-like 编辑器设计
 
-> **文档版本**: v1.0.0 | **最后更新**: 2026-04-17 | **适用范围**: 前端开发、后端开发、产品设计
+> **文档版本**: v2.0.0 | **最后更新**: 2026-04-22 | **适用范围**: 前端开发、后端开发、产品设计
 > 
 > **相关文档**:
 > - `docs/architecture-contract.md`
@@ -20,8 +20,8 @@
 - 基础写作块：段落、标题、列表、引用、代码块。
 - 图片能力：上传、插入、尺寸和对齐、caption。
 - 主题能力：明暗主题可切换，且与现有主题变量体系一致。
-- 卡片能力：GitHub 仓库卡片、音乐卡片（跨平台链接）。
-- 存储兼容：兼容现有 MySQL + Redis + MinIO 分层，不引入破坏性变更。
+- 内容协议：前后端统一 `tiptap-json`，不再保留 `gmp-block-v1` 双读兼容。
+- 运行时约束：前端编辑器与阅读渲染均直接使用 `npm novel`。
 
 ### 1.2 非目标（本期不做）
 
@@ -51,14 +51,13 @@
 - `infrastructure/cache`: GitHub/音乐卡片缓存与限流键。
 - `infrastructure/search`: 内容变更后的索引更新。
 
-### 2.3 Novel 风格桥接（Tiptap v3）
+### 2.3 Novel 运行时直连（Tiptap v2）
 
-- 现阶段采用 **Novel 风格桥接方案**：前端新增 `frontend/src/features/editor/*` 作为编辑器平台层，提供 `EditorRoot`、`EditorContent`、`CommandMenu`、`BubbleMenu`、`ImageUploadHandlers`。
-- 底层内核继续使用仓库现有 Tiptap v3，不直接引入 Novel 运行时（Novel 发布包依赖 Tiptap v2，与当前依赖基线冲突）。
-- 业务编辑入口（首批为文章编辑）必须通过平台层复用命令菜单、行内工具栏、粘贴/拖拽图片上传，不在业务组件中重复造壳层。
-- 业务编辑入口应优先复用 `EditorEntryTemplate` 作为统一页面骨架，仅通过 props/slot 注入具体业务动作与预览内容。
-- 平台层对外稳定协议：`EditorShellProps`（`initialContent`、`onChange`、`onSave`、`uploadImage`、`resolveEmbed`、`readonly`），后续新增编辑入口按该协议接入。
-- 后端契约保持不变：正文仍保存为 `gmp-block-v1`，`contentFormat` 不新增值，不引入 breaking change。
+- 本次改造采用 **Novel 运行时直连方案**：编辑与阅读链路直接使用 `novel` 包的 `EditorRoot/EditorContent`。
+- `frontend/src/features/post/components/PostRichEditor.tsx` 为当前文章编辑入口，使用 Novel 提供的扩展与上传能力。
+- `frontend/src/features/post/components/PostContentRenderer.tsx` 使用同一 Novel/Tiptap 协议进行只读渲染，保证编辑预览与阅读一致。
+- `frontend/src/features/editor/*` 仅保留页面骨架与通用布局模板，不再承载协议转换。
+- 后端契约同步硬切：`contentFormat` 仅允许 `tiptap-json`，并强校验 `content.type=doc` + `content.content[]`。
 
 ---
 
@@ -69,13 +68,10 @@
 | 能力 | 本期状态 | 说明 |
 |---|---|---|
 | 基础文本块 | P0 | 段落、H1-H3、无序/有序列表、引用、代码块 |
-| Slash 命令 | P0 | `/image` `/github` `/music` `/code` 等 |
-| 图片块 | P0 | 上传、插入、caption、尺寸、对齐 |
-| GitHub 卡片 | P0 | 输入仓库 URL 或 `owner/repo` 自动解析 |
-| 音乐卡片 | P0 | 支持 Spotify/网易云/Apple Music/Bilibili 音频链接 |
-| 暗色模式 | P0 | 支持系统模式 + 手动切换 |
-| 自动保存 | P1 | 防抖自动保存与草稿恢复 |
-| 卡片拖拽重排 | P1 | 与块级拖拽手柄联动 |
+| 图片插入 | P0 | 上传、插入、粘贴/拖拽上传 |
+| 阅读一致性 | P0 | 编辑器与阅读器同走 Novel + tiptap-json |
+| 卡片节点扩展 | P1 | 预留扩展点，后续追加 GitHub/音乐卡片 |
+| AI 写作能力 | 关闭 | 一期关闭，仅保留扩展入口 |
 
 ### 3.2 编辑体验约束
 
@@ -103,18 +99,17 @@
 
 | 节点类型 | attrs | 说明 |
 |---|---|---|
-| `imageBlock` | `src`, `alt`, `caption`, `width`, `height`, `align` | 图片块 |
-| `embedGithub` | `repo`, `url`, `snapshot`, `snapshotAt` | GitHub 仓库卡片 |
-| `embedMusic` | `provider`, `url`, `trackId`, `snapshot`, `snapshotAt` | 音乐卡片 |
-| `divider` | - | 分割线 |
+| `image` | `src`, `alt`, `caption` | 图片块 |
+| `horizontalRule` | - | 分割线 |
+| `link`(mark) | `href`, `target`, `rel` | 行内链接 |
 
-### 4.3 向后兼容策略
+### 4.3 一次性硬切策略
 
-当前线上基线已统一为 `gmp-block-v1`：
+本次为一次性硬切，不保留旧协议在线兼容：
 
-1. 历史 `mdx` / `tiptap-json` 正文通过迁移服务转换为 `gmp-block-v1`，读取与渲染链路统一走块协议。
-2. 写入接口固定 `contentFormat = gmp-block-v1`，不再新增或回退到旧格式字段。
-3. Novel 风格桥接仅影响前端交互层，不改变后端 `content` 与 `contentFormat` 契约。
+1. 发布前执行批量迁移：`gmp-block-v1 -> tiptap-json`，输出失败清单（`postId/slug/reason`）。
+2. 写入接口固定 `contentFormat = tiptap-json`，旧格式请求直接返回 40001。
+3. 阅读与编辑链路统一按 tiptap-json 解析，不做双读或灰度。
 
 ---
 
@@ -305,8 +300,8 @@
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| `contentFormat` | string | `mdx` 或 `tiptap-json` |
-| `content` | string | 正文内容（JSON 字符串或 MDX 字符串） |
+| `contentFormat` | string | 仅 `tiptap-json` |
+| `content` | string | 正文内容（tiptap JSON 字符串） |
 | `excerpt` | string | 可选摘要（为空时后端提取） |
 
 ### 10.2 Embeds 解析接口（建议新增）
@@ -326,7 +321,7 @@
 
 ### 11.1 MySQL
 
-- `post.content`: 保存 Tiptap JSON 字符串（兼容 MDX）。
+- `post.content`: 保存 Tiptap JSON 字符串（唯一格式）。
 - 可选新增：`post.content_format`。
 - 可选新增：`post.excerpt`（用于列表摘要）。
 
@@ -383,9 +378,9 @@
 | AC-EDITOR-01 | 基础编辑 | 可创建并保存含标题/列表/代码块文章 |
 | AC-EDITOR-02 | 图片块 | 上传后可显示、可编辑 caption、可持久化 |
 | AC-EDITOR-03 | 主题切换 | light/dark/system 切换无闪屏，刷新后保持一致 |
-| AC-EDITOR-04 | GitHub 卡片 | 输入仓库链接后成功出卡，失效链接可降级 |
-| AC-EDITOR-05 | 音乐卡片 | 输入平台链接后成功出卡，非白名单可降级 |
-| AC-EDITOR-06 | 存储兼容 | 旧 MDX 内容仍可读取，新 JSON 可正常渲染 |
+| AC-EDITOR-04 | 协议硬切 | 写接口仅接受 `contentFormat=tiptap-json`，旧格式返回 40001 |
+| AC-EDITOR-05 | 数据迁移 | 发布窗口内完成全量迁移并产出失败清单 |
+| AC-EDITOR-06 | 阅读一致性 | 迁移后旧文可在阅读页按 tiptap-json 正常渲染 |
 
 ---
 
@@ -393,7 +388,7 @@
 
 | 风险 | 影响 | 缓解 |
 |---|---|---|
-| 内容格式迁移不完整 | 历史文章显示异常 | 双格式兼容 + 回滚脚本 |
+| 内容格式迁移不完整 | 历史文章显示异常 | 发布前全量迁移演练 + 失败清单阻断发布 + DB 备份回滚 |
 | 第三方 API 速率限制 | 卡片加载失败 | Redis 缓存 + 降级显示 |
 | 图片上传链路失败 | 编辑中断 | 前端重试 + 临时占位块 |
 | 主题闪屏 | 用户体验下降 | SSR 初始主题注入 + Hydration 对齐 |
@@ -402,7 +397,7 @@
 
 ## 16. 后续增强建议
 
-1. AI 写作助手（改写、续写、摘要、标题生成）并保留审计日志。
+1. AI 写作助手（改写、续写、摘要、标题生成）保持关闭，待二期按扩展点接入并补齐审计日志。
 2. Notion 导入导出适配层（先支持常见块，复杂块降级为 callout）。
 3. 自定义卡片市场（Bilibili、YouTube、Figma、X 链接卡片）。
 4. 文章模板系统（技术文档模板、周报模板、发布清单模板）。
@@ -415,5 +410,5 @@
 - [ ] 前端编辑器落在 `features/post`，未污染 `app` 与 `components/ui`。
 - [ ] 样式使用 Tailwind v4 变量语法，不使用旧版变量包裹写法。
 - [ ] 图片仅存对象存储 URL，不把二进制写入数据库。
-- [ ] 卡片接口具备缓存、限流、降级和白名单策略。
+- [ ] `contentFormat` 写入/读取仅为 `tiptap-json`，无 `gmp-block-v1` 在线兼容分支。
 - [ ] P0 验收用例（成功/失败路径）均可复现。

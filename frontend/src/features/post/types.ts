@@ -1,6 +1,6 @@
 import type { PaginatedData } from '@/types/api';
 
-export type PostContentFormat = 'gmp-block-v1';
+export type PostContentFormat = 'tiptap-json';
 
 export type PostStatus = 0 | 1;
 

@@ -38,12 +38,12 @@ class PostContentMigrationServiceImplTest {
     private PostContentMigrationServiceImpl migrationService;
 
     /**
-     * 功能：验证管理员触发迁移时可将 mdx 与 tiptap-json 文章转换为 gmp-block-v1，并统计迁移结果。
+     * 功能：验证管理员触发迁移时可将 gmp-block-v1 与 mdx 文章转换为 tiptap-json，并统计迁移结果。
      * 关键参数：无（测试内部构造三类文章样本）。
      * 返回值/副作用：无返回值；断言迁移统计和 updateById 调用次数。
      */
     @Test
-    void migrateAllPostsToGmpBlockV1ShouldMigrateLegacyFormats() {
+    void migrateAllPostsToTiptapJsonShouldMigrateLegacyFormats() {
         when(securityUtils.isAdmin()).thenReturn(true);
         when(postMapper.selectList(org.mockito.ArgumentMatchers.any())).thenReturn(List.of(
                 buildPost(1L, "mdx-post", "# hello"),
@@ -51,7 +51,7 @@ class PostContentMigrationServiceImplTest {
                 buildPost(3L, "gmp-post", "{\"version\":\"gmp-block-v1\",\"blocks\":[]}")
         ));
 
-        PostContentMigrationReportResponse report = migrationService.migrateAllPostsToGmpBlockV1();
+        PostContentMigrationReportResponse report = migrationService.migrateAllPostsToTiptapJson();
 
         assertEquals(3, report.getTotalPosts());
         assertEquals(2, report.getMigratedPosts());
@@ -66,10 +66,10 @@ class PostContentMigrationServiceImplTest {
      * 返回值/副作用：无返回值；断言抛出 FORBIDDEN 异常。
      */
     @Test
-    void migrateAllPostsToGmpBlockV1ShouldRejectNonAdmin() {
+    void migrateAllPostsToTiptapJsonShouldRejectNonAdmin() {
         when(securityUtils.isAdmin()).thenReturn(false);
 
-        BizException exception = assertThrows(BizException.class, () -> migrationService.migrateAllPostsToGmpBlockV1());
+        BizException exception = assertThrows(BizException.class, () -> migrationService.migrateAllPostsToTiptapJson());
 
         assertEquals(ErrorCode.FORBIDDEN, exception.getErrorCode());
     }

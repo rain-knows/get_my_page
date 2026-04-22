@@ -29,7 +29,7 @@ public class PostListItemResponse {
     @Schema(description = "兼容旧字段，值与 excerpt 一致")
     private String summary;
 
-    @Schema(description = "正文格式", example = "gmp-block-v1")
+    @Schema(description = "正文格式", example = "tiptap-json")
     private String contentFormat;
 
     @Schema(description = "文章状态：0-草稿，1-已发布", example = "1")

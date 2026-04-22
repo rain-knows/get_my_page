@@ -29,11 +29,11 @@ public class PostUpdateRequest {
     private String excerpt;
 
     @NotBlank(message = "正文不能为空")
-    @Schema(description = "正文内容（gmp-block-v1 JSON 字符串）")
+    @Schema(description = "正文内容（tiptap-json JSON 字符串）")
     private String content;
 
     @NotBlank(message = "contentFormat 不能为空")
-    @Schema(description = "正文格式，仅支持 gmp-block-v1", example = "gmp-block-v1")
+    @Schema(description = "正文格式，仅支持 tiptap-json", example = "tiptap-json")
     private String contentFormat;
 
     @NotNull(message = "状态不能为空")
