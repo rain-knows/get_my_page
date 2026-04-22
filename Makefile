@@ -50,7 +50,7 @@ build: ## 不使用缓存重新构建所有镜像
 sync-fe: ## 同步前端依赖到容器（package*.json 改动后执行）
 	docker compose run --rm frontend npm ci
 
-rebuild-fe: ## 重新构建并重启前端容器
+rebuild-fe: ## 重新构建并重启前端容器  
 	docker compose up -d --build --force-recreate frontend
 
 mysql-cli: ## 进入 MySQL 命令行

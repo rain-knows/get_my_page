@@ -22,9 +22,13 @@ public class FileServiceImpl implements FileService {
     private static final long MAX_FILE_SIZE_BYTES = 8 * 1024 * 1024;
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             "image/jpeg",
+            "image/jpg",
             "image/png",
             "image/webp",
-            "image/gif"
+            "image/gif",
+            "image/avif",
+            "image/heic",
+            "image/heif"
     );
 
     private final StorageClient storageClient;
@@ -38,11 +42,11 @@ public class FileServiceImpl implements FileService {
     @Override
     public FileUploadResponse uploadArticleAsset(MultipartFile file, Long postId) {
         ensureAuthenticatedUser();
-        validateFile(file);
+        String normalizedContentType = validateFile(file);
 
         String key = storageClient.generateArticleObjectKey(postId, file.getOriginalFilename());
         byte[] content = readFileBytes(file);
-        String url = storageClient.upload(key, content, file.getContentType());
+        String url = storageClient.upload(key, content, normalizedContentType);
 
         return FileUploadResponse.builder()
                 .key(key)
@@ -67,19 +71,80 @@ public class FileServiceImpl implements FileService {
     /**
      * 功能：校验上传文件是否满足大小与 MIME 类型限制。
      * 关键参数：file 为待校验上传文件。
-     * 返回值/副作用：无返回值；不满足限制时抛出参数异常。
+     * 返回值/副作用：返回归一化后的 MIME 类型；不满足限制时抛出参数异常。
      */
-    private void validateFile(MultipartFile file) {
+    private String validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new BizException(ErrorCode.BAD_REQUEST, "上传文件不能为空");
         }
         if (file.getSize() > MAX_FILE_SIZE_BYTES) {
             throw new BizException(ErrorCode.BAD_REQUEST, "文件大小不能超过 8MB");
         }
-        String contentType = file.getContentType();
+        String contentType = normalizeContentType(file.getContentType(), file.getOriginalFilename());
         if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
             throw new BizException(ErrorCode.BAD_REQUEST, "不支持的文件类型");
         }
+        return contentType;
+    }
+
+    /**
+     * 功能：归一化上传文件 MIME，优先使用请求头类型，缺失时按文件后缀推断常见图片类型。
+     * 关键参数：contentType 为请求头 MIME；filename 为原始文件名。
+     * 返回值/副作用：返回归一化 MIME 字符串；无副作用。
+     */
+    private String normalizeContentType(String contentType, String filename) {
+        String extensionBased = resolveContentTypeByFilename(filename);
+
+        if (contentType != null && !contentType.isBlank()) {
+            String normalizedContentType = contentType.toLowerCase();
+            if ("image/pjpeg".equals(normalizedContentType)) {
+                return "image/jpeg";
+            }
+            if ("image/x-png".equals(normalizedContentType)) {
+                return "image/png";
+            }
+            if ("application/octet-stream".equals(normalizedContentType)
+                    || "binary/octet-stream".equals(normalizedContentType)) {
+                return extensionBased;
+            }
+            return normalizedContentType;
+        }
+
+        return extensionBased;
+    }
+
+    /**
+     * 功能：按文件后缀推断图片 MIME 类型，作为请求头缺失或通用流类型时的兜底。
+     * 关键参数：filename 为上传文件原始名称。
+     * 返回值/副作用：返回推断的 MIME；无法识别时返回 null。
+     */
+    private String resolveContentTypeByFilename(String filename) {
+        if (filename == null || filename.isBlank()) {
+            return null;
+        }
+        String lowerName = filename.toLowerCase();
+        if (lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg")) {
+            return "image/jpeg";
+        }
+        if (lowerName.endsWith(".png")) {
+            return "image/png";
+        }
+        if (lowerName.endsWith(".webp")) {
+            return "image/webp";
+        }
+        if (lowerName.endsWith(".gif")) {
+            return "image/gif";
+        }
+        if (lowerName.endsWith(".avif")) {
+            return "image/avif";
+        }
+        if (lowerName.endsWith(".heic")) {
+            return "image/heic";
+        }
+        if (lowerName.endsWith(".heif")) {
+            return "image/heif";
+        }
+        return null;
     }
 
     /**

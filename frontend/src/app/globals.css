@@ -292,3 +292,186 @@
 .gmp-hard-shadow-accent {
   box-shadow: 4px 4px 0 0 var(--gmp-accent);
 }
+
+/* Tiptap Notion-like block style */
+.gmp-notion-editor .ProseMirror {
+  min-height: 28rem;
+}
+
+.gmp-notion-editor .ProseMirror:focus {
+  outline: none;
+}
+
+.gmp-notion-editor .ProseMirror> * {
+  position: relative;
+  margin: 0;
+  padding: 0.65rem 0.85rem 0.65rem 1.25rem;
+  border-left: 1px solid var(--gmp-line-soft);
+  transition: border-color var(--gmp-end-timing-fast) ease, background-color var(--gmp-end-timing-fast) ease;
+}
+
+.gmp-notion-editor .ProseMirror> *+* {
+  margin-top: 0.35rem;
+}
+
+.gmp-notion-editor .ProseMirror> *::before {
+  content: "⋮⋮";
+  position: absolute;
+  left: 0.35rem;
+  top: 0.55rem;
+  color: var(--gmp-text-secondary);
+  opacity: 0;
+  font-size: 0.65rem;
+  line-height: 1;
+  letter-spacing: 0.04rem;
+  transition: opacity var(--gmp-end-timing-fast) ease;
+}
+
+.gmp-notion-editor .ProseMirror> *:hover {
+  border-left-color: var(--gmp-accent);
+  background-color: rgb(26 27 32 / 72%);
+}
+
+.gmp-notion-editor .ProseMirror> *:hover::before {
+  opacity: 1;
+}
+
+.gmp-notion-editor .ProseMirror h1,
+.gmp-notion-editor .ProseMirror h2,
+.gmp-notion-editor .ProseMirror h3 {
+  color: var(--gmp-text-primary);
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.gmp-notion-editor .ProseMirror h1 {
+  font-size: 1.7rem;
+}
+
+.gmp-notion-editor .ProseMirror h2 {
+  font-size: 1.4rem;
+}
+
+.gmp-notion-editor .ProseMirror h3 {
+  font-size: 1.2rem;
+}
+
+.gmp-notion-editor .ProseMirror p,
+.gmp-notion-editor .ProseMirror li {
+  color: var(--gmp-text-primary);
+}
+
+.gmp-notion-editor .ProseMirror blockquote {
+  background-color: var(--gmp-bg-panel);
+  border-left: 2px solid var(--gmp-accent);
+}
+
+.gmp-notion-editor .ProseMirror pre {
+  border: 1px solid var(--gmp-line-soft);
+  background-color: var(--gmp-bg-panel);
+  padding: 0.9rem;
+}
+
+.gmp-notion-editor .ProseMirror figure[data-type="image-block"] {
+  border: 1px solid var(--gmp-line-soft);
+  background-color: var(--gmp-bg-panel);
+}
+
+.gmp-notion-editor .ProseMirror figure[data-type="image-block"] img {
+  width: 100%;
+  display: block;
+}
+
+.gmp-notion-editor .ProseMirror figure[data-type="image-block"] figcaption {
+  padding: 0.55rem 0.7rem;
+  color: var(--gmp-text-secondary);
+  font-size: 0.7rem;
+  letter-spacing: 0.08rem;
+  text-transform: uppercase;
+}
+
+.gmp-notion-editor .ProseMirror section[data-type="embed-github"],
+.gmp-notion-editor .ProseMirror section[data-type="embed-music"],
+.gmp-notion-editor .ProseMirror section[data-type="embed-link"],
+.gmp-notion-editor .ProseMirror section[data-type="embed-video"] {
+  display: block;
+  border: 1px solid var(--gmp-line-soft);
+  background-color: var(--gmp-bg-panel);
+  padding: 0.8rem;
+}
+
+.gmp-notion-editor .ProseMirror section[data-type="embed-github"] a,
+.gmp-notion-editor .ProseMirror section[data-type="embed-music"] a,
+.gmp-notion-editor .ProseMirror section[data-type="embed-link"] a,
+.gmp-notion-editor .ProseMirror section[data-type="embed-video"] a {
+  display: grid;
+  gap: 0.45rem;
+  color: var(--gmp-text-primary);
+  text-decoration: none;
+}
+
+.gmp-notion-editor .ProseMirror section[data-type="embed-github"] img,
+.gmp-notion-editor .ProseMirror section[data-type="embed-music"] img,
+.gmp-notion-editor .ProseMirror section[data-type="embed-link"] img,
+.gmp-notion-editor .ProseMirror section[data-type="embed-video"] img {
+  width: 100%;
+  max-height: 12rem;
+  display: block;
+  border: 1px solid var(--gmp-line-soft);
+  object-fit: cover;
+}
+
+.gmp-notion-editor .ProseMirror section[data-type="embed-github"] span,
+.gmp-notion-editor .ProseMirror section[data-type="embed-music"] span,
+.gmp-notion-editor .ProseMirror section[data-type="embed-link"] span,
+.gmp-notion-editor .ProseMirror section[data-type="embed-video"] span {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08rem;
+  text-transform: uppercase;
+  color: var(--gmp-accent);
+}
+
+.gmp-notion-editor .ProseMirror section[data-type="embed-github"] strong,
+.gmp-notion-editor .ProseMirror section[data-type="embed-music"] strong,
+.gmp-notion-editor .ProseMirror section[data-type="embed-link"] strong,
+.gmp-notion-editor .ProseMirror section[data-type="embed-video"] strong {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--gmp-text-primary);
+}
+
+.gmp-notion-editor .ProseMirror section[data-type="embed-github"] p,
+.gmp-notion-editor .ProseMirror section[data-type="embed-music"] p,
+.gmp-notion-editor .ProseMirror section[data-type="embed-link"] p,
+.gmp-notion-editor .ProseMirror section[data-type="embed-video"] p {
+  margin: 0;
+  font-size: 0.77rem;
+  line-height: 1.4;
+  color: var(--gmp-text-secondary);
+  word-break: break-all;
+}
+
+/* Article view keeps the same block rhythm as editor mode */
+.gmp-notion-viewer> * {
+  position: relative;
+  margin: 0;
+  padding: 0.65rem 0.85rem 0.65rem 1.25rem;
+  border-left: 1px solid var(--gmp-line-soft);
+}
+
+.gmp-notion-viewer> *+* {
+  margin-top: 0.35rem;
+}
+
+.gmp-notion-viewer> *::before {
+  content: "⋮⋮";
+  position: absolute;
+  left: 0.35rem;
+  top: 0.55rem;
+  color: var(--gmp-text-secondary);
+  opacity: 0.65;
+  font-size: 0.65rem;
+  line-height: 1;
+  letter-spacing: 0.04rem;
+}

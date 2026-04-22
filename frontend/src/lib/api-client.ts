@@ -20,13 +20,7 @@ class ApiClient {
    */
   async get<T>(path: string, params?: Record<string, QueryValue>): Promise<T> {
     const url = this.buildUrl(path);
-    if (params) {
-      Object.entries(params).forEach(([k, v]) => {
-        if (v !== undefined && v !== null) {
-          url.searchParams.set(k, String(v));
-        }
-      });
-    }
+    this.applyQueryParams(url, params);
 
     const res = await fetch(url.toString(), {
       headers: this.getHeaders(false),
@@ -46,6 +40,40 @@ class ApiClient {
       method: 'POST',
       headers: this.getHeaders(true),
       body: body ? JSON.stringify(body) : undefined,
+    });
+
+    return this.handleResponse<T>(res);
+  }
+
+  /**
+   * 功能：发起 PUT 请求并提交 JSON 请求体。
+   * 关键参数：path 为接口路径；body 为请求体（可选）。
+   * 返回值/副作用：返回解析后的业务数据；副作用为触发网络请求。
+   */
+  async put<T>(path: string, body?: unknown): Promise<T> {
+    const url = this.buildUrl(path);
+    const res = await fetch(url.toString(), {
+      method: 'PUT',
+      headers: this.getHeaders(true),
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    return this.handleResponse<T>(res);
+  }
+
+  /**
+   * 功能：发起 multipart/form-data POST 请求。
+   * 关键参数：path 为接口路径；formData 为表单数据；params 为附加查询参数（可选）。
+   * 返回值/副作用：返回解析后的业务数据；副作用为触发网络请求。
+   */
+  async postForm<T>(path: string, formData: FormData, params?: Record<string, QueryValue>): Promise<T> {
+    const url = this.buildUrl(path);
+    this.applyQueryParams(url, params);
+
+    const res = await fetch(url.toString(), {
+      method: 'POST',
+      headers: this.getHeaders(false),
+      body: formData,
     });
 
     return this.handleResponse<T>(res);
@@ -99,6 +127,23 @@ class ApiClient {
    */
   private normalizeBaseUrl(baseUrl: string): string {
     return `${baseUrl.replace(/\/+$/, '')}/`;
+  }
+
+  /**
+   * 功能：将查询参数批量写入 URL，自动忽略 null/undefined。
+   * 关键参数：url 为目标地址；params 为查询参数对象。
+   * 返回值/副作用：无返回值；副作用为修改入参 url 的 searchParams。
+   */
+  private applyQueryParams(url: URL, params?: Record<string, QueryValue>): void {
+    if (!params) {
+      return;
+    }
+
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) {
+        url.searchParams.set(k, String(v));
+      }
+    });
   }
 
   /**

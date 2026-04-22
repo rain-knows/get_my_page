@@ -21,6 +21,7 @@ interface KineticPageShellProps {
   centerTitle: string;
   centerDescription: string;
   children: ReactNode;
+  layoutMode?: "default" | "focus";
   navItems?: ShellNavItem[];
   topActions?: ShellActionItem[];
   rightBottom?: ReactNode;
@@ -49,12 +50,14 @@ export function KineticPageShell({
   centerTitle,
   centerDescription,
   children,
+  layoutMode = "default",
   navItems = [...defaultNavItems],
   topActions = [...defaultTopActions],
   rightBottom,
   className,
 }: KineticPageShellProps) {
   const [hoveredPath, setHoveredPath] = useState<string | null>(null);
+  const isFocusLayout = layoutMode === "focus";
 
   return (
     <section
@@ -63,15 +66,28 @@ export function KineticPageShell({
       {/* 极简网格底纹 */}
       <div className="absolute inset-0 gmp-industrial-dot-grid opacity-[0.03] pointer-events-none" />
 
-      <main className="relative z-10 mx-auto grid min-h-dvh w-full grid-cols-1 gap-0 md:grid-cols-[100px_1fr] xl:grid-cols-[100px_1fr_360px] xl:gap-8 px-4 md:px-0">
+      <main
+        className={cn(
+          "relative z-10 mx-auto grid min-h-dvh w-full grid-cols-1 gap-0 px-4 md:px-0",
+          isFocusLayout
+            ? "md:grid-cols-[100px_1fr] xl:grid-cols-[100px_1fr]"
+            : "md:grid-cols-[100px_1fr] xl:grid-cols-[100px_1fr_360px] xl:gap-8",
+        )}
+      >
 
         {/* 左侧工业导航 */}
-        <aside className="relative hidden h-full flex-col items-center justify-between bg-(--gmp-bg-elevated) border-r border-(--gmp-line-soft) py-8 md:flex">
+        <aside className={cn(
+          "relative hidden h-full flex-col items-center justify-between bg-(--gmp-bg-elevated) border-r border-(--gmp-line-soft) py-8 md:flex",
+          isFocusLayout ? "py-8" : "py-8",
+        )}>
           <div className="absolute inset-0 gmp-halftone-sidebar mix-blend-overlay pointer-events-none" />
           <div className="relative z-10 flex flex-col items-center gap-12 w-full">
             {/* Logo区 */}
             <Link href="/" className="group flex flex-col items-center gap-2">
-              <div className="flex z-20 h-16 w-16 items-center justify-center bg-(--gmp-bg-base) border border-(--gmp-accent) p-1.5 shadow-[2px_2px_0_0_var(--gmp-line-soft)] transition-colors group-hover:bg-(--gmp-bg-panel)">
+              <div className={cn(
+                "flex z-20 items-center justify-center bg-(--gmp-bg-base) border border-(--gmp-accent) p-1.5 shadow-[2px_2px_0_0_var(--gmp-line-soft)] transition-colors group-hover:bg-(--gmp-bg-panel)",
+                isFocusLayout ? "h-16 w-16" : "h-16 w-16",
+              )}>
                 <img src="/gmp-logo.svg" alt="GetMyPage Logo" className="w-full h-full object-contain" />
               </div>
               <span className="font-mono text-[9px] font-bold tracking-[0.2em] text-(--gmp-text-secondary) uppercase group-hover:text-white transition-colors">
@@ -92,8 +108,9 @@ export function KineticPageShell({
                       <Link
                         href={item.href}
                         className={cn(
-                          "group relative flex w-full flex-col items-center justify-center gap-1 py-5 transition-all text-center",
+                          "group relative flex w-full flex-col items-center justify-center gap-1 transition-all text-center",
                           "font-heading text-xs font-black tracking-widest uppercase outline-none",
+                          isFocusLayout ? "py-5" : "py-5",
                           isHighlighted ? "text-white" : "text-(--gmp-text-secondary) hover:text-white"
                         )}
                       >
@@ -117,7 +134,7 @@ export function KineticPageShell({
 
                         <span className="relative z-10">{item.label}</span>
 
-                        {isActive && (
+                        {isActive && !isFocusLayout && (
                           <span className="relative z-10 font-mono text-[9px] tracking-widest text-(--gmp-accent) scale-90">
                             SELECTED
                           </span>
@@ -131,12 +148,14 @@ export function KineticPageShell({
           </div>
 
           {/* 底部保留状态指示 */}
-          <div className="relative z-10 flex flex-col items-center gap-6">
-            <div className="h-24 w-px bg-(--gmp-line-soft)" />
-            <span className="font-mono text-[10px] font-bold tracking-[0.3em] text-(--gmp-text-secondary) uppercase [writing-mode:vertical-rl]">
-              LINK // ONLINE
-            </span>
-          </div>
+          {!isFocusLayout ? (
+            <div className="relative z-10 flex flex-col items-center gap-6">
+              <div className="h-24 w-px bg-(--gmp-line-soft)" />
+              <span className="font-mono text-[10px] font-bold tracking-[0.3em] text-(--gmp-text-secondary) uppercase [writing-mode:vertical-rl]">
+                LINK // ONLINE
+              </span>
+            </div>
+          ) : null}
         </aside>
 
         {/* 中间主内容区 */}
@@ -144,10 +163,18 @@ export function KineticPageShell({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.2, 1, 0.2, 1] }}
-          className="relative flex flex-col justify-start pt-6 pb-6 overflow-hidden"
+          className={cn(
+            "relative flex flex-col justify-start overflow-hidden",
+            isFocusLayout ? "pt-4 pb-4" : "pt-6 pb-6",
+          )}
         >
           {/* 主标题栏 */}
-          <header className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b-2 border-(--gmp-line-soft) pb-4 pr-4">
+          <header
+            className={cn(
+              "flex flex-wrap items-end justify-between gap-4 border-b-2 border-(--gmp-line-soft) pr-4",
+              isFocusLayout ? "mb-4 pb-3" : "mb-6 pb-4",
+            )}
+          >
             <div className="space-y-3">
               <div className="inline-flex items-center gap-3 bg-(--gmp-bg-panel) border border-(--gmp-line-strong) px-3 py-1.5 font-mono text-[10px] font-bold tracking-[0.2em] text-[#FFF] uppercase gmp-cut-corner-l">
                 <Layers3 className="h-4 w-4 text-(--gmp-accent)" />
@@ -155,35 +182,51 @@ export function KineticPageShell({
                 <span className="ml-1 h-1.5 w-1.5 bg-(--gmp-accent) animate-pulse" />
               </div>
               <div>
-                <h1 className="font-heading text-4xl font-black tracking-widest text-[#FFF] md:text-5xl uppercase drop-shadow-[2px_2px_0_var(--gmp-line-soft)]">
+                <h1 className={cn(
+                  "font-heading font-black tracking-widest text-[#FFF] uppercase drop-shadow-[2px_2px_0_var(--gmp-line-soft)]",
+                  isFocusLayout ? "text-2xl md:text-3xl" : "text-4xl md:text-5xl",
+                )}>
                   {centerTitle}
                 </h1>
-                <p className="mt-2 max-w-xl text-sm font-medium leading-relaxed text-(--gmp-text-secondary)">
+                <p className={cn(
+                  "mt-2 max-w-xl font-medium leading-relaxed text-(--gmp-text-secondary)",
+                  isFocusLayout ? "text-xs md:text-sm" : "text-sm",
+                )}>
                   {centerDescription}
                 </p>
               </div>
             </div>
 
             {/* 顶栏静默指示器 */}
-            <div className="flex items-center gap-4">
-              <div className="group relative inline-flex h-10 items-center bg-(--gmp-bg-panel) border border-(--gmp-line-soft) px-5 font-mono text-[10px] font-bold tracking-[0.2em] text-(--gmp-text-secondary) uppercase gmp-cut-corner-r">
-                <span className="w-1.5 h-1.5 bg-(--gmp-accent) mr-3 inline-block opacity-80" />
-                <span>UPLINK: SECURED</span>
+            {!isFocusLayout ? (
+              <div className="flex items-center gap-4">
+                <div className="group relative inline-flex h-10 items-center bg-(--gmp-bg-panel) border border-(--gmp-line-soft) px-5 font-mono text-[10px] font-bold tracking-[0.2em] text-(--gmp-text-secondary) uppercase gmp-cut-corner-r">
+                  <span className="w-1.5 h-1.5 bg-(--gmp-accent) mr-3 inline-block opacity-80" />
+                  <span>UPLINK: SECURED</span>
+                </div>
               </div>
-            </div>
+            ) : null}
           </header>
 
-          <div className="min-h-0 flex-1 overflow-y-auto pr-4 custom-scrollbar">
+          <div className={cn(
+            "min-h-0 flex-1 overflow-y-auto custom-scrollbar",
+            isFocusLayout ? "pr-2 md:pr-3" : "pr-4",
+          )}>
             {children}
           </div>
 
-          <footer className="mt-4 flex items-center justify-start border-t border-(--gmp-line-soft) pt-4 font-mono text-[10px] font-bold tracking-[0.3em] text-(--gmp-text-secondary) uppercase">
-            MODULE_ID: 0xFD42A // SYS_v3.0.0
-          </footer>
+          {!isFocusLayout ? (
+            <footer className="mt-4 flex items-center justify-start border-t border-(--gmp-line-soft) pt-4 font-mono text-[10px] font-bold tracking-[0.3em] text-(--gmp-text-secondary) uppercase">
+              MODULE_ID: 0xFD42A // SYS_v3.0.0
+            </footer>
+          ) : null}
         </motion.section>
 
         {/* 右侧边栏区 */}
-        <aside className="hidden flex-col gap-6 pt-6 pb-6 pr-8 xl:flex">
+        <aside className={cn(
+          "hidden flex-col gap-6 pt-6 pb-6 pr-8 xl:flex",
+          isFocusLayout && "xl:hidden",
+        )}>
           {/* Action Panel */}
           <section className="bg-(--gmp-bg-panel) border border-(--gmp-line-soft) p-5 gmp-cut-corner-br gmp-hard-shadow box-border">
             <h3 className="mb-5 font-mono text-[11px] font-bold tracking-[0.2em] text-(--gmp-accent) uppercase flex items-center gap-2 border-b border-(--gmp-line-strong) pb-2">

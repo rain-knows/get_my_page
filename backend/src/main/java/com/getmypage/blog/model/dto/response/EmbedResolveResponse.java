@@ -14,6 +14,9 @@ import java.util.Map;
 @Schema(description = "Embed 解析响应")
 public class EmbedResolveResponse {
 
+    @Schema(description = "卡片类型（github/music/video/link）", example = "link")
+    private String cardType;
+
     @Schema(description = "平台标识", example = "github")
     private String provider;
 

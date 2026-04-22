@@ -150,10 +150,7 @@
 
 - **目标**：文档从设计态更新为实施态，移除独立 admin 假设。
 - **允许修改**：
-  - `docs/07-api-design.md`
-  - `docs/09-data-storage-matrix.md`
-  - `docs/11-rich-editor-design.md`
-  - `docs/architecture-contract.md`
+  - `docs
   - `README.md`
 - **禁止修改**：
   - `frontend/**`

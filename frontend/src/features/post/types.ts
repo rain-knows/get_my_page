@@ -39,3 +39,29 @@ export interface PostDetail {
   updatedAt: string;
   baseUpdatedAt: string;
 }
+
+export interface PostMutationPayload {
+  title: string;
+  slug: string;
+  summary?: string;
+  excerpt?: string;
+  content: string;
+  contentFormat: PostContentFormat;
+  status: PostStatus;
+  baseUpdatedAt?: string;
+  coverUrl?: string | null;
+}
+
+export interface FileUploadResult {
+  url: string;
+  key: string;
+}
+
+export interface EmbedResolveResult {
+  cardType: string;
+  provider: string;
+  normalizedUrl: string;
+  resolved: boolean;
+  fallbackUrl: string;
+  snapshot: Record<string, unknown> | null;
+}

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ApiError } from '@/lib/api-client';
 import { fetchPostDetail, fetchPostList } from '@/features/post/api';
 import type { PostDetail, PostListItem, PostListQuery, PostListResponse } from '@/features/post/types';
+import { useAuthStore } from '@/stores/use-auth-store';
 
 interface PostListState {
   records: PostListItem[];
@@ -126,4 +127,47 @@ export function usePostDetail(slug: string, includeDraft = false) {
     error,
     reload,
   };
+}
+
+/**
+ * 功能：解析 JWT accessToken 中的 role 字段，作为刷新后的权限兜底来源。
+ * 关键参数：token 为浏览器本地存储的 accessToken。
+ * 返回值/副作用：返回角色字符串（大写）或 null；无副作用。
+ */
+function parseRoleFromAccessToken(token: string): string | null {
+  try {
+    const payloadSegment = token.split('.')[1];
+    if (!payloadSegment) {
+      return null;
+    }
+
+    const normalized = payloadSegment.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=');
+    const payloadText = atob(padded);
+    const payload = JSON.parse(payloadText) as { role?: unknown };
+
+    if (typeof payload.role !== 'string') {
+      return null;
+    }
+
+    return payload.role.toUpperCase();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 功能：判断当前浏览器会话是否具备管理员编辑能力。
+ * 关键参数：无（内部读取 Zustand 登录态与 localStorage token）。
+ * 返回值/副作用：返回管理员标识布尔值；副作用为首次挂载时读取浏览器本地存储。
+ */
+export function useIsAdminCapability(): boolean {
+  const userRole = useAuthStore((state) => state.user?.role ?? null);
+  const normalizedUserRole = userRole ? userRole.toUpperCase() : null;
+  const tokenRole =
+    typeof window === 'undefined'
+      ? null
+      : parseRoleFromAccessToken(localStorage.getItem('accessToken') ?? '');
+
+  return normalizedUserRole === 'ADMIN' || tokenRole === 'ADMIN';
 }
