@@ -27,10 +27,11 @@ public class PostCreateRequest {
     private String excerpt;
 
     @NotBlank(message = "正文不能为空")
-    @Schema(description = "正文内容（MDX 或 tiptap-json 字符串）")
+    @Schema(description = "正文内容（gmp-block-v1 JSON 字符串）")
     private String content;
 
-    @Schema(description = "正文格式，支持 mdx / tiptap-json，缺省时自动推断", example = "mdx")
+    @NotBlank(message = "contentFormat 不能为空")
+    @Schema(description = "正文格式，仅支持 gmp-block-v1", example = "gmp-block-v1")
     private String contentFormat;
 
     @NotNull(message = "状态不能为空")

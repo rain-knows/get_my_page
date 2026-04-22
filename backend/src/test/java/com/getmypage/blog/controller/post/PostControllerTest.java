@@ -67,7 +67,7 @@ class PostControllerTest {
                 .slug("slug")
                 .excerpt("excerpt")
                 .summary("excerpt")
-                .contentFormat("mdx")
+                .contentFormat("gmp-block-v1")
                 .status(1)
                 .updatedAt(LocalDateTime.of(2026, 4, 21, 10, 0, 0))
                 .baseUpdatedAt(LocalDateTime.of(2026, 4, 21, 10, 0, 0))
@@ -102,8 +102,8 @@ class PostControllerTest {
         request.setTitle("title");
         request.setSlug("slug");
         request.setExcerpt("excerpt");
-        request.setContent("# content");
-        request.setContentFormat("mdx");
+        request.setContent(buildGmpBlockContent("content"));
+        request.setContentFormat("gmp-block-v1");
         request.setStatus(1);
 
         mockMvc.perform(post("/api/posts")
@@ -127,8 +127,8 @@ class PostControllerTest {
         request.setTitle("title");
         request.setSlug("slug");
         request.setExcerpt("excerpt");
-        request.setContent("# content");
-        request.setContentFormat("mdx");
+        request.setContent(buildGmpBlockContent("content"));
+        request.setContentFormat("gmp-block-v1");
         request.setStatus(1);
 
         mockMvc.perform(put("/api/posts/1")
@@ -163,8 +163,8 @@ class PostControllerTest {
                 .slug("slug")
                 .excerpt("excerpt")
                 .summary("excerpt")
-                .content("# content")
-                .contentFormat("mdx")
+                .content(buildGmpBlockContent("content"))
+                .contentFormat("gmp-block-v1")
                 .status(1)
                 .createdAt(LocalDateTime.of(2026, 4, 21, 8, 0, 0))
                 .updatedAt(LocalDateTime.of(2026, 4, 21, 9, 0, 0))
@@ -176,5 +176,14 @@ class PostControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.slug").value("slug"))
                 .andExpect(jsonPath("$.data.status").value(1));
+    }
+
+    /**
+     * 功能：构造 gmp-block-v1 格式正文 JSON，供控制器请求体测试复用。
+     * 关键参数：text 为段落文本。
+     * 返回值/副作用：返回 JSON 字符串；无副作用。
+     */
+    private String buildGmpBlockContent(String text) {
+        return "{\"version\":\"gmp-block-v1\",\"blocks\":[{\"type\":\"paragraph\",\"richText\":[{\"text\":\"" + text + "\"}]}]}";
     }
 }

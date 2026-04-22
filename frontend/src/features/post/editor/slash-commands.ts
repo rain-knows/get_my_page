@@ -2,6 +2,48 @@ import type { SlashCommandItem } from '@/features/post/editor/types';
 
 export const SLASH_COMMAND_ITEMS: SlashCommandItem[] = [
   {
+    type: 'heading1',
+    title: '一级标题',
+    alias: 'h1',
+    description: '将当前块转换为 H1',
+  },
+  {
+    type: 'heading2',
+    title: '二级标题',
+    alias: 'h2',
+    description: '将当前块转换为 H2',
+  },
+  {
+    type: 'heading3',
+    title: '三级标题',
+    alias: 'h3',
+    description: '将当前块转换为 H3',
+  },
+  {
+    type: 'bulletList',
+    title: '无序列表',
+    alias: 'bullet',
+    description: '将当前块转换为无序列表',
+  },
+  {
+    type: 'orderedList',
+    title: '有序列表',
+    alias: 'ordered',
+    description: '将当前块转换为有序列表',
+  },
+  {
+    type: 'quote',
+    title: '引用',
+    alias: 'quote',
+    description: '将当前块转换为引用块',
+  },
+  {
+    type: 'code',
+    title: '代码块',
+    alias: 'code',
+    description: '将当前块转换为代码块',
+  },
+  {
     type: 'image',
     title: '插入图片',
     alias: 'image',

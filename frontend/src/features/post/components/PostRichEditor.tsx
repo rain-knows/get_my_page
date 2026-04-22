@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent, type PointerEvent } from 'react';
-import type { JSONContent } from '@tiptap/core';
+import type { Editor as TiptapEditor, JSONContent } from '@tiptap/core';
+import Link from '@tiptap/extension-link';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { TextSelection } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
@@ -24,7 +25,9 @@ import {
   EmbedVideoNode,
   ImageBlockNode,
 } from '@/features/post/editor/extensions/custom-nodes';
-import { filterSlashCommands } from '@/features/post/editor/slash-commands';
+import { filterSlashCommands, SLASH_COMMAND_ITEMS } from '@/features/post/editor/slash-commands';
+import { convertTiptapDocToBlockDocument, type BlockDocument } from '@/features/post/editor/block-model';
+import { BlockRenderer } from '@/features/post/components/BlockRenderer';
 import type { EmbedResolveResult, PostDetail } from '@/features/post/types';
 import type { SlashCommandItem, SlashCommandType } from '@/features/post/editor/types';
 
@@ -51,6 +54,11 @@ interface ActiveBlockState {
 interface DragSortState {
   pointerId: number;
   lastY: number;
+}
+
+interface SlashMenuPosition {
+  top: number;
+  left: number;
 }
 
 /**
@@ -219,12 +227,92 @@ function resolveCardType(response?: EmbedResolveResult): 'github' | 'music' | 'v
 }
 
 /**
+ * 功能：判断当前光标所在顶层块是否为空块，用于 Backspace 合并块语义。
+ * 关键参数：currentEditor 为编辑器实例。
+ * 返回值/副作用：返回是否为空块；无副作用。
+ */
+function isCurrentTopLevelBlockEmpty(currentEditor: TiptapEditor): boolean {
+  const selection = currentEditor.state.selection;
+  if (!selection.empty || selection.$from.depth < 1) {
+    return false;
+  }
+  const index = selection.$from.index(0);
+  if (index < 0 || index >= currentEditor.state.doc.childCount) {
+    return false;
+  }
+  const node = currentEditor.state.doc.child(index);
+  if (node.type.name === 'divider') {
+    return true;
+  }
+  return node.textContent.trim().length === 0;
+}
+
+/**
+ * 功能：计算当前光标所在顶层块在文档中的起止位置。
+ * 关键参数：currentEditor 为编辑器实例。
+ * 返回值/副作用：返回块范围信息或 null；无副作用。
+ */
+function resolveCurrentTopLevelBlockRange(currentEditor: TiptapEditor): { index: number; from: number; to: number } | null {
+  const selection = currentEditor.state.selection;
+  if (selection.$from.depth < 1) {
+    return null;
+  }
+  const index = selection.$from.index(0);
+  if (index < 0 || index >= currentEditor.state.doc.childCount) {
+    return null;
+  }
+  return {
+    index,
+    from: selection.$from.before(1),
+    to: selection.$from.after(1),
+  };
+}
+
+/**
+ * 功能：为 Slash 菜单计算相对编辑器容器的位置，使菜单在光标附近弹出。
+ * 关键参数：currentEditor 为编辑器实例；container 为编辑器容器节点；from 为 slash 起始位置。
+ * 返回值/副作用：返回菜单坐标；无副作用。
+ */
+function resolveSlashMenuPosition(currentEditor: TiptapEditor, container: HTMLDivElement | null, from: number): SlashMenuPosition {
+  if (!container) {
+    return { top: 8, left: 8 };
+  }
+
+  try {
+    const cursorRect = currentEditor.view.coordsAtPos(from);
+    const containerRect = container.getBoundingClientRect();
+    const top = Math.max(8, cursorRect.bottom - containerRect.top + 8);
+    const left = Math.max(8, cursorRect.left - containerRect.left);
+    return { top, left };
+  } catch {
+    return { top: 8, left: 8 };
+  }
+}
+
+/**
+ * 功能：将用户输入链接归一化为可写入 link mark 的 URL。
+ * 关键参数：value 为输入链接。
+ * 返回值/副作用：返回标准 URL；无副作用。
+ */
+function normalizeInlineLink(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return '';
+  }
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+}
+
+/**
  * 功能：渲染文章富文本编辑器，提供统一卡片解析、图片上传、块拖拽排序与保存能力。
  * 关键参数：post 为当前文章详情；onSaved/onCancel 为编辑态回调。
  * 返回值/副作用：返回编辑器 UI；副作用为触发接口请求与本地文件选择。
  */
 export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const editorContainerRef = useRef<HTMLDivElement | null>(null);
   const dragSortRef = useRef<DragSortState | null>(null);
 
   const [slashState, setSlashState] = useState<SlashState>({
@@ -234,6 +322,10 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
     to: 0,
   });
   const [activeSlashIndex, setActiveSlashIndex] = useState(0);
+  const [slashMenuPosition, setSlashMenuPosition] = useState<SlashMenuPosition>({ top: 8, left: 8 });
+  const [inlineToolbarVisible, setInlineToolbarVisible] = useState(false);
+  const [inlineToolbarPosition, setInlineToolbarPosition] = useState<SlashMenuPosition>({ top: 8, left: 8 });
+  const [insertMenuOpen, setInsertMenuOpen] = useState(false);
   const [activeBlock, setActiveBlock] = useState<ActiveBlockState | null>(null);
   const [dragSorting, setDragSorting] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -245,6 +337,7 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
     () => parsePostContentToEditorDoc(post.content, post.contentFormat),
     [post.content, post.contentFormat],
   );
+  const [previewDocument, setPreviewDocument] = useState<BlockDocument>(() => convertTiptapDocToBlockDocument(initialDoc));
 
   /**
    * 功能：刷新编辑器当前激活块信息，供上下移动与拖拽排序使用。
@@ -283,7 +376,17 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
   function syncTransientEditorState(currentEditor: NonNullable<ReturnType<typeof useEditor>>): void {
     const selection = currentEditor.state.selection;
     const parentBeforeCursor = selection.$from.parent.textBetween(0, selection.$from.parentOffset, '\0', '\0');
-    setSlashState(detectSlashState(parentBeforeCursor, selection.from));
+    const nextSlashState = detectSlashState(parentBeforeCursor, selection.from);
+    setSlashState(nextSlashState);
+    if (nextSlashState.open) {
+      setSlashMenuPosition(resolveSlashMenuPosition(currentEditor, editorContainerRef.current, nextSlashState.from));
+    }
+    if (!selection.empty) {
+      setInlineToolbarVisible(true);
+      setInlineToolbarPosition(resolveSlashMenuPosition(currentEditor, editorContainerRef.current, selection.from));
+    } else {
+      setInlineToolbarVisible(false);
+    }
     refreshActiveBlock(currentEditor);
   }
 
@@ -294,6 +397,11 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
         heading: {
           levels: [1, 2, 3],
         },
+      }),
+      Link.configure({
+        openOnClick: false,
+        autolink: false,
+        linkOnPaste: false,
       }),
       ImageBlockNode,
       EmbedGithubNode,
@@ -311,10 +419,11 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
     },
     onUpdate: ({ editor: currentEditor }) => {
       syncTransientEditorState(currentEditor);
+      setPreviewDocument(convertTiptapDocToBlockDocument(currentEditor.getJSON() as JSONContent));
       setStatusHint('');
     },
     onSelectionUpdate: ({ editor: currentEditor }) => {
-      refreshActiveBlock(currentEditor);
+      syncTransientEditorState(currentEditor);
     },
   });
 
@@ -328,12 +437,15 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
     }
 
     editor.commands.setContent(initialDoc);
+    setPreviewDocument(convertTiptapDocToBlockDocument(initialDoc));
     setSlashState({
       open: false,
       query: '',
       from: 0,
       to: 0,
     });
+    setInsertMenuOpen(false);
+    setInlineToolbarVisible(false);
     setStatusHint('');
     setError('');
     refreshActiveBlock(editor);
@@ -349,6 +461,10 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
       setActiveSlashIndex(0);
     }
   }, [activeSlashIndex, slashItems.length]);
+
+  useEffect(() => {
+    setActiveSlashIndex(0);
+  }, [slashState.query, slashState.open]);
 
   /**
    * 功能：在执行 Slash 命令前移除光标前的 `/query` 文本。
@@ -694,22 +810,55 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
    */
   async function executeSlashCommand(commandType: SlashCommandType): Promise<void> {
     clearSlashTriggerText();
+    setInsertMenuOpen(false);
 
+    if (!editor) {
+      return;
+    }
+
+    if (commandType === 'heading1') {
+      editor.chain().focus().setHeading({ level: 1 }).run();
+      return;
+    }
+    if (commandType === 'heading2') {
+      editor.chain().focus().setHeading({ level: 2 }).run();
+      return;
+    }
+    if (commandType === 'heading3') {
+      editor.chain().focus().setHeading({ level: 3 }).run();
+      return;
+    }
+    if (commandType === 'bulletList') {
+      editor.chain().focus().toggleBulletList().run();
+      return;
+    }
+    if (commandType === 'orderedList') {
+      editor.chain().focus().toggleOrderedList().run();
+      return;
+    }
+    if (commandType === 'quote') {
+      editor.chain().focus().toggleBlockquote().run();
+      return;
+    }
+    if (commandType === 'code') {
+      editor.chain().focus().toggleCodeBlock().run();
+      return;
+    }
     if (commandType === 'divider') {
       insertDividerNode();
       return;
     }
-
     if (commandType === 'image') {
       fileInputRef.current?.click();
       return;
     }
-
-    const inputUrl = requestUrlInput('请输入外部链接（系统将自动识别卡片类型）：', 'https://');
-    if (!inputUrl) {
-      return;
+    if (commandType === 'card') {
+      const inputUrl = requestUrlInput('请输入外部链接（系统将自动识别卡片类型）：', 'https://');
+      if (!inputUrl) {
+        return;
+      }
+      await resolveAndInsertCard(inputUrl);
     }
-    await resolveAndInsertCard(inputUrl);
   }
 
   /**
@@ -717,21 +866,21 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
    * 关键参数：event 为键盘事件对象。
    * 返回值/副作用：无返回值；副作用为更新菜单选中项或触发命令执行。
    */
-  function handleSlashMenuKeydown(event: KeyboardEvent<HTMLDivElement>): void {
+  function handleSlashMenuKeydown(event: KeyboardEvent<HTMLDivElement>): boolean {
     if (!slashState.open || slashItems.length === 0) {
-      return;
+      return false;
     }
 
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       setActiveSlashIndex((previous) => (previous + 1) % slashItems.length);
-      return;
+      return true;
     }
 
     if (event.key === 'ArrowUp') {
       event.preventDefault();
       setActiveSlashIndex((previous) => (previous - 1 + slashItems.length) % slashItems.length);
-      return;
+      return true;
     }
 
     if (event.key === 'Enter') {
@@ -740,7 +889,7 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
       if (selected) {
         void executeSlashCommand(selected.type);
       }
-      return;
+      return true;
     }
 
     if (event.key === 'Escape') {
@@ -751,7 +900,104 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
         from: 0,
         to: 0,
       });
+      return true;
     }
+
+    return false;
+  }
+
+  /**
+   * 功能：将光标定位到指定顶层块的起始或末尾，支持方向键跨块导航。
+   * 关键参数：targetIndex 为目标块索引；placement 为定位位置（start/end）。
+   * 返回值/副作用：无返回值；副作用为更新编辑器选区。
+   */
+  function focusBlockByIndex(targetIndex: number, placement: 'start' | 'end'): void {
+    if (!editor) {
+      return;
+    }
+
+    const { doc } = editor.state;
+    if (targetIndex < 0 || targetIndex >= doc.childCount) {
+      return;
+    }
+
+    let from = 0;
+    for (let index = 0; index < targetIndex; index += 1) {
+      from += doc.child(index).nodeSize;
+    }
+    from += 1;
+    const node = doc.child(targetIndex);
+    const targetPos = placement === 'start'
+      ? Math.min(from + 1, doc.content.size)
+      : Math.max(1, from + node.nodeSize - 2);
+    const resolved = editor.state.tr.doc.resolve(targetPos);
+    const transaction = editor.state.tr.setSelection(TextSelection.near(resolved, placement === 'start' ? 1 : -1));
+    editor.view.dispatch(transaction.scrollIntoView());
+    editor.view.focus();
+  }
+
+  /**
+   * 功能：实现 Notion 核心键盘语义（Enter 拆块、空块 Backspace 合并、方向键跨块移动）。
+   * 关键参数：event 为键盘事件对象。
+   * 返回值/副作用：返回是否已处理；副作用为修改文档结构或光标位置。
+   */
+  function handleNotionKeyboardSemantics(event: KeyboardEvent<HTMLDivElement>): boolean {
+    if (!editor || actionLoading || saveLoading) {
+      return false;
+    }
+    if (event.shiftKey || event.metaKey || event.ctrlKey || event.altKey) {
+      return false;
+    }
+
+    const blockRange = resolveCurrentTopLevelBlockRange(editor);
+    if (!blockRange) {
+      return false;
+    }
+    const selection = editor.state.selection;
+
+    if (event.key === 'Enter' && selection.empty) {
+      const node = editor.state.doc.child(blockRange.index);
+      const atEnd = selection.$from.pos === blockRange.to - 1;
+      const supportsSplitByEnter = node.type.name === 'heading' || node.type.name === 'blockquote' || node.type.name === 'codeBlock';
+      if (atEnd && supportsSplitByEnter) {
+        event.preventDefault();
+        editor
+          .chain()
+          .focus()
+          .insertContentAt(blockRange.to, { type: 'paragraph', content: [{ type: 'text', text: '' }] })
+          .run();
+        focusBlockByIndex(blockRange.index + 1, 'start');
+        return true;
+      }
+    }
+
+    if (event.key === 'Backspace' && isCurrentTopLevelBlockEmpty(editor) && blockRange.index > 0) {
+      event.preventDefault();
+      const transaction = editor.state.tr.delete(blockRange.from, blockRange.to);
+      editor.view.dispatch(transaction.scrollIntoView());
+      focusBlockByIndex(blockRange.index - 1, 'end');
+      return true;
+    }
+
+    if (event.key === 'ArrowUp' && selection.empty) {
+      const atStart = selection.$from.pos === blockRange.from + 1;
+      if (atStart && blockRange.index > 0) {
+        event.preventDefault();
+        focusBlockByIndex(blockRange.index - 1, 'end');
+        return true;
+      }
+    }
+
+    if (event.key === 'ArrowDown' && selection.empty) {
+      const atEnd = selection.$from.pos === blockRange.to - 1;
+      if (atEnd && blockRange.index < editor.state.doc.childCount - 1) {
+        event.preventDefault();
+        focusBlockByIndex(blockRange.index + 1, 'start');
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -783,6 +1029,51 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
   }
 
   /**
+   * 功能：处理编辑区键盘事件，优先处理 Slash 菜单，再处理 Notion 风格块语义。
+   * 关键参数：event 为键盘事件对象。
+   * 返回值/副作用：无返回值；副作用为触发菜单操作或块编辑动作。
+   */
+  function handleEditorContainerKeydown(event: KeyboardEvent<HTMLDivElement>): void {
+    if (handleSlashMenuKeydown(event)) {
+      return;
+    }
+    handleNotionKeyboardSemantics(event);
+  }
+
+  /**
+   * 功能：为当前选中文本设置或移除行内链接 mark。
+   * 关键参数：无（内部读取当前 link mark 与用户输入）。
+   * 返回值/副作用：无返回值；副作用为更新当前选区 marks。
+   */
+  function handleInlineLinkAction(): void {
+    if (!editor) {
+      return;
+    }
+
+    const previousHref = (editor.getAttributes('link').href as string | undefined) ?? '';
+    const input = window.prompt('请输入链接地址（留空则移除链接）：', previousHref || 'https://');
+    if (input === null) {
+      return;
+    }
+    const normalized = normalizeInlineLink(input);
+    if (!normalized) {
+      editor.chain().focus().unsetLink().run();
+      return;
+    }
+
+    editor
+      .chain()
+      .focus()
+      .extendMarkRange('link')
+      .setLink({
+        href: normalized,
+        target: '_blank',
+        rel: 'noopener noreferrer',
+      })
+      .run();
+  }
+
+  /**
    * 功能：将当前编辑器内容保存到后端文章接口。
    * 关键参数：无（内部读取 editor/post）。
    * 返回值/副作用：返回 Promise<void>；副作用为调用更新接口并触发 onSaved。
@@ -806,7 +1097,7 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
         summary: nextExcerpt,
         excerpt: nextExcerpt,
         content: serializeEditorDoc(docJson),
-        contentFormat: 'tiptap-json',
+        contentFormat: 'gmp-block-v1',
         status: post.status,
         baseUpdatedAt: post.baseUpdatedAt,
         coverUrl: post.coverUrl,
@@ -839,6 +1130,31 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
         </div>
 
         <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:items-center">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setInsertMenuOpen((previous) => !previous)}
+              disabled={actionLoading || saveLoading}
+              className="h-10 border border-(--gmp-line-soft) bg-(--gmp-bg-base) px-3 font-mono text-[10px] font-bold tracking-widest uppercase text-white hover:border-white disabled:opacity-60"
+            >
+              + BLOCK
+            </button>
+            {insertMenuOpen ? (
+              <div className="absolute left-0 top-11 z-40 w-72 border border-(--gmp-line-strong) bg-(--gmp-bg-panel) p-2">
+                {SLASH_COMMAND_ITEMS.map((item) => (
+                  <button
+                    key={`insert-${item.type}`}
+                    type="button"
+                    onClick={() => void executeSlashCommand(item.type)}
+                    className="mb-1 flex w-full items-center justify-between border border-(--gmp-line-soft) bg-(--gmp-bg-base) px-3 py-2 text-left last:mb-0 hover:border-white"
+                  >
+                    <span className="font-mono text-[11px] font-bold uppercase tracking-widest text-white">{item.title}</span>
+                    <span className="pl-3 text-right font-mono text-[10px] uppercase tracking-widest text-(--gmp-text-secondary)">/{item.alias}</span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
@@ -854,14 +1170,6 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
             className="h-10 border border-(--gmp-line-soft) bg-(--gmp-bg-base) px-3 font-mono text-[10px] font-bold tracking-widest uppercase text-white hover:border-white disabled:opacity-60"
           >
             CARD
-          </button>
-          <button
-            type="button"
-            onClick={insertDividerNode}
-            disabled={actionLoading || saveLoading}
-            className="h-10 border border-(--gmp-line-soft) bg-(--gmp-bg-base) px-3 font-mono text-[10px] font-bold tracking-widest uppercase text-white hover:border-white disabled:opacity-60"
-          >
-            DIVIDER
           </button>
           <button
             type="button"
@@ -933,11 +1241,66 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
         </p>
       ) : null}
 
-      <div className="relative" onKeyDownCapture={handleSlashMenuKeydown}>
+      <div ref={editorContainerRef} className="relative" onKeyDownCapture={handleEditorContainerKeydown}>
+        {editor && inlineToolbarVisible ? (
+          <div
+            className="absolute z-30 flex items-center gap-1 border border-(--gmp-line-strong) bg-(--gmp-bg-panel) p-1"
+            style={{ top: `${Math.max(8, inlineToolbarPosition.top - 52)}px`, left: `${inlineToolbarPosition.left}px` }}
+          >
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              className={`h-8 min-w-8 border px-2 font-mono text-[10px] font-bold uppercase tracking-widest ${
+                editor.isActive('bold')
+                  ? 'border-(--gmp-accent) bg-(--gmp-accent) text-black'
+                  : 'border-(--gmp-line-soft) bg-(--gmp-bg-base) text-white hover:border-white'
+              }`}
+            >
+              B
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              className={`h-8 min-w-8 border px-2 font-mono text-[10px] font-bold uppercase tracking-widest ${
+                editor.isActive('italic')
+                  ? 'border-(--gmp-accent) bg-(--gmp-accent) text-black'
+                  : 'border-(--gmp-line-soft) bg-(--gmp-bg-base) text-white hover:border-white'
+              }`}
+            >
+              I
+            </button>
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleCode().run()}
+              className={`h-8 min-w-8 border px-2 font-mono text-[10px] font-bold uppercase tracking-widest ${
+                editor.isActive('code')
+                  ? 'border-(--gmp-accent) bg-(--gmp-accent) text-black'
+                  : 'border-(--gmp-line-soft) bg-(--gmp-bg-base) text-white hover:border-white'
+              }`}
+            >
+              CODE
+            </button>
+            <button
+              type="button"
+              onClick={handleInlineLinkAction}
+              className={`h-8 min-w-8 border px-2 font-mono text-[10px] font-bold uppercase tracking-widest ${
+                editor.isActive('link')
+                  ? 'border-(--gmp-accent) bg-(--gmp-accent) text-black'
+                  : 'border-(--gmp-line-soft) bg-(--gmp-bg-base) text-white hover:border-white'
+              }`}
+            >
+              LINK
+            </button>
+          </div>
+        ) : null}
+
         <EditorContent editor={editor} />
 
         {slashState.open && slashItems.length > 0 ? (
-          <div className="absolute left-2 top-2 z-20 w-full max-w-xl border border-(--gmp-line-strong) bg-(--gmp-bg-panel) p-2">
+          <div
+            className="absolute z-20 w-full max-w-xl border border-(--gmp-line-strong) bg-(--gmp-bg-panel) p-2"
+            style={{ top: `${slashMenuPosition.top}px`, left: `${slashMenuPosition.left}px` }}
+          >
             {slashItems.map((item, index) => {
               const isActive = index === activeSlashIndex;
               return (
@@ -961,8 +1324,16 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
       </div>
 
       <p className="font-mono text-[10px] uppercase tracking-widest text-(--gmp-text-secondary)">
-        Slash: 输入 <span className="text-(--gmp-accent)">/</span> 打开命令菜单（支持 IMAGE/CARD/DIVIDER）
+        Slash: 输入 <span className="text-(--gmp-accent)">/</span> 打开命令菜单；支持标题、列表、引用、代码、图片、卡片、分割线。
       </p>
+      <p className="font-mono text-[10px] uppercase tracking-widest text-(--gmp-text-secondary)">
+        键盘语义：Enter 拆块，空块 Backspace 合并，ArrowUp/ArrowDown 在块间移动。
+      </p>
+
+      <section className="space-y-3 border border-(--gmp-line-soft) bg-(--gmp-bg-base) p-3">
+        <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-(--gmp-accent)">LIVE PREVIEW // SAME BLOCK RENDERER AS READER</p>
+        <BlockRenderer document={previewDocument} />
+      </section>
     </section>
   );
 }
