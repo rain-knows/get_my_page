@@ -3,10 +3,26 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type KeyboardEvent, type PointerEvent } from 'react';
 import type { Editor as TiptapEditor, JSONContent } from '@tiptap/core';
 import Link from '@tiptap/extension-link';
-import { EditorContent, useEditor } from '@tiptap/react';
+import { useEditor } from '@tiptap/react';
 import { TextSelection } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import { ApiError } from '@/lib/api-client';
+import type {
+  EditorBubbleActionItem,
+  EditorCommandMenuItem,
+  EditorShellProps,
+} from '@/features/editor/types';
+import {
+  BubbleMenu,
+  CommandMenu,
+  EditorContent,
+  EditorEntryTemplate,
+  EditorShell,
+} from '@/features/editor/components';
+import {
+  handleEditorImageDrop,
+  handleEditorImagePaste,
+} from '@/features/editor/utils/image-upload-handlers';
 import {
   resolveEmbed,
   updatePost,
@@ -390,6 +406,16 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
     refreshActiveBlock(currentEditor);
   }
 
+  /**
+   * 功能：统一处理编辑器内容变更后的平台层同步逻辑。
+   * 关键参数：currentEditor 为当前编辑器实例。
+   * 返回值/副作用：无返回值；副作用为更新预览文档与状态提示。
+   */
+  function handleEditorChanged(currentEditor: NonNullable<ReturnType<typeof useEditor>>): void {
+    setPreviewDocument(convertTiptapDocToBlockDocument(currentEditor.getJSON() as JSONContent));
+    setStatusHint('');
+  }
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -412,6 +438,8 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
     ],
     content: initialDoc,
     editorProps: {
+      handlePaste: (view, event) => handleEditorImagePaste(view, event, uploadAndInsertImage),
+      handleDrop: (view, event, _slice, moved) => handleEditorImageDrop(view, event, moved, uploadAndInsertImage),
       attributes: {
         class:
           'gmp-notion-editor min-h-96 border border-(--gmp-line-soft) bg-(--gmp-bg-base) p-3 md:p-5 font-mono text-sm leading-relaxed text-(--gmp-text-primary) focus:outline-none',
@@ -419,8 +447,7 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
     },
     onUpdate: ({ editor: currentEditor }) => {
       syncTransientEditorState(currentEditor);
-      setPreviewDocument(convertTiptapDocToBlockDocument(currentEditor.getJSON() as JSONContent));
-      setStatusHint('');
+      handleEditorChanged(currentEditor);
     },
     onSelectionUpdate: ({ editor: currentEditor }) => {
       syncTransientEditorState(currentEditor);
@@ -1119,221 +1146,234 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
 
   const canMoveUp = Boolean(activeBlock && activeBlock.index > 0);
   const canMoveDown = Boolean(activeBlock && activeBlock.index < activeBlock.count - 1);
+  const editorShell: EditorShellProps = {
+    initialContent: initialDoc,
+    onChange: (currentEditor) => {
+      handleEditorChanged(currentEditor);
+    },
+    onSave: async () => {
+      await handleSavePost();
+    },
+    uploadImage: async (file) => {
+      await uploadAndInsertImage(file);
+    },
+    resolveEmbed: async (url) => {
+      await resolveAndInsertCard(url);
+    },
+    readonly: actionLoading || saveLoading,
+  };
 
-  return (
-    <section className="space-y-4 border border-(--gmp-line-strong) bg-(--gmp-bg-panel) p-4 md:p-6 gmp-cut-corner-br">
-      <header className="flex flex-col gap-4 border-b border-(--gmp-line-soft) pb-4">
-        <div className="space-y-1">
-          <p className="font-mono text-[10px] font-bold tracking-widest text-(--gmp-accent) uppercase">ADMIN EDIT MODE</p>
-          <h2 className="font-heading text-xl font-black text-white uppercase tracking-tight">{post.title}</h2>
-          <p className="font-mono text-[11px] text-(--gmp-text-secondary) uppercase tracking-widest">SLUG: {post.slug}</p>
-        </div>
+  const insertMenuItems: EditorCommandMenuItem[] = SLASH_COMMAND_ITEMS.map((item) => ({
+    key: `insert-${item.type}`,
+    label: item.title,
+    description: item.description,
+    alias: item.alias,
+    disabled: actionLoading || saveLoading,
+    onSelect: () => {
+      void executeSlashCommand(item.type);
+    },
+  }));
 
-        <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:items-center">
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setInsertMenuOpen((previous) => !previous)}
-              disabled={actionLoading || saveLoading}
-              className="h-10 border border-(--gmp-line-soft) bg-(--gmp-bg-base) px-3 font-mono text-[10px] font-bold tracking-widest uppercase text-white hover:border-white disabled:opacity-60"
-            >
-              + BLOCK
-            </button>
-            {insertMenuOpen ? (
-              <div className="absolute left-0 top-11 z-40 w-72 border border-(--gmp-line-strong) bg-(--gmp-bg-panel) p-2">
-                {SLASH_COMMAND_ITEMS.map((item) => (
-                  <button
-                    key={`insert-${item.type}`}
-                    type="button"
-                    onClick={() => void executeSlashCommand(item.type)}
-                    className="mb-1 flex w-full items-center justify-between border border-(--gmp-line-soft) bg-(--gmp-bg-base) px-3 py-2 text-left last:mb-0 hover:border-white"
-                  >
-                    <span className="font-mono text-[11px] font-bold uppercase tracking-widest text-white">{item.title}</span>
-                    <span className="pl-3 text-right font-mono text-[10px] uppercase tracking-widest text-(--gmp-text-secondary)">/{item.alias}</span>
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={actionLoading || saveLoading}
-            className="h-10 border border-(--gmp-line-soft) bg-(--gmp-bg-base) px-3 font-mono text-[10px] font-bold tracking-widest uppercase text-white hover:border-white disabled:opacity-60"
-          >
-            IMAGE
-          </button>
-          <button
-            type="button"
-            onClick={handleInsertSmartCard}
-            disabled={actionLoading || saveLoading}
-            className="h-10 border border-(--gmp-line-soft) bg-(--gmp-bg-base) px-3 font-mono text-[10px] font-bold tracking-widest uppercase text-white hover:border-white disabled:opacity-60"
-          >
-            CARD
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={saveLoading}
-            className="h-10 border border-(--gmp-line-soft) bg-(--gmp-bg-base) px-3 font-mono text-[10px] font-bold tracking-widest uppercase text-(--gmp-text-secondary) hover:text-white"
-          >
-            CANCEL
-          </button>
-          <button
-            type="button"
-            onClick={() => void handleSavePost()}
-            disabled={saveLoading || actionLoading}
-            className="h-10 border border-(--gmp-accent) bg-(--gmp-accent) px-4 font-mono text-[10px] font-black tracking-widest uppercase text-black hover:opacity-90 disabled:opacity-60"
-          >
-            {saveLoading ? 'SAVING...' : 'SAVE'}
-          </button>
-        </div>
+  const slashMenuItems: EditorCommandMenuItem[] = slashItems.map((item, index) => ({
+    key: item.type,
+    label: item.title,
+    description: item.description,
+    alias: item.alias,
+    active: index === activeSlashIndex,
+    onSelect: () => {
+      void executeSlashCommand(item.type);
+    },
+  }));
 
-        <div className="flex flex-wrap items-center gap-2 border border-(--gmp-line-soft) bg-(--gmp-bg-base) p-2">
-          <button
-            type="button"
-            onPointerDown={handleDragHandlePointerDown}
-            onPointerMove={handleDragHandlePointerMove}
-            onPointerUp={handleDragHandlePointerUp}
-            disabled={!activeBlock || actionLoading || saveLoading}
-            className="inline-flex h-9 w-9 items-center justify-center border border-(--gmp-line-soft) bg-(--gmp-bg-panel) font-mono text-[12px] font-black tracking-tight text-(--gmp-text-secondary) cursor-grab active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50"
-            title="拖拽排序手柄"
-          >
-            ⋮⋮
-          </button>
-          <button
-            type="button"
-            onClick={() => moveCurrentBlock('up')}
-            disabled={!canMoveUp || actionLoading || saveLoading}
-            className="h-9 border border-(--gmp-line-soft) bg-(--gmp-bg-panel) px-3 font-mono text-[10px] font-bold tracking-widest uppercase text-white hover:border-white disabled:opacity-50"
-          >
-            MOVE UP
-          </button>
-          <button
-            type="button"
-            onClick={() => moveCurrentBlock('down')}
-            disabled={!canMoveDown || actionLoading || saveLoading}
-            className="h-9 border border-(--gmp-line-soft) bg-(--gmp-bg-panel) px-3 font-mono text-[10px] font-bold tracking-widest uppercase text-white hover:border-white disabled:opacity-50"
-          >
-            MOVE DOWN
-          </button>
-          <span className="ml-1 font-mono text-[10px] uppercase tracking-widest text-(--gmp-text-secondary)">
-            BLOCK {activeBlock ? `${activeBlock.index + 1}/${activeBlock.count}` : '--/--'}{dragSorting ? ' · DRAGGING' : ''}
-          </span>
-        </div>
-      </header>
+  const bubbleActions: EditorBubbleActionItem[] = !editor ? [] : [
+    {
+      key: 'bold',
+      label: 'B',
+      active: editor.isActive('bold'),
+      onClick: () => {
+        editor.chain().focus().toggleBold().run();
+      },
+    },
+    {
+      key: 'italic',
+      label: 'I',
+      active: editor.isActive('italic'),
+      onClick: () => {
+        editor.chain().focus().toggleItalic().run();
+      },
+    },
+    {
+      key: 'code',
+      label: 'CODE',
+      active: editor.isActive('code'),
+      onClick: () => {
+        editor.chain().focus().toggleCode().run();
+      },
+    },
+    {
+      key: 'link',
+      label: 'LINK',
+      active: editor.isActive('link'),
+      onClick: handleInlineLinkAction,
+    },
+  ];
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,image/heic,image/heif"
-        className="hidden"
-        onChange={handleFileInputChange}
-      />
+  const actionBar = (
+    <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:items-center">
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setInsertMenuOpen((previous) => !previous)}
+          disabled={actionLoading || saveLoading}
+          className="h-10 border border-(--gmp-line-soft) bg-(--gmp-bg-base) px-3 font-mono text-[10px] font-bold tracking-widest uppercase text-white hover:border-white disabled:opacity-60"
+        >
+          + BLOCK
+        </button>
+        <CommandMenu
+          open={insertMenuOpen}
+          items={insertMenuItems}
+          className="absolute left-0 top-11 z-40 w-72 border border-(--gmp-line-strong) bg-(--gmp-bg-panel) p-2"
+        />
+      </div>
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={actionLoading || saveLoading}
+        className="h-10 border border-(--gmp-line-soft) bg-(--gmp-bg-base) px-3 font-mono text-[10px] font-bold tracking-widest uppercase text-white hover:border-white disabled:opacity-60"
+      >
+        IMAGE
+      </button>
+      <button
+        type="button"
+        onClick={handleInsertSmartCard}
+        disabled={actionLoading || saveLoading}
+        className="h-10 border border-(--gmp-line-soft) bg-(--gmp-bg-base) px-3 font-mono text-[10px] font-bold tracking-widest uppercase text-white hover:border-white disabled:opacity-60"
+      >
+        CARD
+      </button>
+      <button
+        type="button"
+        onClick={onCancel}
+        disabled={saveLoading}
+        className="h-10 border border-(--gmp-line-soft) bg-(--gmp-bg-base) px-3 font-mono text-[10px] font-bold tracking-widest uppercase text-(--gmp-text-secondary) hover:text-white"
+      >
+        CANCEL
+      </button>
+      <button
+        type="button"
+        onClick={() => void handleSavePost()}
+        disabled={saveLoading || actionLoading}
+        className="h-10 border border-(--gmp-accent) bg-(--gmp-accent) px-4 font-mono text-[10px] font-black tracking-widest uppercase text-black hover:opacity-90 disabled:opacity-60"
+      >
+        {saveLoading ? 'SAVING...' : 'SAVE'}
+      </button>
+    </div>
+  );
 
-      {statusHint ? (
-        <p className="font-mono text-[11px] uppercase tracking-widest text-(--gmp-accent)">{statusHint}</p>
-      ) : null}
+  const blockControlBar = (
+    <div className="flex flex-wrap items-center gap-2 border border-(--gmp-line-soft) bg-(--gmp-bg-base) p-2">
+      <button
+        type="button"
+        onPointerDown={handleDragHandlePointerDown}
+        onPointerMove={handleDragHandlePointerMove}
+        onPointerUp={handleDragHandlePointerUp}
+        disabled={!activeBlock || actionLoading || saveLoading}
+        className="inline-flex h-9 w-9 items-center justify-center border border-(--gmp-line-soft) bg-(--gmp-bg-panel) font-mono text-[12px] font-black tracking-tight text-(--gmp-text-secondary) cursor-grab active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-50"
+        title="拖拽排序手柄"
+      >
+        ⋮⋮
+      </button>
+      <button
+        type="button"
+        onClick={() => moveCurrentBlock('up')}
+        disabled={!canMoveUp || actionLoading || saveLoading}
+        className="h-9 border border-(--gmp-line-soft) bg-(--gmp-bg-panel) px-3 font-mono text-[10px] font-bold tracking-widest uppercase text-white hover:border-white disabled:opacity-50"
+      >
+        MOVE UP
+      </button>
+      <button
+        type="button"
+        onClick={() => moveCurrentBlock('down')}
+        disabled={!canMoveDown || actionLoading || saveLoading}
+        className="h-9 border border-(--gmp-line-soft) bg-(--gmp-bg-panel) px-3 font-mono text-[10px] font-bold tracking-widest uppercase text-white hover:border-white disabled:opacity-50"
+      >
+        MOVE DOWN
+      </button>
+      <span className="ml-1 font-mono text-[10px] uppercase tracking-widest text-(--gmp-text-secondary)">
+        BLOCK {activeBlock ? `${activeBlock.index + 1}/${activeBlock.count}` : '--/--'}{dragSorting ? ' · DRAGGING' : ''}
+      </span>
+    </div>
+  );
 
-      {error ? (
-        <p className="font-mono text-[11px] uppercase tracking-widest text-red-400" role="alert">
-          ERROR // {error}
-        </p>
-      ) : null}
+  const hiddenInputs = (
+    <input
+      ref={fileInputRef}
+      type="file"
+      accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/avif,image/heic,image/heif"
+      className="hidden"
+      onChange={handleFileInputChange}
+    />
+  );
 
-      <div ref={editorContainerRef} className="relative" onKeyDownCapture={handleEditorContainerKeydown}>
-        {editor && inlineToolbarVisible ? (
-          <div
+  const editorArea = (
+    <div ref={editorContainerRef}>
+      <EditorShell
+        shell={editorShell}
+        editor={editor}
+        onKeyDownCapture={handleEditorContainerKeydown}
+        bubbleMenu={(
+          <BubbleMenu
+            visible={Boolean(editor && inlineToolbarVisible)}
+            actions={bubbleActions}
             className="absolute z-30 flex items-center gap-1 border border-(--gmp-line-strong) bg-(--gmp-bg-panel) p-1"
             style={{ top: `${Math.max(8, inlineToolbarPosition.top - 52)}px`, left: `${inlineToolbarPosition.left}px` }}
-          >
-            <button
-              type="button"
-              onClick={() => editor.chain().focus().toggleBold().run()}
-              className={`h-8 min-w-8 border px-2 font-mono text-[10px] font-bold uppercase tracking-widest ${
-                editor.isActive('bold')
-                  ? 'border-(--gmp-accent) bg-(--gmp-accent) text-black'
-                  : 'border-(--gmp-line-soft) bg-(--gmp-bg-base) text-white hover:border-white'
-              }`}
-            >
-              B
-            </button>
-            <button
-              type="button"
-              onClick={() => editor.chain().focus().toggleItalic().run()}
-              className={`h-8 min-w-8 border px-2 font-mono text-[10px] font-bold uppercase tracking-widest ${
-                editor.isActive('italic')
-                  ? 'border-(--gmp-accent) bg-(--gmp-accent) text-black'
-                  : 'border-(--gmp-line-soft) bg-(--gmp-bg-base) text-white hover:border-white'
-              }`}
-            >
-              I
-            </button>
-            <button
-              type="button"
-              onClick={() => editor.chain().focus().toggleCode().run()}
-              className={`h-8 min-w-8 border px-2 font-mono text-[10px] font-bold uppercase tracking-widest ${
-                editor.isActive('code')
-                  ? 'border-(--gmp-accent) bg-(--gmp-accent) text-black'
-                  : 'border-(--gmp-line-soft) bg-(--gmp-bg-base) text-white hover:border-white'
-              }`}
-            >
-              CODE
-            </button>
-            <button
-              type="button"
-              onClick={handleInlineLinkAction}
-              className={`h-8 min-w-8 border px-2 font-mono text-[10px] font-bold uppercase tracking-widest ${
-                editor.isActive('link')
-                  ? 'border-(--gmp-accent) bg-(--gmp-accent) text-black'
-                  : 'border-(--gmp-line-soft) bg-(--gmp-bg-base) text-white hover:border-white'
-              }`}
-            >
-              LINK
-            </button>
-          </div>
-        ) : null}
-
-        <EditorContent editor={editor} />
-
-        {slashState.open && slashItems.length > 0 ? (
-          <div
+          />
+        )}
+        commandMenu={(
+          <CommandMenu
+            open={slashState.open}
+            items={slashMenuItems}
             className="absolute z-20 w-full max-w-xl border border-(--gmp-line-strong) bg-(--gmp-bg-panel) p-2"
             style={{ top: `${slashMenuPosition.top}px`, left: `${slashMenuPosition.left}px` }}
-          >
-            {slashItems.map((item, index) => {
-              const isActive = index === activeSlashIndex;
-              return (
-                <button
-                  key={item.type}
-                  type="button"
-                  onClick={() => void executeSlashCommand(item.type)}
-                  className={`mb-1 flex w-full items-start justify-between border px-3 py-2 text-left last:mb-0 ${
-                    isActive
-                      ? 'border-(--gmp-accent) bg-(--gmp-accent) text-black'
-                      : 'border-(--gmp-line-soft) bg-(--gmp-bg-base) text-(--gmp-text-secondary) hover:border-white hover:text-white'
-                  }`}
-                >
-                  <span className="font-mono text-[11px] font-bold uppercase tracking-widest">/{item.alias}</span>
-                  <span className="pl-3 text-right font-mono text-[10px] uppercase tracking-widest">{item.description}</span>
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
-      </div>
+          />
+        )}
+      >
+        <EditorContent editor={editor} />
+      </EditorShell>
+    </div>
+  );
 
+  const helperTexts = (
+    <>
       <p className="font-mono text-[10px] uppercase tracking-widest text-(--gmp-text-secondary)">
         Slash: 输入 <span className="text-(--gmp-accent)">/</span> 打开命令菜单；支持标题、列表、引用、代码、图片、卡片、分割线。
       </p>
       <p className="font-mono text-[10px] uppercase tracking-widest text-(--gmp-text-secondary)">
         键盘语义：Enter 拆块，空块 Backspace 合并，ArrowUp/ArrowDown 在块间移动。
       </p>
+    </>
+  );
 
-      <section className="space-y-3 border border-(--gmp-line-soft) bg-(--gmp-bg-base) p-3">
-        <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-(--gmp-accent)">LIVE PREVIEW // SAME BLOCK RENDERER AS READER</p>
-        <BlockRenderer document={previewDocument} />
-      </section>
+  const previewArea = (
+    <section className="space-y-3 border border-(--gmp-line-soft) bg-(--gmp-bg-base) p-3">
+      <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-(--gmp-accent)">LIVE PREVIEW // SAME BLOCK RENDERER AS READER</p>
+      <BlockRenderer document={previewDocument} />
     </section>
+  );
+
+  return (
+    <EditorEntryTemplate
+      modeLabel="ADMIN EDIT MODE"
+      title={post.title}
+      slug={post.slug}
+      actions={actionBar}
+      blockControls={blockControlBar}
+      hiddenInputs={hiddenInputs}
+      statusHint={statusHint}
+      error={error}
+      editorArea={editorArea}
+      helperTexts={helperTexts}
+      previewArea={previewArea}
+    />
   );
 }

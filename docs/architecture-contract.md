@@ -13,6 +13,7 @@
 - `frontend/src/components/admin`：后台业务组件。
 - `frontend/src/components/shared`：跨板块复用展示组件。
 - `frontend/src/features/*`：按业务域聚合 API、hooks、types 与业务逻辑（优先放这里）。
+- `frontend/src/features/editor/*`：编辑器平台层（Novel 风格壳层、命令菜单、BubbleMenu、上传事件处理、入口模板 `EditorEntryTemplate`）；所有业务编辑入口优先复用该层。
 - `frontend/src/hooks`：跨业务通用 hook（如 `use-debounce`）。
 - `frontend/src/lib`：基础能力封装（如 `api-client`、`mdx`、`seo`），避免业务耦合。
 - `frontend/src/types`：跨 feature 共享的公共类型，feature 私有类型应放在 feature 内。
@@ -28,6 +29,7 @@
 
 - 在 `app/**/page.tsx` 内直接写请求封装与业务 orchestration（应下沉到 `features/*`）。
 - 在 `components/ui` 放 `Navbar`、`PostCard`、`Editor` 这类业务组件。
+- 在业务 feature 内重复造编辑器壳层（命令菜单/上传粘贴拖拽/BubbleMenu）；应复用 `features/editor/*` 平台层。
 
 ### 1.4 设计语言工程契约（首页/认证）
 

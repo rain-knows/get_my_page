@@ -51,6 +51,15 @@
 - `infrastructure/cache`: GitHub/音乐卡片缓存与限流键。
 - `infrastructure/search`: 内容变更后的索引更新。
 
+### 2.3 Novel 风格桥接（Tiptap v3）
+
+- 现阶段采用 **Novel 风格桥接方案**：前端新增 `frontend/src/features/editor/*` 作为编辑器平台层，提供 `EditorRoot`、`EditorContent`、`CommandMenu`、`BubbleMenu`、`ImageUploadHandlers`。
+- 底层内核继续使用仓库现有 Tiptap v3，不直接引入 Novel 运行时（Novel 发布包依赖 Tiptap v2，与当前依赖基线冲突）。
+- 业务编辑入口（首批为文章编辑）必须通过平台层复用命令菜单、行内工具栏、粘贴/拖拽图片上传，不在业务组件中重复造壳层。
+- 业务编辑入口应优先复用 `EditorEntryTemplate` 作为统一页面骨架，仅通过 props/slot 注入具体业务动作与预览内容。
+- 平台层对外稳定协议：`EditorShellProps`（`initialContent`、`onChange`、`onSave`、`uploadImage`、`resolveEmbed`、`readonly`），后续新增编辑入口按该协议接入。
+- 后端契约保持不变：正文仍保存为 `gmp-block-v1`，`contentFormat` 不新增值，不引入 breaking change。
+
 ---
 
 ## 3. 编辑器能力总览
@@ -101,10 +110,11 @@
 
 ### 4.3 向后兼容策略
 
-现有 `post.content` 为 MDX 字符串，本方案采用双阶段：
+当前线上基线已统一为 `gmp-block-v1`：
 
-1. **阶段 A（兼容期）**：后端继续使用 `content` 字段，保存 Tiptap JSON 字符串；读取时根据内容首字符判断 JSON 或 MDX。
-2. **阶段 B（稳定期）**：新增 `content_format`（`mdx` / `tiptap-json`），彻底消除推断逻辑。
+1. 历史 `mdx` / `tiptap-json` 正文通过迁移服务转换为 `gmp-block-v1`，读取与渲染链路统一走块协议。
+2. 写入接口固定 `contentFormat = gmp-block-v1`，不再新增或回退到旧格式字段。
+3. Novel 风格桥接仅影响前端交互层，不改变后端 `content` 与 `contentFormat` 契约。
 
 ---
 
