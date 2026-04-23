@@ -22,7 +22,7 @@ export function PostContentRenderer({ content, contentFormat }: PostContentRende
   if (contentFormat !== 'tiptap-json') {
     return (
       <div className="border border-red-500/40 bg-(--gmp-bg-panel) p-4">
-        <p className="font-mono text-xs uppercase tracking-widest text-red-400">CONTENT FORMAT UNSUPPORTED // EXPECTED tiptap-json</p>
+        <p className="font-mono text-xs uppercase tracking-widest text-red-400">内容格式不受支持 // 仅支持 tiptap-json</p>
       </div>
     );
   }
@@ -37,7 +37,7 @@ export function PostContentRenderer({ content, contentFormat }: PostContentRende
         editorProps={{
           attributes: {
             class:
-              'gmp-novel-editor gmp-novel-view min-h-24 border border-(--gmp-novel-line) bg-(--gmp-novel-surface) px-4 py-6 text-(--gmp-novel-text) focus:outline-none md:px-6',
+              'gmp-novel-editor gmp-novel-view min-h-24 border border-(--gmp-novel-line-strong) bg-(--gmp-novel-surface) px-4 py-6 text-(--gmp-novel-text) gmp-cut-corner-br focus:outline-none md:px-6',
           },
         }}
       />

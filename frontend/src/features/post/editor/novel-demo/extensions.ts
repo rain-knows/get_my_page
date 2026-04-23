@@ -23,6 +23,7 @@ import {
   UploadImagesPlugin,
   Youtube,
 } from 'novel';
+import { embedLinkExtension } from '@/features/post/editor/novel-demo/embed-link-extension';
 
 const tiptapLink = TiptapLink.configure({
   HTMLAttributes: {
@@ -39,20 +40,20 @@ const tiptapImage = TiptapImage.extend({
   addProseMirrorPlugins() {
     return [
       UploadImagesPlugin({
-        imageClass: cx('rounded-lg border border-stone-300 opacity-40'),
+        imageClass: cx('border border-(--gmp-novel-line) opacity-40'),
       }),
     ];
   },
 }).configure({
   allowBase64: true,
   HTMLAttributes: {
-    class: cx('rounded-lg border border-stone-300'),
+    class: cx('border border-(--gmp-novel-line)'),
   },
 });
 
 const updatedImage = UpdatedImage.configure({
   HTMLAttributes: {
-    class: cx('rounded-lg border border-stone-300'),
+    class: cx('border border-(--gmp-novel-line)'),
   },
 });
 
@@ -71,7 +72,7 @@ const taskItem = TaskItem.configure({
 
 const horizontalRule = HorizontalRule.configure({
   HTMLAttributes: {
-    class: cx('my-6 border-t border-stone-300'),
+    class: cx('my-6 border-t border-(--gmp-novel-line)'),
   },
 });
 
@@ -93,24 +94,24 @@ const starterKit = StarterKit.configure({
   },
   blockquote: {
     HTMLAttributes: {
-      class: cx('border-l-4 border-stone-700'),
+      class: cx('border-l-4 border-(--gmp-novel-line-strong)'),
     },
   },
   codeBlock: {
     HTMLAttributes: {
-      class: cx('rounded-md border border-stone-300 bg-stone-900 p-4 font-mono text-sm text-stone-100'),
+      class: cx('border border-(--gmp-novel-line-strong) bg-(--gmp-novel-code-bg) p-4 font-mono text-sm text-(--gmp-novel-code-text)'),
     },
   },
   code: {
     HTMLAttributes: {
-      class: cx('rounded-md bg-stone-200 px-1.5 py-1 font-mono text-sm'),
+      class: cx('bg-(--gmp-novel-code-inline-bg) px-1.5 py-1 font-mono text-sm text-(--gmp-novel-code-inline-text)'),
       spellcheck: 'false',
     },
   },
   horizontalRule: false,
   dropcursor: {
-    color: '#60a5fa',
-    width: 4,
+    color: '#FFCC00',
+    width: 3,
   },
   gapcursor: false,
 });
@@ -121,7 +122,7 @@ const codeBlockLowlight = CodeBlockLowlight.configure({
 
 const youtube = Youtube.configure({
   HTMLAttributes: {
-    class: cx('rounded-lg border border-stone-300'),
+    class: cx('border border-(--gmp-novel-line)'),
   },
   inline: false,
 });
@@ -135,7 +136,7 @@ const twitter = Twitter.configure({
 
 const mathematics = Mathematics.configure({
   HTMLAttributes: {
-    class: cx('cursor-pointer rounded p-1 text-stone-900 hover:bg-stone-100'),
+    class: cx('cursor-pointer p-1 text-(--gmp-novel-text) hover:bg-(--gmp-novel-toolbar-hover)'),
   },
   katexOptions: {
     throwOnError: false,
@@ -153,7 +154,7 @@ export function buildNovelBaseExtensions(): unknown[] {
   return [
     starterKit,
     Placeholder.configure({
-      placeholder: 'Press "/" for commands',
+      placeholder: '输入“/”打开中文命令菜单',
     }),
     tiptapLink,
     tiptapImage,
@@ -161,6 +162,7 @@ export function buildNovelBaseExtensions(): unknown[] {
     taskList,
     taskItem,
     horizontalRule,
+    embedLinkExtension,
     AIHighlight,
     codeBlockLowlight,
     youtube,

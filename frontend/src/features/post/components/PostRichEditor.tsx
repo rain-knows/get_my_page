@@ -1,6 +1,7 @@
-"use client";
+'use client';
 
-import { Bold, Code, Italic, Link as LinkIcon, Strikethrough } from "lucide-react";
+import type { EditorView } from '@tiptap/pm/view';
+import { Bold, Code, Italic, Link as LinkIcon, Strikethrough } from 'lucide-react';
 import {
   EditorBubble,
   EditorBubbleItem,
@@ -17,17 +18,22 @@ import {
   handleImageDrop,
   handleImagePaste,
   useEditor,
-} from "novel";
-import { type ComponentType, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { buildNovelEditorExtensions } from "@/features/post/editor/novel-demo/extensions";
-import { createDefaultEditorContent } from "@/features/post/editor/novel-demo/content";
-import { slashCommand, suggestionItems } from "@/features/post/editor/novel-demo/slash-items";
-import { buildNovelStorageKey, loadNovelDraftDocument } from "@/features/post/editor/novel-demo/storage";
-import { uploadFn } from "@/features/post/editor/novel-demo/upload";
+} from 'novel';
+import { type ComponentType, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  extractSingleUrlFromClipboard,
+  insertEmbedCardAtSelection,
+  resolveAndHydrateEmbedCard,
+} from '@/features/post/editor/novel-demo/embed-link';
+import { createDefaultEditorContent } from '@/features/post/editor/novel-demo/content';
+import { buildNovelEditorExtensions } from '@/features/post/editor/novel-demo/extensions';
+import { slashCommand, suggestionItems } from '@/features/post/editor/novel-demo/slash-items';
+import { buildNovelStorageKey, loadNovelDraftDocument } from '@/features/post/editor/novel-demo/storage';
+import { uploadFn } from '@/features/post/editor/novel-demo/upload';
 
 const SAVE_DEBOUNCE_MS = 500;
 
-type SaveStatus = "Saved" | "Unsaved" | "Saving" | "Error";
+type SaveStatus = 'Saved' | 'Unsaved' | 'Saving' | 'Error';
 
 interface PostRichEditorProps {
   slug: string;
@@ -40,6 +46,8 @@ interface BubbleActionItem {
   icon: ComponentType<{ className?: string }>;
   command: (editor: EditorInstance) => void;
   isActive: (editor: EditorInstance) => boolean;
+  isDisabled?: (editor: EditorInstance) => boolean;
+  disabledHint?: string;
 }
 
 interface EditorStorageSnapshot {
@@ -61,12 +69,30 @@ interface BubbleActionButtonProps {
  * 返回值/副作用：返回高亮处理后的 HTML 文本；无副作用。
  */
 function highlightCodeblocks(content: string): string {
-  const document = new DOMParser().parseFromString(content, "text/html");
-  document.querySelectorAll("pre code").forEach((element) => {
+  const document = new DOMParser().parseFromString(content, 'text/html');
+  document.querySelectorAll('pre code').forEach((element) => {
     const typedElement = element as HTMLElement;
-    typedElement.classList.add("hljs");
+    typedElement.classList.add('hljs');
   });
   return new XMLSerializer().serializeToString(document);
+}
+
+/**
+ * 功能：将保存状态枚举转换为中文文案，统一编辑器顶部状态显示。
+ * 关键参数：status 为当前保存状态。
+ * 返回值/副作用：返回中文状态文本；无副作用。
+ */
+function resolveSaveStatusLabel(status: SaveStatus): string {
+  if (status === 'Saved') {
+    return '已保存';
+  }
+  if (status === 'Unsaved') {
+    return '未保存';
+  }
+  if (status === 'Saving') {
+    return '保存中';
+  }
+  return '保存失败';
 }
 
 /**
@@ -75,15 +101,15 @@ function highlightCodeblocks(content: string): string {
  * 返回值/副作用：返回规范化 URL、空字符串（清除）或 null（用户取消）；副作用为触发 prompt 弹窗。
  */
 function resolveLinkInput(editor: EditorInstance): string | null {
-  const previousHref = String(editor.getAttributes("link").href ?? "");
-  const userInput = window.prompt("Enter URL", previousHref || "https://");
+  const previousHref = String(editor.getAttributes('link').href ?? '');
+  const userInput = window.prompt('请输入链接地址', previousHref || 'https://');
   if (userInput === null) {
     return null;
   }
 
   const normalized = userInput.trim();
   if (!normalized) {
-    return "";
+    return '';
   }
 
   if (/^[a-z][a-z0-9+\-.]*:/i.test(normalized)) {
@@ -94,6 +120,15 @@ function resolveLinkInput(editor: EditorInstance): string | null {
 }
 
 /**
+ * 功能：判断当前选区是否位于代码上下文，用于控制加粗等样式按钮的可用态。
+ * 关键参数：editor 为当前编辑器实例。
+ * 返回值/副作用：返回是否处于代码上下文；无副作用。
+ */
+function isCodeContext(editor: EditorInstance): boolean {
+  return editor.isActive('code') || editor.isActive('codeBlock');
+}
+
+/**
  * 功能：构建文本选区气泡菜单动作集合，覆盖加粗/斜体/删除线/行内代码/链接。
  * 关键参数：无。
  * 返回值/副作用：返回 Bubble 动作配置数组；无副作用。
@@ -101,44 +136,46 @@ function resolveLinkInput(editor: EditorInstance): string | null {
 function buildBubbleActions(): BubbleActionItem[] {
   return [
     {
-      id: "bold",
-      label: "Bold",
+      id: 'bold',
+      label: '加粗',
       icon: Bold,
       command: (editor) => {
         editor.chain().focus().toggleBold().run();
       },
-      isActive: (editor) => editor.isActive("bold"),
+      isActive: (editor) => editor.isActive('bold'),
+      isDisabled: (editor) => isCodeContext(editor),
+      disabledHint: '代码上下文不支持加粗。',
     },
     {
-      id: "italic",
-      label: "Italic",
+      id: 'italic',
+      label: '斜体',
       icon: Italic,
       command: (editor) => {
         editor.chain().focus().toggleItalic().run();
       },
-      isActive: (editor) => editor.isActive("italic"),
+      isActive: (editor) => editor.isActive('italic'),
     },
     {
-      id: "strike",
-      label: "Strike",
+      id: 'strike',
+      label: '删除线',
       icon: Strikethrough,
       command: (editor) => {
         editor.chain().focus().toggleStrike().run();
       },
-      isActive: (editor) => editor.isActive("strike"),
+      isActive: (editor) => editor.isActive('strike'),
     },
     {
-      id: "inline-code",
-      label: "Inline Code",
+      id: 'inline-code',
+      label: '行内代码',
       icon: Code,
       command: (editor) => {
         editor.chain().focus().toggleCode().run();
       },
-      isActive: (editor) => editor.isActive("code"),
+      isActive: (editor) => editor.isActive('code'),
     },
     {
-      id: "link",
-      label: "Link",
+      id: 'link',
+      label: '链接',
       icon: LinkIcon,
       command: (editor) => {
         const nextHref = resolveLinkInput(editor);
@@ -147,23 +184,43 @@ function buildBubbleActions(): BubbleActionItem[] {
         }
 
         if (!nextHref) {
-          editor.chain().focus().extendMarkRange("link").unsetLink().run();
+          editor.chain().focus().extendMarkRange('link').unsetLink().run();
           return;
         }
 
         editor
           .chain()
           .focus()
-          .extendMarkRange("link")
+          .extendMarkRange('link')
           .setLink({
             href: nextHref,
-            target: "_blank",
+            target: '_blank',
           })
           .run();
       },
-      isActive: (editor) => editor.isActive("link"),
+      isActive: (editor) => editor.isActive('link'),
     },
   ];
+}
+
+/**
+ * 功能：在粘贴事件中识别单一 URL 并自动转换为通用链接卡片。
+ * 关键参数：view 为 ProseMirror 视图；event 为粘贴事件。
+ * 返回值/副作用：返回是否已消费事件；副作用为插入卡片节点并触发异步解析。
+ */
+function tryConvertPastedUrlToEmbedCard(view: EditorView, event: ClipboardEvent): boolean {
+  const pastedUrl = extractSingleUrlFromClipboard(event);
+  if (!pastedUrl) {
+    return false;
+  }
+
+  const embedId = insertEmbedCardAtSelection(view, pastedUrl);
+  if (!embedId) {
+    return false;
+  }
+
+  void resolveAndHydrateEmbedCard(view, embedId, pastedUrl);
+  return true;
 }
 
 /**
@@ -174,22 +231,30 @@ function buildBubbleActions(): BubbleActionItem[] {
 function BubbleActionButton({ item }: BubbleActionButtonProps) {
   const { editor } = useEditor();
   const active = editor ? item.isActive(editor) : false;
+  const disabled = editor ? Boolean(item.isDisabled?.(editor)) : false;
 
   return (
     <EditorBubbleItem
       onSelect={(instance) => {
+        if (item.isDisabled?.(instance)) {
+          return;
+        }
         item.command(instance);
       }}
     >
       <button
         type="button"
         className={[
-          "inline-flex h-8 w-8 items-center justify-center rounded-sm border transition-colors",
-          active
-            ? "border-(--gmp-novel-accent) bg-(--gmp-novel-accent-soft) text-(--gmp-novel-accent)"
-            : "border-(--gmp-novel-line) bg-(--gmp-novel-toolbar) text-(--gmp-novel-text-muted) hover:bg-(--gmp-novel-toolbar-hover) hover:text-(--gmp-novel-text)",
-        ].join(" ")}
+          'inline-flex h-8 w-8 items-center justify-center border transition-colors',
+          disabled
+            ? 'cursor-not-allowed border-(--gmp-novel-line) bg-(--gmp-novel-toolbar) text-(--gmp-novel-text-muted) opacity-50'
+            : active
+              ? 'border-(--gmp-novel-accent) bg-(--gmp-novel-accent-soft) text-(--gmp-novel-accent)'
+              : 'border-(--gmp-novel-line) bg-(--gmp-novel-toolbar) text-(--gmp-novel-text-muted) hover:border-(--gmp-novel-line-strong) hover:bg-(--gmp-novel-toolbar-hover) hover:text-(--gmp-novel-text)',
+        ].join(' ')}
         aria-label={item.label}
+        title={disabled ? item.disabledHint ?? `${item.label} 当前不可用` : item.label}
+        disabled={disabled}
       >
         <item.icon className="h-4 w-4" />
       </button>
@@ -205,21 +270,21 @@ function BubbleActionButton({ item }: BubbleActionButtonProps) {
 export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
   const saveTimerRef = useRef<number | null>(null);
   const [initialContent] = useState<JSONContent>(() => {
-    if (typeof window === "undefined") {
+    if (typeof window === 'undefined') {
       return createDefaultEditorContent();
     }
 
     const stored = loadNovelDraftDocument(slug);
     return stored ?? createDefaultEditorContent();
   });
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>("Saved");
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('Saved');
   const [wordCount, setWordCount] = useState(0);
 
   const storageKeys = useMemo(
     () => ({
-      json: buildNovelStorageKey(slug, "novel-content"),
-      html: buildNovelStorageKey(slug, "html-content"),
-      markdown: buildNovelStorageKey(slug, "markdown"),
+      json: buildNovelStorageKey(slug, 'novel-content'),
+      html: buildNovelStorageKey(slug, 'html-content'),
+      markdown: buildNovelStorageKey(slug, 'markdown'),
     }),
     [slug],
   );
@@ -238,7 +303,7 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
         window.clearTimeout(saveTimerRef.current);
       }
 
-      setSaveStatus("Saving");
+      setSaveStatus('Saving');
       saveTimerRef.current = window.setTimeout(() => {
         try {
           const snapshot = editor.storage as EditorStorageSnapshot;
@@ -248,14 +313,14 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
 
           window.localStorage.setItem(storageKeys.json, JSON.stringify(nextJson));
           window.localStorage.setItem(storageKeys.html, highlightCodeblocks(editor.getHTML()));
-          if (typeof markdown === "string") {
+          if (typeof markdown === 'string') {
             window.localStorage.setItem(storageKeys.markdown, markdown);
           }
 
           setWordCount(nextWordCount);
-          setSaveStatus("Saved");
+          setSaveStatus('Saved');
         } catch {
-          setSaveStatus("Error");
+          setSaveStatus('Error');
         }
       }, SAVE_DEBOUNCE_MS);
     },
@@ -271,18 +336,24 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-screen-lg space-y-3">
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="inline-flex h-8 items-center rounded-sm border border-(--gmp-novel-line) bg-(--gmp-novel-toolbar) px-3 text-xs font-semibold text-(--gmp-novel-text-muted) transition-colors hover:bg-(--gmp-novel-toolbar-hover) hover:text-(--gmp-novel-text)"
-        >
-          Back
-        </button>
-        <div className="flex items-center gap-2">
-          <span className="rounded-md bg-(--gmp-novel-toolbar) px-2 py-1 text-xs text-(--gmp-novel-text-muted)">{saveStatus}</span>
-          <span className="rounded-md bg-(--gmp-novel-toolbar) px-2 py-1 text-xs text-(--gmp-novel-text-muted)">{wordCount} Words</span>
+    <div className="mx-auto w-full max-w-screen-lg space-y-4">
+      <div className="border border-(--gmp-novel-line-strong) bg-(--gmp-novel-toolbar) p-3 gmp-cut-corner-br md:p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="inline-flex h-9 items-center border border-(--gmp-novel-line) bg-(--gmp-novel-surface) px-4 font-mono text-[10px] font-bold tracking-widest text-(--gmp-novel-text-muted) uppercase transition-colors hover:border-(--gmp-novel-line-strong) hover:text-(--gmp-novel-text)"
+          >
+            返回预览
+          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex h-8 items-center border border-(--gmp-novel-line) bg-(--gmp-novel-surface) px-3 font-mono text-[10px] tracking-widest text-(--gmp-novel-text-muted)">
+              {resolveSaveStatusLabel(saveStatus)}
+            </span>
+            <span className="inline-flex h-8 items-center border border-(--gmp-novel-line) bg-(--gmp-novel-surface) px-3 font-mono text-[10px] tracking-widest text-(--gmp-novel-text-muted)">
+              {wordCount} 词
+            </span>
+          </div>
         </div>
       </div>
 
@@ -290,26 +361,30 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
         <EditorContent
           initialContent={initialContent}
           extensions={extensions as never[]}
-          className="relative min-h-[500px] w-full max-w-screen-lg border-(--gmp-novel-line) bg-(--gmp-novel-surface) sm:mb-[calc(20vh)] sm:rounded-lg sm:border sm:shadow-lg"
+          className="relative min-h-96 w-full max-w-screen-lg border border-(--gmp-novel-line-strong) bg-(--gmp-novel-surface) gmp-cut-corner-br"
           editorProps={{
             handleDOMEvents: {
               keydown: (_view, event) => handleCommandNavigation(event),
             },
-            handlePaste: (view, event) => handleImagePaste(view, event, uploadFn),
+            handlePaste: (view, event) => {
+              if (tryConvertPastedUrlToEmbedCard(view, event)) {
+                return true;
+              }
+              return handleImagePaste(view, event, uploadFn);
+            },
             handleDrop: (view, event, _slice, moved) => handleImageDrop(view, event, moved, uploadFn),
             attributes: {
-              class:
-                "gmp-novel-editor prose max-w-full px-5 py-10 text-(--gmp-novel-text) focus:outline-none sm:px-10",
+              class: 'gmp-novel-editor max-w-full px-4 py-8 text-(--gmp-novel-text) focus:outline-none md:px-8',
             },
           }}
           onUpdate={({ editor }) => {
-            setSaveStatus("Unsaved");
+            setSaveStatus('Unsaved');
             persistLocalContent(editor);
           }}
           slotAfter={<ImageResizer />}
         >
-          <EditorCommand className="z-50 h-auto max-h-[330px] overflow-y-auto rounded-md border border-(--gmp-novel-line) bg-(--gmp-novel-toolbar) px-1 py-2 shadow-md transition-all">
-            <EditorCommandEmpty className="px-2 text-sm text-(--gmp-novel-text-muted)">No results</EditorCommandEmpty>
+          <EditorCommand className="z-50 h-auto max-h-84 overflow-y-auto border border-(--gmp-novel-line-strong) bg-(--gmp-novel-toolbar) p-2 shadow-[4px_4px_0_0_rgba(0,0,0,0.35)] gmp-cut-corner-br transition-all">
+            <EditorCommandEmpty className="px-2 py-1 text-sm text-(--gmp-novel-text-muted)">未匹配到命令</EditorCommandEmpty>
             <EditorCommandList>
               {suggestionItems.map((item) => (
                 <EditorCommandItem
@@ -318,13 +393,13 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
                   onCommand={(value) => {
                     item.command?.(value);
                   }}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm aria-selected:bg-(--gmp-novel-toolbar-hover) hover:bg-(--gmp-novel-toolbar-hover)"
+                  className="flex w-full items-center gap-3 border border-transparent px-2 py-2 text-left text-sm aria-selected:border-(--gmp-novel-line-strong) aria-selected:bg-(--gmp-novel-toolbar-hover) hover:border-(--gmp-novel-line) hover:bg-(--gmp-novel-toolbar-hover)"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-md border border-(--gmp-novel-line) bg-(--gmp-novel-surface)">
+                  <div className="flex h-10 w-10 items-center justify-center border border-(--gmp-novel-line) bg-(--gmp-novel-surface) text-(--gmp-novel-text-muted)">
                     {item.icon}
                   </div>
                   <div>
-                    <p className="font-medium text-(--gmp-novel-text)">{item.title}</p>
+                    <p className="font-semibold text-(--gmp-novel-text)">{item.title}</p>
                     <p className="text-xs text-(--gmp-novel-text-muted)">{item.description}</p>
                   </div>
                 </EditorCommandItem>
@@ -333,8 +408,8 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
           </EditorCommand>
 
           <EditorBubble
-            tippyOptions={{ placement: "top" }}
-            className="flex items-center gap-1 rounded-md border border-(--gmp-novel-line) bg-(--gmp-novel-toolbar) p-1 shadow-md"
+            tippyOptions={{ placement: 'top' }}
+            className="flex items-center gap-1 border border-(--gmp-novel-line-strong) bg-(--gmp-novel-toolbar) p-1 shadow-[4px_4px_0_0_rgba(0,0,0,0.35)]"
           >
             {bubbleActions.map((item) => (
               <BubbleActionButton key={item.id} item={item} />
