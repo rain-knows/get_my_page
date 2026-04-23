@@ -12,7 +12,6 @@ import {
   EditorContent,
   EditorRoot,
   createImageUpload,
-  handleCommandNavigation,
   handleImageDrop,
   handleImagePaste,
   type EditorInstance,
@@ -492,7 +491,7 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
           },
         ])
         .run();
-      setActionHint('已插入外链空卡片，请在 INSERT EDITOR 中补全');
+      setActionHint('已插入通用链接占位卡片，请在 INSERT EDITOR 中补全');
     },
     [],
   );
@@ -521,7 +520,7 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
           },
         ])
         .run();
-      setActionHint('已插入代码空卡片，请在 INSERT EDITOR 中补全');
+      setActionHint('已插入空代码块级组件，请在 INSERT EDITOR 中补全');
     },
     [],
   );
@@ -892,7 +891,6 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
           editorProps={{
             handlePaste: (view, event) => handleImagePaste(view, event, uploadFn),
             handleDrop: (view, event, _slice, moved) => handleImageDrop(view, event, moved, uploadFn),
-            handleKeyDown: (_view, event) => handleCommandNavigation(event),
             attributes: {
               class:
                 'gmp-notion-editor min-h-96 border border-(--gmp-line-soft) bg-(--gmp-bg-base) p-3 md:p-5 font-mono text-sm leading-relaxed text-(--gmp-text-primary) focus:outline-none',

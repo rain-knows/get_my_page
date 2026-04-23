@@ -53,6 +53,33 @@ function resolveEmbedCardTitle(attrs: Record<string, unknown>, fallbackUrl: stri
 }
 
 /**
+ * 功能：构建空外链卡片专用提示文案，优先使用节点 attrs 中的自定义标题。
+ * 关键参数：attrs 为 embed 节点属性；providerLabel 为节点 provider 文案。
+ * 返回值/副作用：返回占位输入条展示文本；无副作用。
+ */
+function resolveEmbedPlaceholderTitle(attrs: Record<string, unknown>, providerLabel: string): string {
+  const customTitle = readStringAttr(attrs, 'title');
+  if (customTitle) {
+    return customTitle;
+  }
+
+  if (providerLabel === 'LINK') {
+    return '嵌入任何内容（PDF、Google 文档、Google 地图、Spotify 等）';
+  }
+
+  return `嵌入 ${providerLabel} 资源或通用外链`;
+}
+
+/**
+ * 功能：构建空外链卡片说明文案，优先读取 attrs 中自定义描述。
+ * 关键参数：attrs 为 embed 节点属性。
+ * 返回值/副作用：返回占位提示文本；无副作用。
+ */
+function resolveEmbedPlaceholderHint(attrs: Record<string, unknown>): string {
+  return readStringAttr(attrs, 'description') || '按 Space（空格）启用 AI，或按“/”启用命令';
+}
+
+/**
  * 功能：按配置创建 embed 原子块扩展，统一输出 section[data-type="embed-*"] 结构。
  * 关键参数：config 为节点类型映射配置。
  * 返回值/副作用：返回可挂载到 Tiptap 的节点扩展；无副作用。
@@ -87,8 +114,7 @@ function createEmbedCardNode(config: EmbedNodeConfig): unknown {
       const attrs = (node.attrs ?? {}) as Record<string, unknown>;
       const rawUrl = readStringAttr(attrs, 'url') || readStringAttr(attrs, 'fallbackUrl');
       const hasUrl = Boolean(rawUrl);
-      const emptyDescription = 'EMPTY CARD // USE INSERT EDITOR PANEL TO IMPORT LINK OR CODE';
-      const description = readStringAttr(attrs, 'description') || readStringAttr(attrs, 'domain') || readStringAttr(attrs, 'artist') || emptyDescription;
+      const description = readStringAttr(attrs, 'description') || readStringAttr(attrs, 'domain') || readStringAttr(attrs, 'artist');
       const coverUrl = readStringAttr(attrs, 'coverUrl');
       const title = resolveEmbedCardTitle(attrs, rawUrl || '') || 'EMPTY CARD';
       const isEmptyCard = !hasUrl;
@@ -98,8 +124,27 @@ function createEmbedCardNode(config: EmbedNodeConfig): unknown {
         'data-empty-card': isEmptyCard ? 'true' : 'false',
       });
 
+      if (isEmptyCard) {
+        return [
+          'section',
+          sectionAttrs,
+          [
+            'div',
+            { 'data-role': 'embed-placeholder-card' },
+            [
+              'div',
+              { 'data-role': 'embed-placeholder-input' },
+              ['span', { 'data-role': 'embed-placeholder-icon', 'aria-hidden': 'true' }, '◎'],
+              ['span', { 'data-role': 'embed-placeholder-text' }, resolveEmbedPlaceholderTitle(attrs, config.providerLabel)],
+            ],
+            ['div', { 'data-role': 'embed-placeholder-preview' }],
+            ['p', { 'data-role': 'embed-placeholder-hint' }, resolveEmbedPlaceholderHint(attrs)],
+          ],
+        ];
+      }
+
       const linkChildren: unknown[] = [];
-      if (coverUrl && !isEmptyCard) {
+      if (coverUrl) {
         linkChildren.push(['img', { src: coverUrl, alt: title }]);
       }
       linkChildren.push(['span', {}, `${config.providerLabel} CARD`]);
@@ -114,7 +159,7 @@ function createEmbedCardNode(config: EmbedNodeConfig): unknown {
         [
           'a',
           {
-            href: hasUrl ? rawUrl : '#',
+            href: rawUrl,
             target: '_blank',
             rel: 'noopener noreferrer nofollow',
           },
@@ -124,6 +169,10 @@ function createEmbedCardNode(config: EmbedNodeConfig): unknown {
     },
     renderText({ node }) {
       const attrs = (node.attrs ?? {}) as Record<string, unknown>;
+      const hasUrl = Boolean(readStringAttr(attrs, 'url') || readStringAttr(attrs, 'fallbackUrl'));
+      if (!hasUrl) {
+        return resolveEmbedPlaceholderTitle(attrs, config.providerLabel);
+      }
       return resolveEmbedCardTitle(attrs, readStringAttr(attrs, 'url'));
     },
   });

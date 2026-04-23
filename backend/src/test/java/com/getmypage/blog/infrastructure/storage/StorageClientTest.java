@@ -32,7 +32,7 @@ class StorageClientTest {
     @Test
     void uploadShouldPutObjectAndReturnAccessibleUrl() throws Exception {
         when(minioClient.bucketExists(any(BucketExistsArgs.class))).thenReturn(true);
-        StorageClient storageClient = new StorageClient(minioClient, "blog-assets", "http://minio:9000");
+        StorageClient storageClient = new StorageClient(minioClient, "blog-assets", "http://minio:9000", "http://minio:9000");
 
         String uploadedUrl = storageClient.upload("2026/cover.png", "hello".getBytes(), "image/png");
 
@@ -48,7 +48,7 @@ class StorageClientTest {
     @Test
     void uploadShouldNormalizeLeadingSlashInObjectName() throws Exception {
         when(minioClient.bucketExists(any(BucketExistsArgs.class))).thenReturn(true);
-        StorageClient storageClient = new StorageClient(minioClient, "blog-assets", "http://minio:9000");
+        StorageClient storageClient = new StorageClient(minioClient, "blog-assets", "http://minio:9000", "http://minio:9000");
 
         String uploadedUrl = storageClient.upload("/articles/2026/04/1/demo.png", "hello".getBytes(), "image/png");
 
@@ -63,7 +63,7 @@ class StorageClientTest {
     @Test
     void uploadShouldCreateBucketWhenBucketMissing() throws Exception {
         when(minioClient.bucketExists(any(BucketExistsArgs.class))).thenReturn(false);
-        StorageClient storageClient = new StorageClient(minioClient, "blog-assets", "http://minio:9000");
+        StorageClient storageClient = new StorageClient(minioClient, "blog-assets", "http://minio:9000", "http://minio:9000");
 
         storageClient.upload("2026/cover.png", "hello".getBytes(), "image/png");
 
@@ -80,7 +80,7 @@ class StorageClientTest {
     void uploadShouldThrowBizExceptionWhenMinioFails() throws Exception {
         when(minioClient.bucketExists(any(BucketExistsArgs.class))).thenReturn(true);
         when(minioClient.putObject(any(PutObjectArgs.class))).thenThrow(new RuntimeException("minio down"));
-        StorageClient storageClient = new StorageClient(minioClient, "blog-assets", "http://minio:9000");
+        StorageClient storageClient = new StorageClient(minioClient, "blog-assets", "http://minio:9000", "http://minio:9000");
 
         BizException exception = assertThrows(BizException.class,
                 () -> storageClient.upload("2026/cover.png", "hello".getBytes(), "image/png"));
@@ -95,7 +95,7 @@ class StorageClientTest {
      */
     @Test
     void generateArticleObjectKeyShouldFollowRequiredPattern() {
-        StorageClient storageClient = new StorageClient(minioClient, "blog-assets", "http://minio:9000");
+        StorageClient storageClient = new StorageClient(minioClient, "blog-assets", "http://minio:9000", "http://minio:9000");
 
         String key = storageClient.generateArticleObjectKey(12L, "cover.PNG");
 

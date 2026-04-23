@@ -379,19 +379,50 @@
 }
 
 .gmp-notion-editor .ProseMirror pre {
+  position: relative;
   border: 1px solid var(--gmp-line-soft);
   background-color: var(--gmp-bg-panel);
   padding: 0.9rem;
 }
 
+.gmp-notion-editor .ProseMirror pre:has(code:empty) {
+  border-style: dashed;
+  border-color: var(--gmp-accent-dim);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 2%) 0%, rgb(255 255 255 / 0%) 65%),
+    var(--gmp-bg-panel);
+  padding: 0.72rem;
+}
+
+.gmp-notion-editor .ProseMirror pre:has(code:empty)::before {
+  content: "空代码块级组件";
+  display: inline-flex;
+  margin-bottom: 0.6rem;
+  border: 1px solid var(--gmp-line-strong);
+  background-color: rgb(11 12 16 / 78%);
+  padding: 0.32rem 0.6rem;
+  color: var(--gmp-text-secondary);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.09rem;
+  text-transform: uppercase;
+}
+
+.gmp-notion-editor .ProseMirror pre code:empty {
+  display: block;
+  min-height: 8.2rem;
+  border: 1px dashed var(--gmp-line-strong);
+  background-color: rgb(11 12 16 / 62%);
+  padding: 0.9rem;
+}
+
 .gmp-notion-editor .ProseMirror pre code:empty::before {
-  content: "EMPTY CODE CARD // USE INSERT EDITOR PANEL";
+  content: "在 INSERT EDITOR 中填写代码，或直接在此块内输入";
   display: block;
   color: var(--gmp-text-secondary);
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 700;
-  letter-spacing: 0.08rem;
-  text-transform: uppercase;
+  letter-spacing: 0.04rem;
 }
 
 .gmp-notion-editor .ProseMirror figure[data-type="image-block"] {
@@ -425,10 +456,53 @@
 .gmp-notion-editor .ProseMirror section[data-empty-card="true"] {
   border-style: dashed;
   border-color: var(--gmp-accent-dim);
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 2%) 0%, rgb(255 255 255 / 0%) 65%),
+    var(--gmp-bg-panel);
 }
 
 .gmp-notion-editor .ProseMirror section[data-empty-card="true"] a {
   pointer-events: none;
+}
+
+.gmp-notion-editor .ProseMirror section[data-empty-card="true"] [data-role="embed-placeholder-card"] {
+  display: grid;
+  gap: 0.62rem;
+}
+
+.gmp-notion-editor .ProseMirror section[data-empty-card="true"] [data-role="embed-placeholder-input"] {
+  display: flex;
+  align-items: center;
+  gap: 0.52rem;
+  border: 1px solid var(--gmp-line-strong);
+  background-color: rgb(11 12 16 / 76%);
+  min-height: 2.5rem;
+  padding: 0.42rem 0.66rem;
+}
+
+.gmp-notion-editor .ProseMirror section[data-empty-card="true"] [data-role="embed-placeholder-icon"] {
+  color: var(--gmp-text-secondary);
+  font-size: 0.88rem;
+  line-height: 1;
+}
+
+.gmp-notion-editor .ProseMirror section[data-empty-card="true"] [data-role="embed-placeholder-text"] {
+  color: var(--gmp-text-secondary);
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.gmp-notion-editor .ProseMirror section[data-empty-card="true"] [data-role="embed-placeholder-preview"] {
+  min-height: 7.8rem;
+  border: 1px dashed var(--gmp-line-strong);
+  background-color: rgb(11 12 16 / 62%);
+}
+
+.gmp-notion-editor .ProseMirror section[data-empty-card="true"] [data-role="embed-placeholder-hint"] {
+  margin: 0;
+  color: var(--gmp-text-secondary);
+  font-size: 0.74rem;
+  letter-spacing: 0.02rem;
 }
 
 .gmp-notion-editor .ProseMirror section[data-type="embed-github"] a,

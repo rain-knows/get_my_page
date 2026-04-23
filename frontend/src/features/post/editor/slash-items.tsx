@@ -158,20 +158,20 @@ export function buildPostSlashCommandItems(options: BuildPostSlashCommandItemsOp
     },
     {
       id: 'embed-empty-card',
-      title: '外链空卡片',
-      description: '插入未导入外链的空卡片，稍后在编辑面板补全',
+      title: '通用链接占位卡片',
+      description: '插入 Notion 风格外链占位卡片，稍后在编辑面板补全链接',
       icon: <Link2 className="h-4 w-4" />,
-      searchTerms: ['empty', 'embed', 'link', 'card'],
+      searchTerms: ['empty', 'embed', 'link', 'card', 'placeholder', '占位'],
       command: ({ editor, range }) => {
         options.onInsertEmptyEmbedCard({ editor, range });
       },
     },
     {
       id: 'code-empty-card',
-      title: '代码空卡片',
-      description: '插入未填充代码的空卡片，稍后在编辑面板补全',
+      title: '空代码块级组件',
+      description: '插入空代码块级组件，稍后在编辑面板补全代码',
       icon: <SquareCode className="h-4 w-4" />,
-      searchTerms: ['empty', 'code', 'snippet', 'card'],
+      searchTerms: ['empty', 'code', 'snippet', 'card', 'placeholder', '占位'],
       command: ({ editor, range }) => {
         options.onInsertEmptyCodeCard({ editor, range });
       },
