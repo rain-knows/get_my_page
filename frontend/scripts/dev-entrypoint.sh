@@ -36,6 +36,34 @@ install_dependencies() {
   npm install --no-audit --no-fund
 }
 
+ensure_next_swc_binding() {
+  if [ ! -x "$APP_DIR/node_modules/.bin/next" ]; then
+    echo "next binary not found, skip SWC check."
+    return 1
+  fi
+
+  NEXT_VERSION="$(node -p "require('$APP_DIR/node_modules/next/package.json').version" 2>/dev/null || true)"
+  if [ -z "$NEXT_VERSION" ]; then
+    echo "Cannot detect Next.js version, skip SWC check."
+    return 1
+  fi
+
+  if ldd --version 2>&1 | grep -qi musl; then
+    SWC_PKG="@next/swc-linux-x64-musl@$NEXT_VERSION"
+    SWC_DIR="$APP_DIR/node_modules/@next/swc-linux-x64-musl"
+  else
+    SWC_PKG="@next/swc-linux-x64-gnu@$NEXT_VERSION"
+    SWC_DIR="$APP_DIR/node_modules/@next/swc-linux-x64-gnu"
+  fi
+
+  if [ -d "$SWC_DIR" ]; then
+    return 0
+  fi
+
+  echo "Missing native SWC binding, installing $SWC_PKG ..."
+  npm install --no-save --no-audit --no-fund "$SWC_PKG"
+}
+
 if [ ! -f "$PKG_FILE" ]; then
   echo "package.json not found at $PKG_FILE"
   exit 1
@@ -78,10 +106,10 @@ if [ "$CURRENT_HASH" != "$SAVED_HASH" ] || [ ! -d "$APP_DIR/node_modules/.bin" ]
   printf '%s' "$CURRENT_HASH" > "$HASH_FILE"
 fi
 
-# Next.js 16 在部分容器环境中无法加载 Turbopack 所需的原生绑定，这里默认切到 webpack。
-# 如需临时启用 Turbopack，可在 compose 环境变量中设置 NEXT_DEV_USE_TURBOPACK=true。
-if [ "${NEXT_DEV_USE_TURBOPACK:-false}" = "true" ]; then
-  exec npm run dev
+# 为 Turbopack 显式校验并补装当前平台的 SWC 原生绑定，避免 optional 依赖被静默跳过。
+if ! ensure_next_swc_binding; then
+  echo "SWC native binding check failed, fallback to webpack mode."
+  exec npm run dev -- --webpack
 fi
 
-exec npm run dev -- --webpack
+exec npm run dev
