@@ -1,6 +1,5 @@
 import { apiClient } from '@/lib/api-client';
 import type {
-  EmbedResolveResult,
   FileUploadResult,
   PostDetail,
   PostListQuery,
@@ -57,31 +56,4 @@ export async function uploadPostAsset(file: File, postId?: number): Promise<File
   return apiClient.postForm<FileUploadResult>('/files/upload', formData, {
     postId,
   });
-}
-
-/**
- * 功能：统一解析外链并返回自动识别后的卡片快照。
- * 关键参数：url 为任意外链输入（GitHub/音乐/视频/网页链接）。
- * 返回值/副作用：返回 embed 解析结果；副作用为触发后端统一解析接口。
- */
-export async function resolveEmbed(url: string): Promise<EmbedResolveResult> {
-  return apiClient.post<EmbedResolveResult>('/embeds/resolve', { url });
-}
-
-/**
- * 功能：解析 GitHub 链接并返回可嵌入编辑器的卡片快照。
- * 关键参数：url 为仓库链接或 owner/repo 字符串。
- * 返回值/副作用：返回 embed 解析结果；副作用为触发后端解析接口。
- */
-export async function resolveGithubEmbed(url: string): Promise<EmbedResolveResult> {
-  return resolveEmbed(url);
-}
-
-/**
- * 功能：解析音乐链接（Spotify/网易云/Apple Music/Bilibili）并返回卡片快照。
- * 关键参数：url 为音乐链接。
- * 返回值/副作用：返回 embed 解析结果；副作用为触发后端解析接口。
- */
-export async function resolveMusicEmbed(url: string): Promise<EmbedResolveResult> {
-  return resolveEmbed(url);
 }

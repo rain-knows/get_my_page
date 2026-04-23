@@ -97,6 +97,18 @@
   --gmp-end-timing-mid: 250ms;
 
   --gmp-text-gray-contrast: #a1a1aa;
+
+  /* Novel official demo surface tokens */
+  --gmp-novel-surface: #f4f4f5;
+  --gmp-novel-toolbar: #ffffff;
+  --gmp-novel-toolbar-hover: #f1f5f9;
+  --gmp-novel-line: #d4d4d8;
+  --gmp-novel-text: #111827;
+  --gmp-novel-text-muted: #64748b;
+  --gmp-novel-link: #2563eb;
+  --gmp-novel-link-hover: #1d4ed8;
+  --gmp-novel-accent: #2563eb;
+  --gmp-novel-accent-soft: #dbeafe;
 }
 
 .dark {
@@ -293,330 +305,95 @@
   box-shadow: 4px 4px 0 0 var(--gmp-accent);
 }
 
-/* Tiptap Notion-like block style */
-.gmp-notion-editor .ProseMirror {
+/* Novel official demo style baseline */
+.gmp-novel-editor.ProseMirror {
   min-height: 28rem;
+  color: var(--gmp-novel-text);
+  line-height: 1.75;
 }
 
-.gmp-notion-editor .ProseMirror:focus {
+.gmp-novel-editor.ProseMirror:focus {
   outline: none;
 }
 
-.gmp-notion-editor .ProseMirror p.is-editor-empty:first-child::before {
+.gmp-novel-editor.ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
   height: 0;
   pointer-events: none;
-  color: var(--gmp-text-secondary);
-  opacity: 0.72;
-  font-size: 0.82rem;
-  letter-spacing: 0.04rem;
-  text-transform: uppercase;
+  color: var(--gmp-novel-text-muted);
 }
 
-.gmp-notion-editor .ProseMirror> * {
-  position: relative;
-  margin: 0;
-  padding: 0.65rem 0.85rem 0.65rem 1.25rem;
-  border-left: 1px solid var(--gmp-line-soft);
-  transition: border-color var(--gmp-end-timing-fast) ease, background-color var(--gmp-end-timing-fast) ease;
-}
-
-.gmp-notion-editor .ProseMirror> *+* {
-  margin-top: 0.35rem;
-}
-
-.gmp-notion-editor .ProseMirror> *::before {
-  content: "⋮⋮";
-  position: absolute;
-  left: 0.35rem;
-  top: 0.55rem;
-  color: var(--gmp-text-secondary);
-  opacity: 0;
-  font-size: 0.65rem;
-  line-height: 1;
-  letter-spacing: 0.04rem;
-  transition: opacity var(--gmp-end-timing-fast) ease;
-}
-
-.gmp-notion-editor .ProseMirror> *:hover {
-  border-left-color: var(--gmp-accent);
-  background-color: rgb(26 27 32 / 72%);
-}
-
-.gmp-notion-editor .ProseMirror> *:hover::before {
-  opacity: 1;
-}
-
-.gmp-notion-editor .ProseMirror h1,
-.gmp-notion-editor .ProseMirror h2,
-.gmp-notion-editor .ProseMirror h3 {
-  color: var(--gmp-text-primary);
-  font-weight: 800;
-  line-height: 1.35;
-}
-
-.gmp-notion-editor .ProseMirror h1 {
-  font-size: 1.7rem;
-}
-
-.gmp-notion-editor .ProseMirror h2 {
-  font-size: 1.4rem;
-}
-
-.gmp-notion-editor .ProseMirror h3 {
-  font-size: 1.2rem;
-}
-
-.gmp-notion-editor .ProseMirror p,
-.gmp-notion-editor .ProseMirror li {
-  color: var(--gmp-text-primary);
-}
-
-.gmp-notion-editor .ProseMirror blockquote {
-  background-color: var(--gmp-bg-panel);
-  border-left: 2px solid var(--gmp-accent);
-}
-
-.gmp-notion-editor .ProseMirror pre {
-  position: relative;
-  border: 1px solid var(--gmp-line-soft);
-  background-color: var(--gmp-bg-panel);
-  padding: 0.9rem;
-}
-
-.gmp-notion-editor .ProseMirror pre:has(code:empty) {
-  border-style: dashed;
-  border-color: var(--gmp-accent-dim);
-  background:
-    linear-gradient(180deg, rgb(255 255 255 / 2%) 0%, rgb(255 255 255 / 0%) 65%),
-    var(--gmp-bg-panel);
-  padding: 0.72rem;
-}
-
-.gmp-notion-editor .ProseMirror pre:has(code:empty)::before {
-  content: "空代码块级组件";
-  display: inline-flex;
-  margin-bottom: 0.6rem;
-  border: 1px solid var(--gmp-line-strong);
-  background-color: rgb(11 12 16 / 78%);
-  padding: 0.32rem 0.6rem;
-  color: var(--gmp-text-secondary);
-  font-size: 0.62rem;
+.gmp-novel-editor.ProseMirror h1,
+.gmp-novel-editor.ProseMirror h2,
+.gmp-novel-editor.ProseMirror h3 {
+  color: var(--gmp-novel-text);
   font-weight: 700;
-  letter-spacing: 0.09rem;
-  text-transform: uppercase;
+  letter-spacing: -0.01em;
 }
 
-.gmp-notion-editor .ProseMirror pre code:empty {
+.gmp-novel-editor.ProseMirror h1 {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+.gmp-novel-editor.ProseMirror h2 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+.gmp-novel-editor.ProseMirror h3 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+.gmp-novel-editor.ProseMirror a {
+  color: var(--gmp-novel-link);
+}
+
+.gmp-novel-editor.ProseMirror a:hover {
+  color: var(--gmp-novel-link-hover);
+}
+
+.gmp-novel-editor.ProseMirror ul,
+.gmp-novel-editor.ProseMirror ol {
+  padding-left: 1.5rem;
+}
+
+.gmp-novel-editor.ProseMirror blockquote {
+  border-left: 4px solid #d4d4d8;
+  padding-left: 1rem;
+  color: #334155;
+}
+
+.gmp-novel-editor.ProseMirror pre {
+  border: 1px solid #1f2937;
+  border-radius: 0.5rem;
+  background: #1e293b;
+  color: #f8fafc;
+  padding: 0.875rem 1rem;
+}
+
+.gmp-novel-editor.ProseMirror code {
+  border-radius: 0.25rem;
+  background: #e2e8f0;
+  padding: 0.1rem 0.25rem;
+}
+
+.gmp-novel-editor.ProseMirror pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.gmp-novel-editor.ProseMirror hr {
+  margin: 2rem 0;
+  border: 0;
+  border-top: 1px solid #d4d4d8;
+}
+
+.gmp-novel-editor.ProseMirror img {
   display: block;
-  min-height: 8.2rem;
-  border: 1px dashed var(--gmp-line-strong);
-  background-color: rgb(11 12 16 / 62%);
-  padding: 0.9rem;
-}
-
-.gmp-notion-editor .ProseMirror pre code:empty::before {
-  content: "在 INSERT EDITOR 中填写代码，或直接在此块内输入";
-  display: block;
-  color: var(--gmp-text-secondary);
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.04rem;
-}
-
-.gmp-notion-editor .ProseMirror figure[data-type="image-block"] {
-  border: 1px solid var(--gmp-line-soft);
-  background-color: var(--gmp-bg-panel);
-}
-
-.gmp-notion-editor .ProseMirror figure[data-type="image-block"] img {
-  width: 100%;
-  display: block;
-}
-
-.gmp-notion-editor .ProseMirror figure[data-type="image-block"] figcaption {
-  padding: 0.55rem 0.7rem;
-  color: var(--gmp-text-secondary);
-  font-size: 0.7rem;
-  letter-spacing: 0.08rem;
-  text-transform: uppercase;
-}
-
-.gmp-notion-editor .ProseMirror section[data-type="embed-github"],
-.gmp-notion-editor .ProseMirror section[data-type="embed-music"],
-.gmp-notion-editor .ProseMirror section[data-type="embed-link"],
-.gmp-notion-editor .ProseMirror section[data-type="embed-video"] {
-  display: block;
-  border: 1px solid var(--gmp-line-soft);
-  background-color: var(--gmp-bg-panel);
-  padding: 0.8rem;
-}
-
-.gmp-notion-editor .ProseMirror section[data-empty-card="true"] {
-  border-style: dashed;
-  border-color: var(--gmp-accent-dim);
-  background:
-    linear-gradient(180deg, rgb(255 255 255 / 2%) 0%, rgb(255 255 255 / 0%) 65%),
-    var(--gmp-bg-panel);
-}
-
-.gmp-notion-editor .ProseMirror section[data-empty-card="true"] a {
-  pointer-events: none;
-}
-
-.gmp-notion-editor .ProseMirror section[data-empty-card="true"] [data-role="embed-placeholder-card"] {
-  display: grid;
-  gap: 0.62rem;
-}
-
-.gmp-notion-editor .ProseMirror section[data-empty-card="true"] [data-role="embed-placeholder-input"] {
-  display: flex;
-  align-items: center;
-  gap: 0.52rem;
-  border: 1px solid var(--gmp-line-strong);
-  background-color: rgb(11 12 16 / 76%);
-  min-height: 2.5rem;
-  padding: 0.42rem 0.66rem;
-}
-
-.gmp-notion-editor .ProseMirror section[data-empty-card="true"] [data-role="embed-placeholder-icon"] {
-  color: var(--gmp-text-secondary);
-  font-size: 0.88rem;
-  line-height: 1;
-}
-
-.gmp-notion-editor .ProseMirror section[data-empty-card="true"] [data-role="embed-placeholder-text"] {
-  color: var(--gmp-text-secondary);
-  font-size: 0.86rem;
-  line-height: 1.35;
-}
-
-.gmp-notion-editor .ProseMirror section[data-empty-card="true"] [data-role="embed-placeholder-preview"] {
-  min-height: 7.8rem;
-  border: 1px dashed var(--gmp-line-strong);
-  background-color: rgb(11 12 16 / 62%);
-}
-
-.gmp-notion-editor .ProseMirror section[data-empty-card="true"] [data-role="embed-placeholder-hint"] {
-  margin: 0;
-  color: var(--gmp-text-secondary);
-  font-size: 0.74rem;
-  letter-spacing: 0.02rem;
-}
-
-.gmp-notion-editor .ProseMirror section[data-type="embed-github"] a,
-.gmp-notion-editor .ProseMirror section[data-type="embed-music"] a,
-.gmp-notion-editor .ProseMirror section[data-type="embed-link"] a,
-.gmp-notion-editor .ProseMirror section[data-type="embed-video"] a {
-  display: grid;
-  gap: 0.45rem;
-  color: var(--gmp-text-primary);
-  text-decoration: none;
-}
-
-.gmp-notion-editor .ProseMirror section[data-type="embed-github"] img,
-.gmp-notion-editor .ProseMirror section[data-type="embed-music"] img,
-.gmp-notion-editor .ProseMirror section[data-type="embed-link"] img,
-.gmp-notion-editor .ProseMirror section[data-type="embed-video"] img {
-  width: 100%;
-  max-height: 12rem;
-  display: block;
-  border: 1px solid var(--gmp-line-soft);
-  object-fit: cover;
-}
-
-.gmp-notion-editor .ProseMirror section[data-type="embed-github"] span,
-.gmp-notion-editor .ProseMirror section[data-type="embed-music"] span,
-.gmp-notion-editor .ProseMirror section[data-type="embed-link"] span,
-.gmp-notion-editor .ProseMirror section[data-type="embed-video"] span {
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.08rem;
-  text-transform: uppercase;
-  color: var(--gmp-accent);
-}
-
-.gmp-notion-editor .ProseMirror section[data-type="embed-github"] strong,
-.gmp-notion-editor .ProseMirror section[data-type="embed-music"] strong,
-.gmp-notion-editor .ProseMirror section[data-type="embed-link"] strong,
-.gmp-notion-editor .ProseMirror section[data-type="embed-video"] strong {
-  font-size: 0.98rem;
-  font-weight: 800;
-  color: var(--gmp-text-primary);
-}
-
-.gmp-notion-editor .ProseMirror section[data-type="embed-github"] p,
-.gmp-notion-editor .ProseMirror section[data-type="embed-music"] p,
-.gmp-notion-editor .ProseMirror section[data-type="embed-link"] p,
-.gmp-notion-editor .ProseMirror section[data-type="embed-video"] p {
-  margin: 0;
-  font-size: 0.77rem;
-  line-height: 1.4;
-  color: var(--gmp-text-secondary);
-  word-break: break-all;
-}
-
-.gmp-editor-command {
-  width: min(30rem, calc(100vw - 2rem));
-  max-height: 18rem;
-  overflow: hidden;
-}
-
-.gmp-editor-command-item {
-  border: 1px solid transparent;
-}
-
-.gmp-editor-command-item[data-selected='true'] {
-  border-color: var(--gmp-accent);
-  background-color: rgb(255 204 0 / 10%);
-}
-
-.gmp-editor-bubble {
-  box-shadow: 2px 2px 0 0 var(--gmp-line-soft);
-}
-
-.gmp-editor-bubble-btn {
-  display: inline-flex;
-  height: 2rem;
-  width: 2rem;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid transparent;
-  color: var(--gmp-text-primary);
-  transition: border-color var(--gmp-end-timing-fast) ease, color var(--gmp-end-timing-fast) ease;
-}
-
-.gmp-editor-bubble-btn:hover {
-  border-color: var(--gmp-accent);
-  color: var(--gmp-accent);
-}
-
-.gmp-editor-bubble-btn:focus-visible {
-  border-color: var(--gmp-accent);
-  outline: none;
-}
-
-/* Article view keeps the same block rhythm as editor mode */
-.gmp-notion-viewer> * {
-  position: relative;
-  margin: 0;
-  padding: 0.65rem 0.85rem 0.65rem 1.25rem;
-  border-left: 1px solid var(--gmp-line-soft);
-}
-
-.gmp-notion-viewer> *+* {
-  margin-top: 0.35rem;
-}
-
-.gmp-notion-viewer> *::before {
-  content: "⋮⋮";
-  position: absolute;
-  left: 0.35rem;
-  top: 0.55rem;
-  color: var(--gmp-text-secondary);
-  opacity: 0.65;
-  font-size: 0.65rem;
-  line-height: 1;
-  letter-spacing: 0.04rem;
+  max-width: 100%;
+  border: 1px solid #d4d4d8;
+  border-radius: 0.5rem;
 }

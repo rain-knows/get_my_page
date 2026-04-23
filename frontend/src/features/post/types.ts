@@ -56,12 +56,3 @@ export interface FileUploadResult {
   url: string;
   key: string;
 }
-
-export interface EmbedResolveResult {
-  cardType: string;
-  provider: string;
-  normalizedUrl: string;
-  resolved: boolean;
-  fallbackUrl: string;
-  snapshot: Record<string, unknown> | null;
-}

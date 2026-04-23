@@ -11,7 +11,7 @@
 | **全文搜索** | Meilisearch 驱动的毫秒级搜索，支持容错拼写与高亮 |
 | **容器化** | 全程 Docker Compose 编排，一键启动开发/生产环境 |
 | **高并发** | Java 21 虚拟线程 + 多级缓存 (Caffeine → Redis → MySQL) |
-| **现代前端** | Next.js 14 + Tailwind CSS v4 + shadcn/ui + MDX 自定义组件 |
+| **现代前端** | Next.js 14 + Tailwind CSS v4 + shadcn/ui + Novel 编辑器 |
 
 ---
 
@@ -39,7 +39,7 @@
 
 ### 技术栈
 
-**前端**: Next.js 14 · React 19 · TypeScript 5 · Tailwind CSS v4 · shadcn/ui · Motion · Zustand · SWR · MDX
+**前端**: Next.js 14 · React 19 · TypeScript 5 · Tailwind CSS v4 · shadcn/ui · Motion · Zustand · SWR · Novel
 
 **后端**: Spring Boot 3.5 · Java 21 (虚拟线程) · MyBatis-Plus · Spring Security · JWT · Flyway · SpringDoc
 
@@ -229,7 +229,7 @@ docker compose -f docker-compose.prod.yml up -d --no-deps frontend backend
 | 表 | 说明 |
 |----|------|
 | `user` | 用户 (支持 USER / ADMIN 角色) |
-| `post` | 文章 (MDX 内容，支持草稿/发布状态) |
+| `post` | 文章 (tiptap-json 内容，支持草稿/发布状态) |
 | `category` | 分类 |
 | `tag` | 标签 |
 | `post_tag` | 文章-标签关联 |
@@ -271,7 +271,8 @@ docker compose -f docker-compose.prod.yml up -d --no-deps frontend backend
 |------|------|
 | [00-架构概览](docs/00-architecture-overview.md) | 系统定位、架构图、技术栈全景 |
 | [架构契约](docs/architecture-contract.md) | 前后端分层职责、依赖方向、禁止项（Agent 首读） |
-| [01-前端技术栈](docs/01-frontend-stack.md) | Next.js、Tailwind v4、shadcn/ui、MDX |
+| [01-前端技术栈](docs/01-frontend-stack.md) | Next.js、Tailwind v4、shadcn/ui、Novel |
+| [11-Novel 编辑器设计](docs/11-rich-editor-design.md) | 官方 demo 基线、localStorage 保存、`/api/upload` MinIO 适配 |
 | [02-后端技术栈](docs/02-backend-stack.md) | Spring Boot、MyBatis-Plus、Security |
 | [03-基础设施](docs/03-infrastructure.md) | MySQL、Redis、Meilisearch、MinIO |
 | [04-Docker 开发](docs/04-docker-dev-guide.md) | 容器化开发、热重载、IDE 调试 |

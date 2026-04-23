@@ -2,12 +2,20 @@
 
 import Link from "next/link";
 import { Clock, HardDrive, ShieldAlert } from "lucide-react";
+import { useMemo } from "react";
 import { KineticPageShell } from "@/features/surface/components/KineticPageShell";
 import { useIsAdminCapability, usePostDetail } from "@/features/post/hooks";
 import { PostContentRenderer } from "@/features/post/components/PostContentRenderer";
+import { loadNovelDraftContentString, loadNovelDraftTitle } from "@/features/post/editor/novel-demo";
+import type { PostContentFormat } from "@/features/post/types";
 
 interface BlogArticleReaderProps {
   slug: string;
+}
+
+interface LocalDraftSnapshot {
+  title: string | null;
+  content: string | null;
 }
 
 /**
@@ -31,6 +39,26 @@ function formatDetailTime(value: string): string {
 export function BlogArticleReader({ slug }: BlogArticleReaderProps) {
   const { data, loading, error, reload } = usePostDetail(slug);
   const canEdit = useIsAdminCapability();
+  const localDraft = useMemo<LocalDraftSnapshot>(() => {
+    return {
+      title: loadNovelDraftTitle(slug),
+      content: loadNovelDraftContentString(slug),
+    };
+  }, [slug]);
+
+  const resolvedTitle = useMemo(() => {
+    if (localDraft.title) {
+      return localDraft.title;
+    }
+    if (loading) {
+      return "LOADING ARTICLE...";
+    }
+    return data?.title ?? "ARTICLE NOT FOUND";
+  }, [data?.title, loading, localDraft.title]);
+
+  const resolvedContent = localDraft.content ?? data?.content ?? "";
+  const resolvedFormat: PostContentFormat = "tiptap-json";
+  const hasLocalDraft = Boolean(localDraft.content);
 
   return (
     <KineticPageShell
@@ -59,8 +87,11 @@ export function BlogArticleReader({ slug }: BlogArticleReaderProps) {
               <div className="space-y-2 min-w-0">
                 <p className="font-mono text-[10px] font-bold text-(--gmp-accent) uppercase tracking-widest">ARTICLE // {slug}</p>
                 <h1 className="font-heading text-2xl font-black text-white uppercase leading-tight tracking-tight md:text-3xl">
-                  {loading ? "LOADING ARTICLE..." : data?.title ?? "ARTICLE NOT FOUND"}
+                  {resolvedTitle}
                 </h1>
+                {hasLocalDraft ? (
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-emerald-300">LOCAL DRAFT PREVIEW ACTIVE</p>
+                ) : null}
               </div>
 
               <div className="flex items-center gap-2">
@@ -103,6 +134,9 @@ export function BlogArticleReader({ slug }: BlogArticleReaderProps) {
                   FORMAT
                 </dt>
                 <dd className="font-mono text-[10px] font-bold uppercase tracking-widest text-white/80">{data?.contentFormat ?? "--"}</dd>
+                {hasLocalDraft ? (
+                  <dd className="mt-1 font-mono text-[9px] font-bold uppercase tracking-widest text-emerald-300">LOCAL</dd>
+                ) : null}
               </div>
               <div className="border border-(--gmp-line-soft) bg-(--gmp-bg-panel) px-3 py-2">
                 <dt className="flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-widest text-(--gmp-text-secondary)">
@@ -117,14 +151,14 @@ export function BlogArticleReader({ slug }: BlogArticleReaderProps) {
           </header>
 
           <div className="bg-(--gmp-bg-base) p-4 md:p-8 lg:p-10">
-            {loading ? (
+            {loading && !hasLocalDraft ? (
               <div className="space-y-4 animate-pulse">
                 <div className="h-4 w-full bg-(--gmp-line-soft)" />
                 <div className="h-4 w-11/12 bg-(--gmp-line-soft)" />
                 <div className="h-4 w-4/5 bg-(--gmp-line-soft)" />
               </div>
-            ) : data ? (
-              <PostContentRenderer content={data.content} contentFormat={data.contentFormat} />
+            ) : resolvedContent ? (
+              <PostContentRenderer content={resolvedContent} contentFormat={resolvedFormat} />
             ) : (
               <p className="text-sm leading-relaxed text-(--gmp-text-secondary)">目标文章不存在或暂不可访问。</p>
             )}
