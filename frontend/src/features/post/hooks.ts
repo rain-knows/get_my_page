@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { ApiError } from '@/lib/api-client';
 import { fetchPostDetail, fetchPostList } from '@/features/post/api';
 import type { PostDetail, PostListItem, PostListQuery, PostListResponse } from '@/features/post/types';
@@ -164,10 +164,54 @@ function parseRoleFromAccessToken(token: string): string | null {
 export function useIsAdminCapability(): boolean {
   const userRole = useAuthStore((state) => state.user?.role ?? null);
   const normalizedUserRole = userRole ? userRole.toUpperCase() : null;
-  const tokenRole =
-    typeof window === 'undefined'
-      ? null
-      : parseRoleFromAccessToken(localStorage.getItem('accessToken') ?? '');
+  const tokenRole = useSyncExternalStore(
+    subscribeAccessTokenStorage,
+    getTokenRoleSnapshot,
+    getTokenRoleServerSnapshot,
+  );
 
   return normalizedUserRole === 'ADMIN' || tokenRole === 'ADMIN';
+}
+
+/**
+ * 功能：为 accessToken 本地存储提供订阅接口，支持跨标签页权限状态同步。
+ * 关键参数：onStoreChange 为外部存储变更回调。
+ * 返回值/副作用：返回取消订阅函数；副作用为注册/注销 storage 事件监听。
+ */
+function subscribeAccessTokenStorage(onStoreChange: () => void): () => void {
+  if (typeof window === 'undefined') {
+    return () => {};
+  }
+
+  const handleStorage = (event: StorageEvent): void => {
+    if (event.key === 'accessToken') {
+      onStoreChange();
+    }
+  };
+
+  window.addEventListener('storage', handleStorage);
+  return () => {
+    window.removeEventListener('storage', handleStorage);
+  };
+}
+
+/**
+ * 功能：读取客户端 accessToken 并解析角色快照，供 useSyncExternalStore 客户端分支使用。
+ * 关键参数：无。
+ * 返回值/副作用：返回角色字符串或 null；副作用为读取 localStorage。
+ */
+function getTokenRoleSnapshot(): string | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  return parseRoleFromAccessToken(localStorage.getItem('accessToken') ?? '');
+}
+
+/**
+ * 功能：返回 SSR 阶段的权限快照，保证服务端与客户端首帧结构一致。
+ * 关键参数：无。
+ * 返回值/副作用：固定返回 null；无副作用。
+ */
+function getTokenRoleServerSnapshot(): string | null {
+  return null;
 }

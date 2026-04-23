@@ -1,4 +1,5 @@
 import type { JSONContent } from 'novel';
+import { normalizeEditorAssetUrls } from '@/features/post/editor/assets';
 import type { PostContentFormat } from '@/features/post/types';
 
 const EMPTY_EDITOR_DOC: JSONContent = {
@@ -31,17 +32,17 @@ function isTiptapDocContent(value: unknown): value is JSONContent {
  */
 export function parsePostContentToEditorDoc(content: string, contentFormat: PostContentFormat): JSONContent {
   if (contentFormat !== 'tiptap-json') {
-    return EMPTY_EDITOR_DOC;
+    return normalizeEditorAssetUrls(EMPTY_EDITOR_DOC);
   }
 
   try {
     const parsed = JSON.parse(content) as unknown;
     if (!isTiptapDocContent(parsed)) {
-      return EMPTY_EDITOR_DOC;
+      return normalizeEditorAssetUrls(EMPTY_EDITOR_DOC);
     }
-    return parsed;
+    return normalizeEditorAssetUrls(parsed);
   } catch {
-    return EMPTY_EDITOR_DOC;
+    return normalizeEditorAssetUrls(EMPTY_EDITOR_DOC);
   }
 }
 

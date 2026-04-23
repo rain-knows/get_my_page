@@ -302,6 +302,18 @@
   outline: none;
 }
 
+.gmp-notion-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--gmp-text-secondary);
+  opacity: 0.72;
+  font-size: 0.82rem;
+  letter-spacing: 0.04rem;
+  text-transform: uppercase;
+}
+
 .gmp-notion-editor .ProseMirror> * {
   position: relative;
   margin: 0;
@@ -372,6 +384,16 @@
   padding: 0.9rem;
 }
 
+.gmp-notion-editor .ProseMirror pre code:empty::before {
+  content: "EMPTY CODE CARD // USE INSERT EDITOR PANEL";
+  display: block;
+  color: var(--gmp-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08rem;
+  text-transform: uppercase;
+}
+
 .gmp-notion-editor .ProseMirror figure[data-type="image-block"] {
   border: 1px solid var(--gmp-line-soft);
   background-color: var(--gmp-bg-panel);
@@ -398,6 +420,15 @@
   border: 1px solid var(--gmp-line-soft);
   background-color: var(--gmp-bg-panel);
   padding: 0.8rem;
+}
+
+.gmp-notion-editor .ProseMirror section[data-empty-card="true"] {
+  border-style: dashed;
+  border-color: var(--gmp-accent-dim);
+}
+
+.gmp-notion-editor .ProseMirror section[data-empty-card="true"] a {
+  pointer-events: none;
 }
 
 .gmp-notion-editor .ProseMirror section[data-type="embed-github"] a,
@@ -450,6 +481,46 @@
   line-height: 1.4;
   color: var(--gmp-text-secondary);
   word-break: break-all;
+}
+
+.gmp-editor-command {
+  width: min(30rem, calc(100vw - 2rem));
+  max-height: 18rem;
+  overflow: hidden;
+}
+
+.gmp-editor-command-item {
+  border: 1px solid transparent;
+}
+
+.gmp-editor-command-item[data-selected='true'] {
+  border-color: var(--gmp-accent);
+  background-color: rgb(255 204 0 / 10%);
+}
+
+.gmp-editor-bubble {
+  box-shadow: 2px 2px 0 0 var(--gmp-line-soft);
+}
+
+.gmp-editor-bubble-btn {
+  display: inline-flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  color: var(--gmp-text-primary);
+  transition: border-color var(--gmp-end-timing-fast) ease, color var(--gmp-end-timing-fast) ease;
+}
+
+.gmp-editor-bubble-btn:hover {
+  border-color: var(--gmp-accent);
+  color: var(--gmp-accent);
+}
+
+.gmp-editor-bubble-btn:focus-visible {
+  border-color: var(--gmp-accent);
+  outline: none;
 }
 
 /* Article view keeps the same block rhythm as editor mode */

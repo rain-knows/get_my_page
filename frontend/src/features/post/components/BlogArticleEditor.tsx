@@ -26,7 +26,7 @@ function formatDetailTime(value: string): string {
 }
 
 /**
- * 功能：渲染文章独立编辑页并承载保存后的跳转行为。
+ * 功能：渲染文章独立编辑页并承载自动保存编辑流。
  * 关键参数：slug 为文章唯一标识。
  * 返回值/副作用：返回编辑页节点；副作用为触发详情请求与路由跳转。
  */
@@ -37,13 +37,12 @@ export function BlogArticleEditor({ slug }: BlogArticleEditorProps) {
   const detailPath = `/blog/${slug}`;
 
   /**
-   * 功能：处理编辑器保存成功后的返回阅读页流程。
+   * 功能：处理自动保存成功后的本地同步回调，保持编辑模式不跳页。
    * 关键参数：updatedPost 为保存后的文章详情。
-   * 返回值/副作用：返回 Promise<void>；副作用为刷新详情缓存并跳转到阅读页。
+   * 返回值/副作用：无返回值；无副作用。
    */
-  async function handleEditorSaved(updatedPost: PostDetail): Promise<void> {
-    await reload();
-    router.replace(`/blog/${updatedPost.slug}`);
+  function handleEditorSaved(updatedPost: PostDetail): void {
+    void updatedPost;
   }
 
   /**
@@ -155,7 +154,7 @@ export function BlogArticleEditor({ slug }: BlogArticleEditorProps) {
           <PostRichEditor
             post={data}
             onSaved={(updatedPost) => {
-              void handleEditorSaved(updatedPost);
+              handleEditorSaved(updatedPost);
             }}
             onCancel={handleCancelEdit}
           />

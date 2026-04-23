@@ -1,14 +1,9 @@
 "use client";
 
 import { useMemo } from 'react';
-import {
-  EditorContent,
-  EditorRoot,
-  StarterKit,
-  TiptapLink,
-  UpdatedImage,
-  type JSONContent,
-} from 'novel';
+import { EditorContent, EditorRoot, type JSONContent } from 'novel';
+import { normalizeEditorAssetUrls } from '@/features/post/editor/assets';
+import { buildPostRendererExtensions } from '@/features/post/editor/extensions';
 import type { PostContentFormat } from '@/features/post/types';
 
 interface PostContentRendererProps {
@@ -31,7 +26,7 @@ function parseTiptapDocument(content: string): JSONContent | null {
     if (candidate.type !== 'doc' || !Array.isArray(candidate.content)) {
       return null;
     }
-    return candidate as JSONContent;
+    return normalizeEditorAssetUrls(candidate as JSONContent);
   } catch {
     return null;
   }
@@ -44,6 +39,7 @@ function parseTiptapDocument(content: string): JSONContent | null {
  */
 export function PostContentRenderer({ content, contentFormat }: PostContentRendererProps) {
   const document = useMemo(() => parseTiptapDocument(content), [content]);
+  const extensions = useMemo(() => buildPostRendererExtensions(), []);
 
   if (contentFormat !== 'tiptap-json') {
     return (
@@ -71,17 +67,7 @@ export function PostContentRenderer({ content, contentFormat }: PostContentRende
         immediatelyRender={false}
         editable={false}
         initialContent={document}
-        extensions={[
-          StarterKit.configure({
-            heading: { levels: [1, 2, 3] },
-          }),
-          TiptapLink.configure({
-            openOnClick: true,
-            autolink: false,
-            linkOnPaste: false,
-          }),
-          UpdatedImage,
-        ]}
+        extensions={extensions as never[]}
         editorProps={{
           attributes: {
             class:

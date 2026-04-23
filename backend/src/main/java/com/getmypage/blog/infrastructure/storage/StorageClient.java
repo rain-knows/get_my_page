@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.io.ByteArrayInputStream;
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.Locale;
 import java.util.UUID;
@@ -24,19 +25,22 @@ public class StorageClient {
     private final MinioClient minioClient;
     private final String bucket;
     private final String endpoint;
+    private final String publicEndpoint;
 
     /**
      * 功能：初始化对象存储客户端并注入 MinIO 关键配置。
-     * 关键参数：minioClient 为 S3 兼容客户端；bucket 为默认桶名；endpoint 为访问域名。
+     * 关键参数：minioClient 为 S3 兼容客户端；bucket 为默认桶名；endpoint 为内部访问域名；publicEndpoint 为浏览器访问域名。
      * 返回值/副作用：无返回值；构造后用于文件上传与 URL 生成。
      */
     public StorageClient(
             MinioClient minioClient,
             @Value("${blog.minio.bucket:blog-assets}") String bucket,
-            @Value("${blog.minio.endpoint:http://localhost:9000}") String endpoint) {
+            @Value("${blog.minio.endpoint:http://localhost:9000}") String endpoint,
+            @Value("${MINIO_PUBLIC_ENDPOINT:}") String publicEndpoint) {
         this.minioClient = minioClient;
         this.bucket = bucket;
         this.endpoint = endpoint;
+        this.publicEndpoint = publicEndpoint;
     }
 
     /**
@@ -110,7 +114,48 @@ public class StorageClient {
      * 返回值/副作用：返回完整 URL；无其他副作用。
      */
     private String buildObjectUrl(String objectName) {
-        return "%s/%s/%s".formatted(endpoint, bucket, objectName);
+        return "%s/%s/%s".formatted(resolvePublicEndpoint(), bucket, objectName);
+    }
+
+    /**
+     * 功能：解析对象存储对外可访问域名，优先使用显式公网端点，兼容开发环境 minio 服务名映射。
+     * 关键参数：无（内部读取 endpoint 与 publicEndpoint 配置）。
+     * 返回值/副作用：返回可供浏览器访问的端点；无副作用。
+     */
+    private String resolvePublicEndpoint() {
+        if (StringUtils.hasText(publicEndpoint)) {
+            return trimTrailingSlash(publicEndpoint);
+        }
+
+        String normalizedEndpoint = trimTrailingSlash(endpoint);
+        try {
+            URI uri = URI.create(normalizedEndpoint);
+            String host = uri.getHost();
+            if (!StringUtils.hasText(host)) {
+                return normalizedEndpoint;
+            }
+            if ("minio".equalsIgnoreCase(host) || "blog-minio".equalsIgnoreCase(host)) {
+                String scheme = StringUtils.hasText(uri.getScheme()) ? uri.getScheme() : "http";
+                int port = uri.getPort() > 0 ? uri.getPort() : 9000;
+                return "%s://localhost:%d".formatted(scheme, port);
+            }
+            return normalizedEndpoint;
+        } catch (Exception ignored) {
+            return normalizedEndpoint;
+        }
+    }
+
+    /**
+     * 功能：移除 URL 末尾斜杠，避免对象地址拼接时出现重复斜杠。
+     * 关键参数：value 为待处理 URL 字符串。
+     * 返回值/副作用：返回去尾斜杠后的字符串；无副作用。
+     */
+    private String trimTrailingSlash(String value) {
+        String normalized = value == null ? "" : value.trim();
+        if (normalized.endsWith("/")) {
+            return normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
     }
 
     /**
