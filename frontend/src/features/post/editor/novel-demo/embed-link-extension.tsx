@@ -2,18 +2,95 @@
 
 import { mergeAttributes, Node } from '@tiptap/core';
 import { NodeViewWrapper, ReactNodeViewRenderer, type NodeViewProps } from '@tiptap/react';
-import { Globe, LoaderCircle, Link2, RefreshCw } from 'lucide-react';
+import { ChevronDown, Clapperboard, Globe, Link2, LoaderCircle, Music2, RefreshCw, Upload } from 'lucide-react';
+import { type MutableRefObject, useRef, useState } from 'react';
 import {
   createEmbedId,
   createEmptyEmbedAttrs,
   createPendingEmbedAttrs,
+  createUploadedImageEmbedAttrs,
   normalizeEmbedUrl,
   resolveAndHydrateEmbedCard,
   type EmbedLinkAttrs,
 } from '@/features/post/editor/novel-demo/embed-link';
+import { resolveUploadErrorMessage, uploadAssetFile } from '@/features/post/editor/novel-demo/upload';
 
 interface EmbedLinkExtensionOptions {
   HTMLAttributes: Record<string, string>;
+}
+
+type CardPanelMode = 'link' | 'upload';
+
+type CardRenderVariant = 'default' | 'netease-music' | 'bilibili-video';
+
+interface EmbedLinkModePanelProps {
+  panelMode: CardPanelMode;
+  isExpanded: boolean;
+  inputValue: string;
+  pending: boolean;
+  uploadInputRef: MutableRefObject<HTMLInputElement | null>;
+  onToggleExpanded: () => void;
+  onSwitchMode: (mode: CardPanelMode) => void;
+  onInputChange: (nextValue: string) => void;
+  onSubmitResolve: () => Promise<void>;
+  onUploadChange: (file: File) => Promise<void>;
+}
+
+/**
+ * 功能：从 attrs 中安全读取 snapshot 对象，避免空值或非法结构导致渲染异常。
+ * 关键参数：attrs 为 embedLink 节点属性。
+ * 返回值/副作用：返回可用 snapshot 对象；无副作用。
+ */
+function readSnapshot(attrs: Partial<EmbedLinkAttrs>): Record<string, unknown> {
+  if (!attrs.snapshot || typeof attrs.snapshot !== 'object' || Array.isArray(attrs.snapshot)) {
+    return {};
+  }
+  return attrs.snapshot;
+}
+
+/**
+ * 功能：根据节点 attrs 选择卡片渲染模板，优先命中平台专用样式。
+ * 关键参数：attrs 为 embedLink 节点属性。
+ * 返回值/副作用：返回渲染模板标识；无副作用。
+ */
+function resolveCardRenderVariant(attrs: Partial<EmbedLinkAttrs>): CardRenderVariant {
+  if (attrs.cardType === 'music' && attrs.provider === 'netease') {
+    return 'netease-music';
+  }
+  if (attrs.cardType === 'video' && attrs.provider === 'bilibili') {
+    return 'bilibili-video';
+  }
+  return 'default';
+}
+
+/**
+ * 功能：根据 attrs 推导编辑态卡片面板默认模式，上传卡片回显时自动进入上传视图。
+ * 关键参数：attrs 为 embedLink 节点属性。
+ * 返回值/副作用：返回面板模式 `link` 或 `upload`；无副作用。
+ */
+function resolvePanelMode(attrs: Partial<EmbedLinkAttrs>): CardPanelMode {
+  if (attrs.uploadKind === 'image' || attrs.provider === 'upload' || attrs.cardType === 'image') {
+    return 'upload';
+  }
+  return 'link';
+}
+
+/**
+ * 功能：计算卡片输入面板初始展开状态，保证异常态与已有数据可直接编辑。
+ * 关键参数：attrs 为 embedLink 节点属性。
+ * 返回值/副作用：返回是否默认展开；无副作用。
+ */
+function resolvePanelExpanded(attrs: Partial<EmbedLinkAttrs>): boolean {
+  if (attrs.pending || Boolean(attrs.error)) {
+    return true;
+  }
+  if (Boolean(attrs.url) || Boolean(attrs.normalizedUrl)) {
+    return true;
+  }
+  if (attrs.uploadKind === 'image' || attrs.provider === 'upload') {
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -32,22 +109,217 @@ function resolveEmbedCardTitle(attrs: Partial<EmbedLinkAttrs>): string {
  */
 function resolveEmbedCardDescription(attrs: Partial<EmbedLinkAttrs>): string {
   if (attrs.pending) {
-    return '正在解析链接元数据，请稍候...';
+    return '正在处理中，请稍候...';
   }
   if (attrs.error) {
     return attrs.error;
   }
-  return attrs.description || '输入链接并回车，可自动生成卡片预览。';
+  return attrs.description || '输入链接并回车，或切换到上传模式生成卡片。';
 }
 
 /**
- * 功能：渲染 embedLink 节点视图，支持输入链接、异步解析与卡片展示。
+ * 功能：读取网易云卡片展示所需歌手字段，优先使用 attrs，其次回退 snapshot。
+ * 关键参数：attrs 为 embedLink 节点属性。
+ * 返回值/副作用：返回歌手文本或空字符串；无副作用。
+ */
+function resolveNeteaseArtist(attrs: Partial<EmbedLinkAttrs>): string {
+  if (attrs.artist) {
+    return attrs.artist;
+  }
+
+  const snapshot = readSnapshot(attrs);
+  const artist = snapshot.artist;
+  return typeof artist === 'string' ? artist : '';
+}
+
+/**
+ * 功能：读取 B 站卡片展示所需视频 ID，优先使用 attrs，其次回退 snapshot。
+ * 关键参数：attrs 为 embedLink 节点属性。
+ * 返回值/副作用：返回视频 ID（如 BV/av）或空字符串；无副作用。
+ */
+function resolveBilibiliVideoId(attrs: Partial<EmbedLinkAttrs>): string {
+  if (attrs.videoId) {
+    return attrs.videoId;
+  }
+
+  const snapshot = readSnapshot(attrs);
+  const videoId = snapshot.videoId;
+  return typeof videoId === 'string' ? videoId : '';
+}
+
+/**
+ * 功能：将 snapshot 属性序列化为 data-attribute 字符串，保证 tiptap-json 与 HTML 互转可恢复。
+ * 关键参数：snapshot 为节点属性中的 snapshot 对象。
+ * 返回值/副作用：返回 JSON 字符串；无副作用。
+ */
+function stringifySnapshotAttribute(snapshot: unknown): string {
+  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) {
+    return '{}';
+  }
+
+  try {
+    return JSON.stringify(snapshot);
+  } catch {
+    return '{}';
+  }
+}
+
+/**
+ * 功能：解析 HTML `data-snapshot` 字段并恢复为对象，异常时回退空对象。
+ * 关键参数：rawValue 为属性原始字符串。
+ * 返回值/副作用：返回 snapshot 对象；无副作用。
+ */
+function parseSnapshotAttribute(rawValue: string | null): Record<string, unknown> {
+  if (!rawValue) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(rawValue) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {};
+    }
+    return parsed as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * 功能：渲染可折叠的输入面板组件，点击卡片后再显示链接解析与上传图片信息。
+ * 关键参数：props 包含当前面板模式、展开状态、输入值与交互回调。
+ * 返回值/副作用：返回面板节点；副作用为触发回调更新节点 attrs。
+ */
+function EmbedLinkModePanel({
+  panelMode,
+  isExpanded,
+  inputValue,
+  pending,
+  uploadInputRef,
+  onToggleExpanded,
+  onSwitchMode,
+  onInputChange,
+  onSubmitResolve,
+  onUploadChange,
+}: EmbedLinkModePanelProps) {
+  return (
+    <div className="gmp-embed-link-control">
+      <button type="button" className="gmp-embed-link-trigger" onClick={onToggleExpanded} aria-expanded={isExpanded}>
+        <span className="gmp-embed-link-trigger-leading">
+          <Globe className="h-4 w-4" />
+        </span>
+        <span className="gmp-embed-link-trigger-copy">
+          <strong>嵌入任何内容</strong>
+          <small>PDF、Google 文档、地图、音乐、视频链接等</small>
+        </span>
+        <ChevronDown className="h-4 w-4 gmp-embed-link-trigger-chevron" data-expanded={isExpanded ? 'true' : 'false'} />
+      </button>
+
+      {isExpanded ? (
+        <div className="gmp-embed-link-panel" data-mode={panelMode}>
+          <div className="gmp-embed-link-panel-toggle" role="tablist" aria-label="卡片模式切换">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={panelMode === 'link'}
+              className="gmp-embed-link-panel-tab"
+              data-active={panelMode === 'link' ? 'true' : 'false'}
+              onClick={() => onSwitchMode('link')}
+            >
+              <Globe className="h-3.5 w-3.5" />
+              <span>链接</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={panelMode === 'upload'}
+              className="gmp-embed-link-panel-tab"
+              data-active={panelMode === 'upload' ? 'true' : 'false'}
+              onClick={() => onSwitchMode('upload')}
+            >
+              <Upload className="h-3.5 w-3.5" />
+              <span>上传</span>
+            </button>
+          </div>
+
+          {panelMode === 'link' ? (
+            <label className="gmp-embed-link-input-wrapper" aria-label="链接卡片输入">
+              <span className="gmp-embed-link-input-icon" aria-hidden="true">
+                <Globe className="h-4 w-4" />
+              </span>
+              <input
+                value={inputValue}
+                onChange={(event) => {
+                  onInputChange(event.target.value);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    void onSubmitResolve();
+                  }
+                }}
+                placeholder="粘贴链接后按回车"
+                className="gmp-embed-link-input"
+              />
+              <button
+                type="button"
+                className="gmp-embed-link-action"
+                onClick={() => {
+                  void onSubmitResolve();
+                }}
+                aria-label="解析链接卡片"
+              >
+                {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              </button>
+            </label>
+          ) : (
+            <div className="gmp-embed-link-upload-panel">
+              <input
+                ref={uploadInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => {
+                  const selectedFile = event.target.files?.item(0);
+                  event.target.value = '';
+                  if (!selectedFile) {
+                    return;
+                  }
+                  void onUploadChange(selectedFile);
+                }}
+              />
+              <button
+                type="button"
+                className="gmp-embed-link-upload-button"
+                onClick={() => {
+                  uploadInputRef.current?.click();
+                }}
+                aria-label="选择图片上传"
+              >
+                {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                <span>{pending ? '上传中...' : '选择图片并生成卡片'}</span>
+              </button>
+              <p className="gmp-embed-link-upload-hint">支持 `JPEG / PNG / WebP / GIF / AVIF / HEIC / HEIF`，单文件不超过 `8MB`。</p>
+              <p className="gmp-embed-link-upload-hint">PDF 上传能力仅保留代码结构，本次界面不开放入口。</p>
+            </div>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * 功能：渲染 embedLink 节点视图，支持输入链接、上传图片与平台专用卡片展示。
  * 关键参数：props 为 Tiptap NodeView 参数（含 node/editor/updateAttributes）。
  * 返回值/副作用：返回链接卡片节点；副作用为触发节点 attrs 更新与元数据请求。
  */
 function EmbedLinkCardView({ node, editor, updateAttributes }: NodeViewProps) {
   const attrs = node.attrs as Partial<EmbedLinkAttrs>;
   const inputValue = attrs.url || attrs.normalizedUrl || '';
+  const [panelMode, setPanelMode] = useState<CardPanelMode>(() => resolvePanelMode(attrs));
+  const [isPanelExpanded, setIsPanelExpanded] = useState<boolean>(() => resolvePanelExpanded(attrs));
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
   /**
    * 功能：提交当前输入链接并触发卡片异步解析，失败时保留本地降级卡片。
@@ -78,76 +350,148 @@ function EmbedLinkCardView({ node, editor, updateAttributes }: NodeViewProps) {
     await resolveAndHydrateEmbedCard(editor.view, existingEmbedId, normalizedUrl);
   };
 
-  const showInput = editor.isEditable;
+  /**
+   * 功能：在上传模式中处理图片上传并直接生成卡片节点，失败时输出可定位错误。
+   * 关键参数：file 为本地待上传图片文件。
+   * 返回值/副作用：返回 Promise<void>；副作用为调用上传接口并更新卡片 attrs。
+   */
+  const submitImageUpload = async (file: File): Promise<void> => {
+    const existingEmbedId = typeof attrs.embedId === 'string' && attrs.embedId ? attrs.embedId : createEmbedId();
+    updateAttributes({
+      ...createEmptyEmbedAttrs(existingEmbedId),
+      cardType: 'image',
+      mediaType: 'image',
+      provider: 'upload',
+      uploadKind: 'image',
+      title: file.name || '上传图片卡片',
+      pending: true,
+      resolved: false,
+      error: '',
+      snapshot: {
+        fileName: file.name || '',
+        fileSize: file.size,
+        mimeType: file.type || '',
+        mediaType: 'image',
+        provider: 'upload',
+      },
+    });
+
+    try {
+      const uploaded = await uploadAssetFile(file, 'image');
+      updateAttributes(
+        createUploadedImageEmbedAttrs(uploaded.url, {
+          embedId: existingEmbedId,
+          fileName: uploaded.fileName,
+          fileSize: uploaded.fileSize,
+          mimeType: uploaded.mimeType,
+        }),
+      );
+    } catch (error) {
+      updateAttributes({
+        ...createEmptyEmbedAttrs(existingEmbedId),
+        cardType: 'image',
+        mediaType: 'image',
+        provider: 'upload',
+        uploadKind: 'image',
+        title: file.name || '上传图片卡片',
+        pending: false,
+        resolved: false,
+        error: resolveUploadErrorMessage(error),
+        snapshot: {
+          fileName: file.name || '',
+          fileSize: file.size,
+          mimeType: file.type || '',
+          mediaType: 'image',
+          provider: 'upload',
+        },
+      });
+    }
+  };
+
+  const showInputPanel = editor.isEditable;
   const displayUrl = attrs.normalizedUrl || attrs.url || '';
+  const cardVariant = resolveCardRenderVariant(attrs);
+  const artist = resolveNeteaseArtist(attrs);
+  const bilibiliVideoId = resolveBilibiliVideoId(attrs);
+  const activePanelMode = resolvePanelMode(attrs) === 'upload' ? 'upload' : panelMode;
+  const activeExpandedState = isPanelExpanded || Boolean(attrs.pending) || Boolean(attrs.error);
+  const shouldRenderBody = Boolean(attrs.pending || attrs.error || attrs.resolved || displayUrl || attrs.coverUrl);
 
   return (
     <NodeViewWrapper className="gmp-embed-link-card not-prose">
       <section className="gmp-embed-link-shell">
-        {showInput ? (
-          <label className="gmp-embed-link-input-wrapper" aria-label="链接卡片输入">
-            <span className="gmp-embed-link-input-icon" aria-hidden="true">
-              <Globe className="h-4 w-4" />
-            </span>
-            <input
-              value={inputValue}
-              onChange={(event) => {
-                updateAttributes({
-                  url: event.target.value,
-                  normalizedUrl: '',
-                  title: '',
-                  description: '',
-                  coverUrl: '',
-                  domain: '',
-                  siteName: '',
-                  pending: false,
-                  resolved: false,
-                  error: '',
-                });
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  void submitResolve();
-                }
-              }}
-              placeholder="嵌入任何内容（PDF、Google 文档、地图、音乐、网页等）"
-              className="gmp-embed-link-input"
-            />
-            <button
-              type="button"
-              className="gmp-embed-link-action"
-              onClick={() => {
-                void submitResolve();
-              }}
-              aria-label="解析链接卡片"
-            >
-              {attrs.pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-            </button>
-          </label>
+        {showInputPanel ? (
+          <EmbedLinkModePanel
+            panelMode={activePanelMode}
+            isExpanded={activeExpandedState}
+            inputValue={inputValue}
+            pending={Boolean(attrs.pending)}
+            uploadInputRef={uploadInputRef}
+            onToggleExpanded={() => {
+              setIsPanelExpanded((previous) => !previous);
+            }}
+            onSwitchMode={(mode) => {
+              setPanelMode(mode);
+              setIsPanelExpanded(true);
+            }}
+            onInputChange={(nextValue) => {
+              updateAttributes({
+                ...createEmptyEmbedAttrs(typeof attrs.embedId === 'string' ? attrs.embedId : createEmbedId()),
+                url: nextValue,
+              });
+            }}
+            onSubmitResolve={submitResolve}
+            onUploadChange={submitImageUpload}
+          />
         ) : null}
 
-        <div className="gmp-embed-link-body" data-pending={attrs.pending ? 'true' : 'false'}>
-          <div className="gmp-embed-link-body-text">
-            <p className="gmp-embed-link-title">{resolveEmbedCardTitle(attrs)}</p>
-            <p className="gmp-embed-link-description">{resolveEmbedCardDescription(attrs)}</p>
-            {displayUrl ? (
-              <a href={displayUrl} target="_blank" rel="noreferrer noopener" className="gmp-embed-link-url">
-                <Link2 className="h-3.5 w-3.5" />
-                <span>{displayUrl}</span>
-              </a>
-            ) : (
-              <p className="gmp-embed-link-hint">按 Enter 启用链接识别，或输入 / 启用命令</p>
-            )}
-          </div>
+        {shouldRenderBody ? (
+          <div className="gmp-embed-link-body" data-pending={attrs.pending ? 'true' : 'false'}>
+            <div className="gmp-embed-link-body-text">
+              {cardVariant === 'netease-music' ? (
+                <>
+                  <p className="gmp-embed-link-provider-tag">
+                    <Music2 className="h-3.5 w-3.5" />
+                    <span>网易云音乐</span>
+                  </p>
+                  <p className="gmp-embed-link-title">{resolveEmbedCardTitle(attrs)}</p>
+                  <p className="gmp-embed-link-description">{artist || resolveEmbedCardDescription(attrs)}</p>
+                </>
+              ) : cardVariant === 'bilibili-video' ? (
+                <>
+                  <p className="gmp-embed-link-provider-tag">
+                    <Clapperboard className="h-3.5 w-3.5" />
+                    <span>B站视频</span>
+                    {bilibiliVideoId ? <strong className="gmp-embed-link-provider-id">{bilibiliVideoId}</strong> : null}
+                  </p>
+                  <p className="gmp-embed-link-title">{resolveEmbedCardTitle(attrs)}</p>
+                  <p className="gmp-embed-link-description">{resolveEmbedCardDescription(attrs)}</p>
+                </>
+              ) : (
+                <>
+                  <p className="gmp-embed-link-title">{resolveEmbedCardTitle(attrs)}</p>
+                  <p className="gmp-embed-link-description">{resolveEmbedCardDescription(attrs)}</p>
+                </>
+              )}
 
-          {attrs.coverUrl ? (
-            <div className="gmp-embed-link-cover-wrapper">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={attrs.coverUrl} alt={resolveEmbedCardTitle(attrs)} className="gmp-embed-link-cover" />
+              {displayUrl ? (
+                <a href={displayUrl} target="_blank" rel="noreferrer noopener" className="gmp-embed-link-url">
+                  <Link2 className="h-3.5 w-3.5" />
+                  <span>{displayUrl}</span>
+                </a>
+              ) : (
+                <p className="gmp-embed-link-hint">点击上方卡片展开后，可继续编辑链接或切换到上传模式。</p>
+              )}
             </div>
-          ) : null}
-        </div>
+
+            {attrs.coverUrl ? (
+              <div className="gmp-embed-link-cover-wrapper">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={attrs.coverUrl} alt={resolveEmbedCardTitle(attrs)} className="gmp-embed-link-cover" />
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </section>
     </NodeViewWrapper>
   );
@@ -203,6 +547,11 @@ export const embedLinkExtension = Node.create<EmbedLinkExtensionOptions>({
         parseHTML: (element: HTMLElement) => element.getAttribute('data-card-type') ?? 'link',
         renderHTML: (attributes: Record<string, unknown>) => ({ 'data-card-type': String(attributes.cardType ?? 'link') }),
       },
+      mediaType: {
+        default: 'link',
+        parseHTML: (element: HTMLElement) => element.getAttribute('data-media-type') ?? 'link',
+        renderHTML: (attributes: Record<string, unknown>) => ({ 'data-media-type': String(attributes.mediaType ?? 'link') }),
+      },
       provider: {
         default: 'link',
         parseHTML: (element: HTMLElement) => element.getAttribute('data-provider') ?? 'link',
@@ -218,6 +567,16 @@ export const embedLinkExtension = Node.create<EmbedLinkExtensionOptions>({
         parseHTML: (element: HTMLElement) => element.getAttribute('data-description') ?? '',
         renderHTML: (attributes: Record<string, unknown>) => ({ 'data-description': String(attributes.description ?? '') }),
       },
+      artist: {
+        default: '',
+        parseHTML: (element: HTMLElement) => element.getAttribute('data-artist') ?? '',
+        renderHTML: (attributes: Record<string, unknown>) => ({ 'data-artist': String(attributes.artist ?? '') }),
+      },
+      videoId: {
+        default: '',
+        parseHTML: (element: HTMLElement) => element.getAttribute('data-video-id') ?? '',
+        renderHTML: (attributes: Record<string, unknown>) => ({ 'data-video-id': String(attributes.videoId ?? '') }),
+      },
       coverUrl: {
         default: '',
         parseHTML: (element: HTMLElement) => element.getAttribute('data-cover-url') ?? '',
@@ -232,6 +591,18 @@ export const embedLinkExtension = Node.create<EmbedLinkExtensionOptions>({
         default: '',
         parseHTML: (element: HTMLElement) => element.getAttribute('data-site-name') ?? '',
         renderHTML: (attributes: Record<string, unknown>) => ({ 'data-site-name': String(attributes.siteName ?? '') }),
+      },
+      uploadKind: {
+        default: 'none',
+        parseHTML: (element: HTMLElement) => element.getAttribute('data-upload-kind') ?? 'none',
+        renderHTML: (attributes: Record<string, unknown>) => ({ 'data-upload-kind': String(attributes.uploadKind ?? 'none') }),
+      },
+      snapshot: {
+        default: {},
+        parseHTML: (element: HTMLElement) => parseSnapshotAttribute(element.getAttribute('data-snapshot')),
+        renderHTML: (attributes: Record<string, unknown>) => ({
+          'data-snapshot': stringifySnapshotAttribute(attributes.snapshot),
+        }),
       },
       pending: {
         default: false,

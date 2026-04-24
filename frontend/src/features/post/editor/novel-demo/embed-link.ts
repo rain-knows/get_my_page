@@ -10,12 +10,17 @@ export interface EmbedLinkAttrs {
   url: string;
   normalizedUrl: string;
   cardType: string;
+  mediaType: string;
   provider: string;
   title: string;
   description: string;
+  artist: string;
+  videoId: string;
   coverUrl: string;
   domain: string;
   siteName: string;
+  uploadKind: string;
+  snapshot: Record<string, unknown>;
   pending: boolean;
   resolved: boolean;
   error: string;
@@ -85,12 +90,17 @@ export function createEmptyEmbedAttrs(embedId: string = createEmbedId()): EmbedL
     url: '',
     normalizedUrl: '',
     cardType: 'link',
+    mediaType: 'link',
     provider: 'link',
     title: '',
     description: '',
+    artist: '',
+    videoId: '',
     coverUrl: '',
     domain: '',
     siteName: '',
+    uploadKind: 'none',
+    snapshot: {},
     pending: false,
     resolved: false,
     error: '',
@@ -110,14 +120,74 @@ export function createPendingEmbedAttrs(inputUrl: string, embedId: string = crea
     url: inputUrl.trim(),
     normalizedUrl,
     cardType: 'link',
+    mediaType: 'link',
     provider: 'link',
     title: normalizedUrl,
     description: '',
+    artist: '',
+    videoId: '',
     coverUrl: '',
     domain,
     siteName: '',
+    uploadKind: 'none',
+    snapshot: {
+      url: normalizedUrl,
+      domain,
+    },
     pending: true,
     resolved: false,
+    error: '',
+  };
+}
+
+/**
+ * 功能：根据上传成功的图片信息构造统一卡片 attrs，确保上传后直接落地为 embedLink 节点。
+ * 关键参数：uploadedUrl 为上传成功地址；embedId 为目标节点标识；fileName/fileSize/mimeType 为可选展示元信息。
+ * 返回值/副作用：返回完整图片卡片 attrs；无副作用。
+ */
+export function createUploadedImageEmbedAttrs(
+  uploadedUrl: string,
+  options?: {
+    embedId?: string;
+    fileName?: string;
+    fileSize?: number;
+    mimeType?: string;
+  },
+): EmbedLinkAttrs {
+  const normalizedUrl = normalizeEmbedUrl(uploadedUrl);
+  const domain = resolveEmbedDomain(normalizedUrl);
+  const embedId = options?.embedId || createEmbedId();
+  const fileName = options?.fileName ?? '';
+  const fileSize = typeof options?.fileSize === 'number' ? options.fileSize : 0;
+  const mimeType = options?.mimeType ?? '';
+  const title = fileName || normalizedUrl || '上传图片卡片';
+
+  return {
+    embedId,
+    url: uploadedUrl,
+    normalizedUrl,
+    cardType: 'image',
+    mediaType: 'image',
+    provider: 'upload',
+    title,
+    description: fileSize > 0 ? `已上传图片 · ${(fileSize / 1024).toFixed(1)}KB` : '已上传图片',
+    artist: '',
+    videoId: '',
+    coverUrl: normalizedUrl,
+    domain,
+    siteName: 'Upload',
+    uploadKind: 'image',
+    snapshot: {
+      url: normalizedUrl,
+      fileName,
+      fileSize,
+      mimeType,
+      domain,
+      provider: 'upload',
+      mediaType: 'image',
+    },
+    pending: false,
+    resolved: true,
     error: '',
   };
 }
@@ -228,28 +298,49 @@ function readSnapshotString(snapshot: Record<string, unknown>, key: string): str
 }
 
 /**
+ * 功能：在响应快照中读取对象字段并兜底为空对象，避免 attrs.snapshot 落入 null/数组等不可预期结构。
+ * 关键参数：snapshot 为后端返回的 snapshot 字段。
+ * 返回值/副作用：返回可安全写入 attrs 的对象；无副作用。
+ */
+function readSnapshotObject(snapshot: Record<string, unknown> | null | undefined): Record<string, unknown> {
+  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) {
+    return {};
+  }
+  return snapshot;
+}
+
+/**
  * 功能：将后端 Embed 解析响应映射为前端链接卡片 attrs 补丁。
  * 关键参数：response 为后端解析结果；fallbackUrl 为失败兜底链接。
  * 返回值/副作用：返回可直接 merge 的 attrs 增量对象；无副作用。
  */
 export function mapEmbedResolveToAttrs(response: EmbedResolveResponse, fallbackUrl: string): Partial<EmbedLinkAttrs> {
-  const snapshot = response.snapshot ?? {};
+  const snapshot = readSnapshotObject(response.snapshot);
   const normalizedUrl = response.normalizedUrl || readSnapshotString(snapshot, 'url') || fallbackUrl;
   const domain = readSnapshotString(snapshot, 'domain') || resolveEmbedDomain(normalizedUrl);
+  const cardType = response.cardType || 'link';
+  const provider = response.provider || 'link';
+  const mediaType = readSnapshotString(snapshot, 'mediaType') || cardType;
+  const resolved = Boolean(response.resolved);
 
   return {
     url: fallbackUrl,
     normalizedUrl,
-    cardType: response.cardType || 'link',
-    provider: response.provider || 'link',
+    cardType,
+    mediaType,
+    provider,
     title: readSnapshotString(snapshot, 'title') || normalizedUrl,
     description: readSnapshotString(snapshot, 'description'),
+    artist: readSnapshotString(snapshot, 'artist'),
+    videoId: readSnapshotString(snapshot, 'videoId'),
     coverUrl: readSnapshotString(snapshot, 'coverUrl'),
     domain,
     siteName: readSnapshotString(snapshot, 'siteName'),
+    uploadKind: 'none',
+    snapshot,
     pending: false,
-    resolved: Boolean(response.resolved),
-    error: response.resolved ? '' : '链接元数据解析失败，已降级显示基础卡片。',
+    resolved,
+    error: resolved ? '' : '链接元数据解析失败，已降级显示基础卡片。',
   };
 }
 
@@ -262,6 +353,13 @@ export async function resolveAndHydrateEmbedCard(view: EditorView, embedId: stri
   const normalizedUrl = normalizeEmbedUrl(inputUrl);
   if (!normalizedUrl) {
     patchEmbedCardAttrs(view, embedId, {
+      cardType: 'link',
+      mediaType: 'link',
+      provider: 'link',
+      artist: '',
+      videoId: '',
+      uploadKind: 'none',
+      snapshot: {},
       pending: false,
       resolved: false,
       error: '请输入有效的 http 或 https 链接。',
@@ -270,13 +368,26 @@ export async function resolveAndHydrateEmbedCard(view: EditorView, embedId: stri
   }
 
   patchEmbedCardAttrs(view, embedId, {
+    cardType: 'link',
+    mediaType: 'link',
+    provider: 'link',
     pending: true,
     resolved: false,
     error: '',
+    artist: '',
+    videoId: '',
+    uploadKind: 'none',
     url: inputUrl,
     normalizedUrl,
     domain: resolveEmbedDomain(normalizedUrl),
     title: normalizedUrl,
+    description: '',
+    coverUrl: '',
+    siteName: '',
+    snapshot: {
+      url: normalizedUrl,
+      domain: resolveEmbedDomain(normalizedUrl),
+    },
   });
 
   try {
@@ -284,12 +395,25 @@ export async function resolveAndHydrateEmbedCard(view: EditorView, embedId: stri
     patchEmbedCardAttrs(view, embedId, mapEmbedResolveToAttrs(response, normalizedUrl));
   } catch {
     patchEmbedCardAttrs(view, embedId, {
+      cardType: 'link',
+      mediaType: 'link',
+      provider: 'link',
       pending: false,
       resolved: false,
       error: '链接元数据解析失败，已降级显示基础卡片。',
+      artist: '',
+      videoId: '',
+      uploadKind: 'none',
       normalizedUrl,
       domain: resolveEmbedDomain(normalizedUrl),
       title: normalizedUrl,
+      description: '',
+      coverUrl: '',
+      siteName: '',
+      snapshot: {
+        url: normalizedUrl,
+        domain: resolveEmbedDomain(normalizedUrl),
+      },
     });
   }
 }

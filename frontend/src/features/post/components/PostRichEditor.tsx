@@ -14,9 +14,9 @@ import {
   ImageResizer,
   type EditorInstance,
   type JSONContent,
-  handleCommandNavigation,
   handleImageDrop,
   handleImagePaste,
+  handleCommandNavigation,
   useEditor,
 } from 'novel';
 import { type ComponentType, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -361,11 +361,8 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
         <EditorContent
           initialContent={initialContent}
           extensions={extensions as never[]}
-          className="relative min-h-96 w-full max-w-screen-lg border border-(--gmp-novel-line-strong) bg-(--gmp-novel-surface) gmp-cut-corner-br"
+          className="relative min-h-96 w-full max-w-screen-lg border border-(--gmp-novel-line-strong) bg-(--gmp-novel-surface)"
           editorProps={{
-            handleDOMEvents: {
-              keydown: (_view, event) => handleCommandNavigation(event),
-            },
             handlePaste: (view, event) => {
               if (tryConvertPastedUrlToEmbedCard(view, event)) {
                 return true;
@@ -373,6 +370,17 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
               return handleImagePaste(view, event, uploadFn);
             },
             handleDrop: (view, event, _slice, moved) => handleImageDrop(view, event, moved, uploadFn),
+            /**
+             * 功能：仅在 Slash 菜单可见时接管方向键/回车导航，避免 Enter 被编辑器当作普通换行。
+             * 关键参数：event 为当前键盘事件。
+             * 返回值/副作用：返回是否消费快捷键；无副作用。
+             */
+            handleKeyDown: (_view, event) => {
+              if (!document.querySelector('#slash-command')) {
+                return false;
+              }
+              return Boolean(handleCommandNavigation(event));
+            },
             attributes: {
               class: 'gmp-novel-editor max-w-full px-4 py-8 text-(--gmp-novel-text) focus:outline-none md:px-8',
             },
@@ -383,9 +391,12 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
           }}
           slotAfter={<ImageResizer />}
         >
-          <EditorCommand className="z-50 h-auto max-h-84 overflow-y-auto border border-(--gmp-novel-line-strong) bg-(--gmp-novel-toolbar) p-2 shadow-[4px_4px_0_0_rgba(0,0,0,0.35)] gmp-cut-corner-br transition-all">
+          <EditorCommand
+            loop
+            className="z-50 h-auto w-full max-w-xl overflow-hidden border border-(--gmp-novel-line-strong) bg-(--gmp-novel-toolbar) p-2 shadow-[4px_4px_0_0_rgba(0,0,0,0.35)] gmp-cut-corner-br transition-all"
+          >
             <EditorCommandEmpty className="px-2 py-1 text-sm text-(--gmp-novel-text-muted)">未匹配到命令</EditorCommandEmpty>
-            <EditorCommandList>
+            <EditorCommandList className="gmp-editor-command-scroll max-h-84 overflow-y-auto pr-1">
               {suggestionItems.map((item) => (
                 <EditorCommandItem
                   key={item.title}
