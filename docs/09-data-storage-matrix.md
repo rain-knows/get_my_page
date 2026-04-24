@@ -63,7 +63,7 @@
 对于上传进 MinIO 的对象资源，强制规范其前缀结构：
 *   **头像类**：`/avatars/{user_id}/{timestamp}.jpg`
 *   **文章封面**：`/covers/{YYYY}/{MM}/post_{post_id}_{hash}.jpg`
-*   **富文本内图**：`/articles/{YYYY}/{MM}/{post_id}/{uuid}.png`
+*   **富文本内图**：`/articles/{YYYY}/{MM}/{DD}/{post_id}/{uuid}.png`
 
 ---
 

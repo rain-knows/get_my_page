@@ -89,7 +89,7 @@ class StorageClientTest {
     }
 
     /**
-     * 功能：验证文章对象 key 生成符合 /articles/{yyyy}/{mm}/{postId}/{uuid}.{ext} 规范。
+     * 功能：验证文章对象 key 生成符合 /articles/{yyyy}/{mm}/{dd}/{postId}/{uuid}.{ext} 规范。
      * 关键参数：无（测试内部固定 postId=12 与文件名 cover.PNG）。
      * 返回值/副作用：无返回值；断言 key 路径结构与扩展名符合预期。
      */
@@ -99,6 +99,6 @@ class StorageClientTest {
 
         String key = storageClient.generateArticleObjectKey(12L, "cover.PNG");
 
-        assertTrue(key.matches("^/articles/\\d{4}/\\d{2}/12/[a-z0-9]{32}\\.png$"));
+        assertTrue(key.matches("^/articles/\\d{4}/\\d{2}/\\d{2}/12/[a-z0-9]{32}\\.png$"));
     }
 }

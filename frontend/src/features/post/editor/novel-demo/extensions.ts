@@ -2,7 +2,6 @@ import { cx } from 'class-variance-authority';
 import { common, createLowlight } from 'lowlight';
 import {
   AIHighlight,
-  CodeBlockLowlight,
   Color,
   CustomKeymap,
   GlobalDragHandle,
@@ -22,6 +21,7 @@ import {
   UploadImagesPlugin,
   Youtube,
 } from 'novel';
+import { createCodeBlockWithControls } from '@/features/post/editor/novel-demo/code-block-with-controls';
 import { embedLinkExtension } from '@/features/post/editor/novel-demo/embed-link-extension';
 
 const tiptapLink = TiptapLink.configure({
@@ -115,9 +115,7 @@ const starterKit = StarterKit.configure({
   gapcursor: false,
 });
 
-const codeBlockLowlight = CodeBlockLowlight.configure({
-  lowlight: createLowlight(common),
-});
+const codeBlockLowlight = createCodeBlockWithControls(createLowlight(common));
 
 const youtube = Youtube.configure({
   HTMLAttributes: {

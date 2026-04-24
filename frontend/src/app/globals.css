@@ -111,9 +111,10 @@
   --gmp-novel-link-hover: #a5d6ff;
   --gmp-novel-accent: #1f6feb;
   --gmp-novel-accent-soft: #1f6feb33;
-  --gmp-novel-code-bg: #0f141b;
+  --gmp-novel-code-bg: #0d1117;
+  --gmp-novel-code-toolbar: #161b22;
   --gmp-novel-code-text: #c9d1d9;
-  --gmp-novel-code-inline-bg: #1b2230;
+  --gmp-novel-code-inline-bg: #161b22;
   --gmp-novel-code-inline-text: #c9d1d9;
   --gmp-novel-code-border: #30363d;
 }
@@ -382,10 +383,69 @@
   border: 1px solid var(--gmp-novel-code-border);
   background: var(--gmp-novel-code-bg);
   color: var(--gmp-novel-code-text);
-  padding: 0.9rem 1rem;
+  padding: 1rem;
   overflow-x: auto;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace);
+  line-height: 1.75;
+}
+
+.gmp-novel-editor.ProseMirror .gmp-code-block-card {
+  position: relative;
+  margin: 1.5rem 0;
+  border: 1px solid var(--gmp-novel-code-border);
+  background: var(--gmp-novel-code-bg);
+}
+
+.gmp-novel-editor.ProseMirror .gmp-code-block-card pre {
+  margin: 0;
+  border: 0;
+  padding-top: 2.75rem;
+}
+
+.gmp-novel-editor.ProseMirror .gmp-code-block-toolbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--gmp-novel-code-border);
+  background: var(--gmp-novel-code-toolbar);
+  padding: 0 0.5rem 0 0.75rem;
+}
+
+.gmp-novel-editor.ProseMirror .gmp-code-block-language {
+  color: var(--gmp-novel-text-muted);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+.gmp-novel-editor.ProseMirror .gmp-code-block-line-toggle {
+  display: inline-flex;
+  width: 1.75rem;
+  height: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--gmp-novel-line);
+  background: var(--gmp-novel-surface);
+  color: var(--gmp-novel-text-muted);
+  transition:
+    border-color 150ms ease,
+    color 150ms ease,
+    background-color 150ms ease;
+}
+
+.gmp-novel-editor.ProseMirror .gmp-code-block-line-toggle:hover,
+.gmp-novel-editor.ProseMirror .gmp-code-block-line-toggle[data-active='true'] {
+  border-color: var(--gmp-novel-accent);
+  background: var(--gmp-novel-accent-soft);
+  color: var(--gmp-novel-link);
 }
 
 .gmp-novel-editor.ProseMirror code {
@@ -414,14 +474,14 @@
 .gmp-novel-editor.ProseMirror pre code .hljs-selector-tag,
 .gmp-novel-editor.ProseMirror pre code .hljs-doctag,
 .gmp-novel-editor.ProseMirror pre code .hljs-literal {
-  color: #ff7b72;
+  color: #ffab70;
 }
 
 .gmp-novel-editor.ProseMirror pre code .hljs-title,
 .gmp-novel-editor.ProseMirror pre code .hljs-title.function_,
 .gmp-novel-editor.ProseMirror pre code .hljs-section,
 .gmp-novel-editor.ProseMirror pre code .hljs-function .hljs-title {
-  color: #d2a8ff;
+  color: #79c0ff;
 }
 
 .gmp-novel-editor.ProseMirror pre code .hljs-string,
@@ -440,7 +500,7 @@
 
 .gmp-novel-editor.ProseMirror pre code .hljs-type,
 .gmp-novel-editor.ProseMirror pre code .hljs-class .hljs-title {
-  color: #ffa657;
+  color: #d2a8ff;
 }
 
 .gmp-novel-editor.ProseMirror pre code .hljs-variable,
@@ -457,19 +517,19 @@
   color: #f85149;
 }
 
-.gmp-novel-editor.ProseMirror.gmp-code-lines-enabled pre[data-line-numbers='true'] {
+.gmp-novel-editor.ProseMirror pre[data-line-numbers='true'] {
   position: relative;
   padding-left: 3.6rem;
 }
 
-.gmp-novel-editor.ProseMirror.gmp-code-lines-enabled pre[data-line-numbers='true']::before {
+.gmp-novel-editor.ProseMirror pre[data-line-numbers='true']::before {
   content: attr(data-line-number-gutter);
   position: absolute;
   top: 0;
   left: 0;
   width: 2.6rem;
   height: 100%;
-  padding: 0.9rem 0.6rem 0.9rem 0;
+  padding: 1rem 0.6rem 1rem 0;
   border-right: 1px solid var(--gmp-novel-code-border);
   color: var(--gmp-novel-text-muted);
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace);
@@ -479,6 +539,10 @@
   white-space: pre;
   pointer-events: none;
   user-select: none;
+}
+
+.gmp-novel-editor.ProseMirror .gmp-code-block-card pre[data-line-numbers='true']::before {
+  padding-top: 2.75rem;
 }
 
 .gmp-novel-editor.ProseMirror hr {

@@ -1,6 +1,7 @@
 'use client';
 
 import type { EditorView } from '@tiptap/pm/view';
+import { TextSelection } from '@tiptap/pm/state';
 import { Bold, Code, Italic, Link as LinkIcon, Strikethrough } from 'lucide-react';
 import {
   EditorBubble,
@@ -14,17 +15,11 @@ import {
   ImageResizer,
   type EditorInstance,
   type JSONContent,
-  handleImageDrop,
-  handleImagePaste,
   handleCommandNavigation,
   useEditor,
 } from 'novel';
 import { type ComponentType, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  applyCodeLineNumberAttributes,
-  readCodeLineNumbersPreference,
-  writeCodeLineNumbersPreference,
-} from '@/features/post/editor/novel-demo/code-line-numbers';
+import { applyCodeLineNumberAttributes } from '@/features/post/editor/novel-demo/code-line-numbers';
 import {
   extractSingleUrlFromClipboard,
   insertEmbedCardAtSelection,
@@ -34,9 +29,10 @@ import { createDefaultEditorContent } from '@/features/post/editor/novel-demo/co
 import { buildNovelEditorExtensions } from '@/features/post/editor/novel-demo/extensions';
 import { slashCommand, suggestionItems } from '@/features/post/editor/novel-demo/slash-items';
 import { buildNovelStorageKey, loadNovelDraftDocument } from '@/features/post/editor/novel-demo/storage';
-import { uploadFn } from '@/features/post/editor/novel-demo/upload';
+import { resolveUploadErrorMessage, uploadImageForDirectInsert } from '@/features/post/editor/novel-demo/upload';
 
 const SAVE_DEBOUNCE_MS = 500;
+const IMAGE_FILE_EXTENSION_PATTERN = /\.(apng|avif|bmp|gif|heic|heif|jpe?g|png|svg|webp)$/i;
 
 type SaveStatus = 'Saved' | 'Unsaved' | 'Saving' | 'Error';
 
@@ -76,6 +72,7 @@ function highlightCodeblocks(content: string): string {
     const typedElement = element as HTMLElement;
     typedElement.classList.add('hljs');
   });
+  applyCodeLineNumberAttributes(document.body);
   return new XMLSerializer().serializeToString(document);
 }
 
@@ -226,16 +223,94 @@ function tryConvertPastedUrlToEmbedCard(view: EditorView, event: ClipboardEvent)
 }
 
 /**
- * 功能：判断当前剪贴板事件是否包含图片文件，用于优先走图片粘贴上传链路。
- * 关键参数：event 为浏览器粘贴事件。
- * 返回值/副作用：返回是否存在图片文件；无副作用。
+ * 功能：从文件列表中提取可直接插入的图片文件。
+ * 关键参数：files 为剪贴板或拖拽事件提供的文件列表。
+ * 返回值/副作用：返回图片文件数组；无副作用。
  */
-function hasImageFileInClipboard(event: ClipboardEvent): boolean {
+function extractImageFiles(files: FileList | File[]): File[] {
+  return Array.from(files).filter((file) => file.type.startsWith('image/') || IMAGE_FILE_EXTENSION_PATTERN.test(file.name || ''));
+}
+
+/**
+ * 功能：将图片 URL 插入到当前 ProseMirror 选区。
+ * 关键参数：view 为编辑器视图；imageUrl 为图片地址；fileName 为原始文件名。
+ * 返回值/副作用：返回是否插入成功；副作用为修改编辑器文档。
+ */
+function insertImageAtSelection(view: EditorView, imageUrl: string, fileName: string): boolean {
+  const imageNodeType = view.state.schema.nodes.image;
+  if (!imageNodeType) {
+    return false;
+  }
+
+  const imageNode = imageNodeType.create({
+    src: imageUrl,
+    alt: fileName,
+    title: fileName,
+  });
+  view.dispatch(view.state.tr.replaceSelectionWith(imageNode).scrollIntoView());
+  return true;
+}
+
+/**
+ * 功能：上传图片文件并按完成顺序直接插入编辑器。
+ * 关键参数：view 为编辑器视图；imageFiles 为待上传图片数组。
+ * 返回值/副作用：无返回值；副作用为发起上传请求并插入 image 节点。
+ */
+async function uploadAndInsertImages(view: EditorView, imageFiles: File[]): Promise<void> {
+  for (const file of imageFiles) {
+    try {
+      const uploaded = await uploadImageForDirectInsert(file);
+      insertImageAtSelection(view, uploaded.url, uploaded.fileName);
+    } catch (error) {
+      window.alert(resolveUploadErrorMessage(error));
+    }
+  }
+}
+
+/**
+ * 功能：处理图片粘贴并直插 image 节点，避免图片被转换成链接卡片。
+ * 关键参数：view 为编辑器视图；event 为剪贴板事件。
+ * 返回值/副作用：返回是否消费事件；副作用为异步上传并插入图片。
+ */
+function tryInsertPastedImages(view: EditorView, event: ClipboardEvent): boolean {
   const files = event.clipboardData?.files;
   if (!files || files.length === 0) {
     return false;
   }
-  return Array.from(files).some((file) => file.type.startsWith('image/'));
+
+  const imageFiles = extractImageFiles(files);
+  if (imageFiles.length === 0) {
+    return false;
+  }
+
+  event.preventDefault();
+  void uploadAndInsertImages(view, imageFiles);
+  return true;
+}
+
+/**
+ * 功能：处理图片拖拽并按落点直插 image 节点。
+ * 关键参数：view 为编辑器视图；event 为拖拽事件；moved 表示是否为编辑器内移动。
+ * 返回值/副作用：返回是否消费事件；副作用为异步上传并插入图片。
+ */
+function tryInsertDroppedImages(view: EditorView, event: DragEvent, moved: boolean): boolean {
+  if (moved || !event.dataTransfer?.files.length) {
+    return false;
+  }
+
+  const imageFiles = extractImageFiles(event.dataTransfer.files);
+  if (imageFiles.length === 0) {
+    return false;
+  }
+
+  event.preventDefault();
+  const dropPosition = view.posAtCoords({ left: event.clientX, top: event.clientY });
+  if (dropPosition) {
+    const nextSelection = TextSelection.near(view.state.doc.resolve(dropPosition.pos));
+    view.dispatch(view.state.tr.setSelection(nextSelection));
+  }
+  void uploadAndInsertImages(view, imageFiles);
+  return true;
 }
 
 /**
@@ -244,15 +319,15 @@ function hasImageFileInClipboard(event: ClipboardEvent): boolean {
  * 返回值/副作用：返回是否消费本次粘贴；副作用为触发上传或插入卡片。
  */
 function handleEditorPaste(view: EditorView, event: ClipboardEvent): boolean {
-  if (hasImageFileInClipboard(event)) {
-    return handleImagePaste(view, event, uploadFn);
+  if (tryInsertPastedImages(view, event)) {
+    return true;
   }
 
   if (tryConvertPastedUrlToEmbedCard(view, event)) {
     return true;
   }
 
-  return handleImagePaste(view, event, uploadFn);
+  return false;
 }
 
 /**
@@ -311,7 +386,6 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
     return stored ?? createDefaultEditorContent();
   });
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('Saved');
-  const [showCodeLineNumbers, setShowCodeLineNumbers] = useState<boolean>(() => readCodeLineNumbersPreference());
 
   const storageKeys = useMemo(
     () => ({
@@ -366,25 +440,6 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
     };
   }, []);
 
-  /**
-   * 功能：同步代码行号开关到本地存储并刷新当前编辑器代码块的行号属性。
-   * 关键参数：无（闭包读取 showCodeLineNumbers 与 editorHostRef）。
-   * 返回值/副作用：无返回值；副作用为写入 localStorage 与更新编辑器 DOM 属性。
-   */
-  const syncCodeLineNumberPreference = useCallback((): void => {
-    writeCodeLineNumbersPreference(showCodeLineNumbers);
-    if (typeof window === 'undefined') {
-      return;
-    }
-    window.requestAnimationFrame(() => {
-      applyCodeLineNumberAttributes(editorHostRef.current, showCodeLineNumbers);
-    });
-  }, [showCodeLineNumbers]);
-
-  useEffect(() => {
-    syncCodeLineNumberPreference();
-  }, [syncCodeLineNumberPreference]);
-
   return (
     <div className="mx-auto w-full max-w-screen-lg space-y-4">
       <div className="border border-(--gmp-novel-line-strong) bg-(--gmp-novel-toolbar) p-3 gmp-cut-corner-br md:p-4">
@@ -397,20 +452,6 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
             返回预览
           </button>
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setShowCodeLineNumbers((previous) => !previous);
-              }}
-              className={[
-                'inline-flex h-8 items-center border px-3 font-mono text-[10px] tracking-widest uppercase transition-colors',
-                showCodeLineNumbers
-                  ? 'border-(--gmp-novel-accent) bg-(--gmp-novel-accent-soft) text-(--gmp-novel-accent)'
-                  : 'border-(--gmp-novel-line) bg-(--gmp-novel-surface) text-(--gmp-novel-text-muted) hover:border-(--gmp-novel-line-strong) hover:text-(--gmp-novel-text)',
-              ].join(' ')}
-            >
-              {showCodeLineNumbers ? '隐藏行号' : '显示行号'}
-            </button>
             <span className="inline-flex h-8 items-center border border-(--gmp-novel-line) bg-(--gmp-novel-surface) px-3 font-mono text-[10px] tracking-widest text-(--gmp-novel-text-muted)">
               {resolveSaveStatusLabel(saveStatus)}
             </span>
@@ -426,7 +467,7 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
             className="relative min-h-96 w-full max-w-screen-lg border border-(--gmp-novel-line-strong) bg-(--gmp-novel-surface)"
             editorProps={{
               handlePaste: (view, event) => handleEditorPaste(view, event),
-              handleDrop: (view, event, _slice, moved) => handleImageDrop(view, event, moved, uploadFn),
+              handleDrop: (view, event, _slice, moved) => tryInsertDroppedImages(view, event, moved),
               /**
                * 功能：仅在 Slash 菜单可见时接管方向键/回车导航，避免 Enter 被编辑器当作普通换行。
                * 关键参数：event 为当前键盘事件。
@@ -441,14 +482,13 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
               attributes: {
                 class: [
                   'gmp-novel-editor max-w-full px-4 py-8 text-(--gmp-novel-text) focus:outline-none md:px-8',
-                  showCodeLineNumbers ? 'gmp-code-lines-enabled' : '',
                 ].join(' '),
               },
             }}
             onUpdate={({ editor }) => {
               setSaveStatus('Unsaved');
               persistLocalContent(editor);
-              applyCodeLineNumberAttributes(editorHostRef.current, showCodeLineNumbers);
+              applyCodeLineNumberAttributes(editorHostRef.current);
             }}
             slotAfter={<ImageResizer />}
           >

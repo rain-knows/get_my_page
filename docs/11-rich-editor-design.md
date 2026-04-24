@@ -46,6 +46,9 @@
   - 接收官方上传请求格式（`x-vercel-filename` + 二进制 body）。
   - 透传 `Authorization` 到后端 `POST /api/files/upload`（MinIO）。
   - 返回统一 `{ url }`；错误返回 `errorType + message + backendStatus/backendCode/backendMessage` 供前端分类提示。
+- 代码块控制：`frontend/src/features/post/editor/novel-demo/code-block-with-controls.ts`
+  - `codeBlock` 节点持久化 `lineNumbers` 属性。
+  - 每个代码块右上角提供独立行号开关；不再使用编辑器顶部全局行号开关。
 
 ---
 
@@ -58,6 +61,7 @@
   - 前端编辑器侧保持 `/api/upload` 不变。
   - `/api/upload` 内部转发后端 MinIO 上传并透传认证头，不影响编辑器调用方请求协议。
   - 上传错误按 `auth_failed` / `unsupported_type` / `backend_response_error` / `invalid_response` 分类返回。
+  - 编辑器粘贴/拖拽图片时直接上传并插入 `image` 节点；导入链接卡片面板中的上传仍生成 `embedLink` 上传卡片。
 - 链接卡片契约：
   - 前端通过 `/api/embeds/resolve` 解析链接，响应结构沿用后端 `EmbedResolveResponse`。
   - `embedLink` 节点 attrs 保存 `url/normalizedUrl/cardType/mediaType/provider/title/description/artist/videoId/coverUrl/domain/siteName/uploadKind/snapshot/resolved/pending/error`。

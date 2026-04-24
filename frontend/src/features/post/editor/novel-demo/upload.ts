@@ -247,6 +247,17 @@ async function onUpload(file: File): Promise<string> {
 }
 
 /**
+ * 功能：上传图片并返回完整上传元信息，供粘贴/拖拽直插图片节点使用。
+ * 关键参数：file 为待上传图片文件。
+ * 返回值/副作用：返回上传结果对象；副作用为触发上传请求与图片预加载。
+ */
+export async function uploadImageForDirectInsert(file: File): Promise<UploadAssetResult> {
+  const uploaded = await uploadAssetFile(file, 'image');
+  await preloadImage(uploaded.url);
+  return uploaded;
+}
+
+/**
  * 功能：导出官方 createImageUpload 生成的上传函数，统一服务于 slash/拖拽/粘贴图片入口。
  * 关键参数：无。
  * 返回值/副作用：返回 UploadFn；副作用为触发上传链路。

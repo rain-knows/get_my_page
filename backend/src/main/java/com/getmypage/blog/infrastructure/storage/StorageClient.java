@@ -13,6 +13,7 @@ import org.springframework.util.StringUtils;
 import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -21,6 +22,8 @@ import java.util.UUID;
  */
 @Component
 public class StorageClient {
+
+    private static final ZoneId ARTICLE_OBJECT_ZONE = ZoneId.of("Asia/Shanghai");
 
     private final MinioClient minioClient;
     private final String bucket;
@@ -74,18 +77,19 @@ public class StorageClient {
     }
 
     /**
-     * 功能：生成符合文章资源规范的对象 key，格式为 /articles/{yyyy}/{mm}/{postId}/{uuid}.{ext}。
+     * 功能：生成符合文章资源规范的对象 key，格式为 /articles/{yyyy}/{mm}/{dd}/{postId}/{uuid}.{ext}。
      * 关键参数：postId 为文章 ID；originalFilename 为原始文件名用于提取扩展名。
      * 返回值/副作用：返回标准化对象 key；无副作用。
      */
     public String generateArticleObjectKey(Long postId, String originalFilename) {
         long normalizedPostId = (postId == null || postId <= 0) ? 0L : postId;
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ARTICLE_OBJECT_ZONE);
         String extension = extractExtension(originalFilename);
         String uuid = UUID.randomUUID().toString().replace("-", "");
-        return "/articles/%d/%02d/%d/%s.%s".formatted(
+        return "/articles/%d/%02d/%02d/%d/%s.%s".formatted(
                 today.getYear(),
                 today.getMonthValue(),
+                today.getDayOfMonth(),
                 normalizedPostId,
                 uuid,
                 extension
