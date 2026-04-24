@@ -7,6 +7,7 @@ import {
   Clapperboard,
   Copy,
   ExternalLink,
+  GitBranch,
   Globe,
   Link2,
   LoaderCircle,
@@ -34,7 +35,7 @@ interface EmbedLinkExtensionOptions {
 
 type CardPanelMode = 'link' | 'upload';
 
-type CardRenderVariant = 'default' | 'netease-music' | 'bilibili-video';
+type CardRenderVariant = 'default' | 'github-repository' | 'netease-music' | 'bilibili-video';
 
 interface EmbedLinkModePanelProps {
   panelMode: CardPanelMode;
@@ -66,11 +67,24 @@ function readSnapshot(attrs: Partial<EmbedLinkAttrs>): Record<string, unknown> {
 }
 
 /**
+ * 功能：从 snapshot 中安全读取字符串字段，统一处理空值与类型不匹配。
+ * 关键参数：attrs 为 embedLink 节点属性；key 为目标字段名。
+ * 返回值/副作用：返回字符串字段或空字符串；无副作用。
+ */
+function readSnapshotString(attrs: Partial<EmbedLinkAttrs>, key: string): string {
+  const value = readSnapshot(attrs)[key];
+  return typeof value === 'string' ? value : '';
+}
+
+/**
  * 功能：根据节点 attrs 选择卡片渲染模板，优先命中平台专用样式。
  * 关键参数：attrs 为 embedLink 节点属性。
  * 返回值/副作用：返回渲染模板标识；无副作用。
  */
 function resolveCardRenderVariant(attrs: Partial<EmbedLinkAttrs>): CardRenderVariant {
+  if (attrs.cardType === 'github' && attrs.provider === 'github') {
+    return 'github-repository';
+  }
   if (attrs.cardType === 'music' && attrs.provider === 'netease') {
     return 'netease-music';
   }
@@ -162,6 +176,79 @@ function resolveBilibiliVideoId(attrs: Partial<EmbedLinkAttrs>): string {
   const snapshot = readSnapshot(attrs);
   const videoId = snapshot.videoId;
   return typeof videoId === 'string' ? videoId : '';
+}
+
+/**
+ * 功能：读取 GitHub 仓库全名，优先使用后端 snapshot 的 repo/fullName 字段。
+ * 关键参数：attrs 为 embedLink 节点属性。
+ * 返回值/副作用：返回 owner/repo 字符串或空字符串；无副作用。
+ */
+function resolveGithubRepositoryName(attrs: Partial<EmbedLinkAttrs>): string {
+  return readSnapshotString(attrs, 'repo') || readSnapshotString(attrs, 'fullName') || attrs.title || '';
+}
+
+/**
+ * 功能：从 URL 或 hash 片段中读取指定查询参数，兼容网易云 `#/song?id=` 结构。
+ * 关键参数：url 为待解析链接；key 为查询参数名。
+ * 返回值/副作用：返回参数值或空字符串；无副作用。
+ */
+function readUrlParam(url: string, key: string): string {
+  try {
+    const parsed = new URL(url);
+    const searchValue = parsed.searchParams.get(key);
+    if (searchValue) {
+      return searchValue;
+    }
+    const hashQuery = parsed.hash.includes('?') ? parsed.hash.slice(parsed.hash.indexOf('?') + 1) : '';
+    return new URLSearchParams(hashQuery).get(key) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * 功能：解析网易云音乐歌曲 ID，用于生成可真实播放的外链播放器 iframe。
+ * 关键参数：attrs 为 embedLink 节点属性。
+ * 返回值/副作用：返回歌曲 ID 或空字符串；无副作用。
+ */
+function resolveNeteaseSongId(attrs: Partial<EmbedLinkAttrs>): string {
+  const snapshotSongId = readSnapshotString(attrs, 'songId') || readSnapshotString(attrs, 'mediaId');
+  if (snapshotSongId) {
+    return snapshotSongId;
+  }
+  return readUrlParam(attrs.normalizedUrl || attrs.url || '', 'id');
+}
+
+/**
+ * 功能：解析网易云 iframe 地址，优先使用后端返回的 embedUrl。
+ * 关键参数：attrs 为 embedLink 节点属性。
+ * 返回值/副作用：返回可嵌入播放器地址；无法解析时返回空字符串。
+ */
+function resolveNeteaseEmbedUrl(attrs: Partial<EmbedLinkAttrs>): string {
+  const snapshotEmbedUrl = readSnapshotString(attrs, 'embedUrl');
+  if (snapshotEmbedUrl) {
+    return snapshotEmbedUrl;
+  }
+  const songId = resolveNeteaseSongId(attrs);
+  return songId ? `https://music.163.com/outchain/player?type=2&id=${encodeURIComponent(songId)}&auto=0&height=86` : '';
+}
+
+/**
+ * 功能：解析 B 站 iframe 地址，优先使用后端返回的 embedUrl。
+ * 关键参数：attrs 为 embedLink 节点属性。
+ * 返回值/副作用：返回可嵌入播放器地址；无法解析时返回空字符串。
+ */
+function resolveBilibiliEmbedUrl(attrs: Partial<EmbedLinkAttrs>): string {
+  const snapshotEmbedUrl = readSnapshotString(attrs, 'embedUrl');
+  if (snapshotEmbedUrl) {
+    return snapshotEmbedUrl;
+  }
+  const videoId = resolveBilibiliVideoId(attrs);
+  if (!videoId) {
+    return '';
+  }
+  const idParam = videoId.startsWith('BV') ? `bvid=${encodeURIComponent(videoId)}` : `aid=${encodeURIComponent(videoId.replace(/^av/i, ''))}`;
+  return `https://player.bilibili.com/player.html?isOutside=true&autoplay=0&high_quality=1&${idParam}`;
 }
 
 /**
@@ -502,6 +589,9 @@ function EmbedLinkCardView({ node, editor, updateAttributes }: NodeViewProps) {
   const cardVariant = resolveCardRenderVariant(attrs);
   const artist = resolveNeteaseArtist(attrs);
   const bilibiliVideoId = resolveBilibiliVideoId(attrs);
+  const githubRepositoryName = resolveGithubRepositoryName(attrs);
+  const neteaseEmbedUrl = resolveNeteaseEmbedUrl(attrs);
+  const bilibiliEmbedUrl = resolveBilibiliEmbedUrl(attrs);
   const supportsHoverActions = supportsReadonlyHoverActions(cardVariant);
   const shouldLockResolvedMediaCard = supportsHoverActions && Boolean(attrs.resolved) && !attrs.pending && !attrs.error;
   const shouldHidePanelAfterResolvedUpload = attrs.provider === 'upload' && Boolean(attrs.resolved) && !attrs.pending && !attrs.error;
@@ -547,7 +637,17 @@ function EmbedLinkCardView({ node, editor, updateAttributes }: NodeViewProps) {
           >
             {supportsHoverActions && displayUrl ? <EmbedLinkHoverActions displayUrl={displayUrl} /> : null}
             <div className="gmp-embed-link-body-text">
-              {cardVariant === 'netease-music' ? (
+              {cardVariant === 'github-repository' ? (
+                <>
+                  <p className="gmp-embed-link-provider-tag">
+                    <GitBranch className="h-3.5 w-3.5" />
+                    <span>GitHub</span>
+                    {githubRepositoryName ? <strong className="gmp-embed-link-provider-id">{githubRepositoryName}</strong> : null}
+                  </p>
+                  <p className="gmp-embed-link-title">{resolveEmbedCardTitle(attrs)}</p>
+                  <p className="gmp-embed-link-description">{resolveEmbedCardDescription(attrs)}</p>
+                </>
+              ) : cardVariant === 'netease-music' ? (
                 <>
                   <p className="gmp-embed-link-provider-tag">
                     <Music2 className="h-3.5 w-3.5" />
@@ -585,7 +685,32 @@ function EmbedLinkCardView({ node, editor, updateAttributes }: NodeViewProps) {
               )}
             </div>
 
-            {attrs.coverUrl ? (
+            {cardVariant === 'netease-music' && neteaseEmbedUrl ? (
+              <div className="gmp-embed-link-player" data-provider="netease">
+                <iframe
+                  src={neteaseEmbedUrl}
+                  title={`${resolveEmbedCardTitle(attrs)} 播放器`}
+                  loading="lazy"
+                  allow="autoplay; encrypted-media"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            ) : null}
+
+            {cardVariant === 'bilibili-video' && bilibiliEmbedUrl ? (
+              <div className="gmp-embed-link-player" data-provider="bilibili">
+                <iframe
+                  src={bilibiliEmbedUrl}
+                  title={`${resolveEmbedCardTitle(attrs)} 播放器`}
+                  loading="lazy"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowFullScreen
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            ) : null}
+
+            {attrs.coverUrl && !neteaseEmbedUrl && !bilibiliEmbedUrl ? (
               <div className="gmp-embed-link-cover-wrapper">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={attrs.coverUrl} alt={resolveEmbedCardTitle(attrs)} className="gmp-embed-link-cover" />

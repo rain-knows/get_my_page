@@ -108,6 +108,8 @@ public class EmbedServiceImpl implements EmbedService {
         Map<String, Object> snapshot = new HashMap<>();
         snapshot.put("provider", provider);
         snapshot.put("url", normalized);
+        putIfHasText(snapshot, "songId", resolveMusicTrackId(normalized, provider));
+        putIfHasText(snapshot, "embedUrl", resolveMusicEmbedUrl(normalized, provider));
         putIfHasText(snapshot, "title", metadata.title());
         putIfHasText(snapshot, "description", metadata.description());
         putIfHasText(snapshot, "coverUrl", metadata.coverUrl());
@@ -130,6 +132,7 @@ public class EmbedServiceImpl implements EmbedService {
         snapshot.put("provider", provider);
         snapshot.put("url", url);
         putIfHasText(snapshot, "videoId", videoId);
+        putIfHasText(snapshot, "embedUrl", resolveVideoEmbedUrl(provider, videoId));
         putIfHasText(snapshot, "title", metadata.title());
         putIfHasText(snapshot, "description", metadata.description());
         putIfHasText(snapshot, "coverUrl", metadata.coverUrl());
@@ -463,6 +466,116 @@ public class EmbedServiceImpl implements EmbedService {
         } catch (Exception ignored) {
             return "";
         }
+    }
+
+    /**
+     * 功能：按音乐平台提取可嵌入播放器所需的媒体 ID。
+     * 关键参数：url 为标准化音乐链接；provider 为音乐平台标识。
+     * 返回值/副作用：返回媒体 ID；无法解析返回空字符串。
+     */
+    private String resolveMusicTrackId(String url, String provider) {
+        if (!"netease".equals(provider)) {
+            return "";
+        }
+
+        return firstNonBlank(
+                readQueryParam(url, "id"),
+                readHashQueryParam(url, "id")
+        );
+    }
+
+    /**
+     * 功能：按音乐平台生成真实可播放的 iframe 地址。
+     * 关键参数：url 为标准化音乐链接；provider 为音乐平台标识。
+     * 返回值/副作用：返回播放器 URL；无法解析返回空字符串。
+     */
+    private String resolveMusicEmbedUrl(String url, String provider) {
+        if (!"netease".equals(provider)) {
+            return "";
+        }
+
+        String songId = resolveMusicTrackId(url, provider);
+        if (!StringUtils.hasText(songId)) {
+            return "";
+        }
+        return "https://music.163.com/outchain/player?type=2&id=%s&auto=0&height=86".formatted(songId);
+    }
+
+    /**
+     * 功能：按视频平台生成真实可播放的 iframe 地址。
+     * 关键参数：provider 为视频平台标识；videoId 为平台视频 ID。
+     * 返回值/副作用：返回播放器 URL；无法解析返回空字符串。
+     */
+    private String resolveVideoEmbedUrl(String provider, String videoId) {
+        if (!StringUtils.hasText(videoId)) {
+            return "";
+        }
+
+        if ("bilibili".equals(provider)) {
+            if (videoId.startsWith("BV")) {
+                return "https://player.bilibili.com/player.html?isOutside=true&autoplay=0&high_quality=1&bvid=%s".formatted(videoId);
+            }
+            if (videoId.startsWith("av")) {
+                return "https://player.bilibili.com/player.html?isOutside=true&autoplay=0&high_quality=1&aid=%s".formatted(videoId.substring(2));
+            }
+        }
+
+        if ("youtube".equals(provider)) {
+            return "https://www.youtube.com/embed/%s".formatted(videoId);
+        }
+
+        return "";
+    }
+
+    /**
+     * 功能：从 URL query 中读取指定参数。
+     * 关键参数：url 为目标链接；key 为参数名。
+     * 返回值/副作用：返回参数值；无法解析返回空字符串。
+     */
+    private String readQueryParam(String url, String key) {
+        try {
+            URI uri = URI.create(url);
+            return readParamFromQuery(uri.getQuery(), key);
+        } catch (Exception ignored) {
+            return "";
+        }
+    }
+
+    /**
+     * 功能：从 URL hash 内的 query 片段读取指定参数，兼容网易云 `#/song?id=`。
+     * 关键参数：url 为目标链接；key 为参数名。
+     * 返回值/副作用：返回参数值；无法解析返回空字符串。
+     */
+    private String readHashQueryParam(String url, String key) {
+        try {
+            URI uri = URI.create(url);
+            String fragment = uri.getFragment();
+            if (!StringUtils.hasText(fragment) || !fragment.contains("?")) {
+                return "";
+            }
+            return readParamFromQuery(fragment.substring(fragment.indexOf('?') + 1), key);
+        } catch (Exception ignored) {
+            return "";
+        }
+    }
+
+    /**
+     * 功能：从标准 query 字符串中读取指定参数值。
+     * 关键参数：query 为不含问号的查询字符串；key 为参数名。
+     * 返回值/副作用：返回参数值；无法命中返回空字符串。
+     */
+    private String readParamFromQuery(String query, String key) {
+        if (!StringUtils.hasText(query) || !StringUtils.hasText(key)) {
+            return "";
+        }
+
+        for (String part : query.split("&")) {
+            String[] kv = part.split("=", 2);
+            if (kv.length == 2 && key.equals(kv[0]) && StringUtils.hasText(kv[1])) {
+                return kv[1];
+            }
+        }
+        return "";
     }
 
     /**

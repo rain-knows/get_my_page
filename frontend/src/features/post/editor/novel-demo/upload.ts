@@ -206,16 +206,16 @@ export async function uploadAssetFile(file: File, uploadKind: UploadKind = 'imag
 }
 
 /**
- * 功能：预加载上传后的图片资源，避免插入节点后出现明显闪烁。
+ * 功能：尝试预加载上传后的图片资源，失败时不阻断编辑器插入流程。
  * 关键参数：imageUrl 为已上传图片地址。
- * 返回值/副作用：返回 Promise<void>；副作用为触发图片加载请求。
+ * 返回值/副作用：返回是否预加载成功；副作用为触发图片加载请求。
  */
-async function preloadImage(imageUrl: string): Promise<void> {
-  await new Promise<void>((resolve, reject) => {
+async function preloadImage(imageUrl: string): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
     const image = new Image();
     image.src = imageUrl;
-    image.onload = () => resolve();
-    image.onerror = () => reject(new Error('Image preload failed.'));
+    image.onload = () => resolve(true);
+    image.onerror = () => resolve(false);
   });
 }
 
@@ -235,7 +235,7 @@ export function resolveUploadErrorMessage(error: unknown): string {
 }
 
 /**
- * 功能：调用官方 `/api/upload` 上传入口并预加载图片，保证插入节点时图片可立即渲染。
+ * 功能：调用官方 `/api/upload` 上传入口并尝试预加载图片，预加载失败时仍返回上传地址。
  * 关键参数：file 为待上传图片文件。
  * 返回值/副作用：返回 Promise<string> 图片 URL；副作用为触发网络请求与图片预加载。
  */
@@ -247,7 +247,7 @@ async function onUpload(file: File): Promise<string> {
 }
 
 /**
- * 功能：上传图片并返回完整上传元信息，供粘贴/拖拽直插图片节点使用。
+ * 功能：上传图片并返回完整上传元信息，供粘贴/拖拽直插图片节点使用，预加载失败不阻断插入。
  * 关键参数：file 为待上传图片文件。
  * 返回值/副作用：返回上传结果对象；副作用为触发上传请求与图片预加载。
  */

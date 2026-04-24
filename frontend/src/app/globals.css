@@ -518,17 +518,20 @@
 }
 
 .gmp-novel-editor.ProseMirror pre[data-line-numbers='true'] {
-  position: relative;
-  padding-left: 3.6rem;
+  display: grid;
+  grid-template-columns: 2.8rem minmax(max-content, 1fr);
+  column-gap: 1rem;
+  padding-left: 0;
 }
 
-.gmp-novel-editor.ProseMirror pre[data-line-numbers='true']::before {
-  content: attr(data-line-number-gutter);
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 2.6rem;
-  height: 100%;
+.gmp-novel-editor.ProseMirror pre[data-line-numbers='true'] > code {
+  min-width: 0;
+}
+
+.gmp-novel-editor.ProseMirror .gmp-code-line-number-gutter {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
   padding: 1rem 0.6rem 1rem 0;
   border-right: 1px solid var(--gmp-novel-code-border);
   color: var(--gmp-novel-text-muted);
@@ -536,12 +539,16 @@
   font-size: 0.75rem;
   line-height: 1.75;
   text-align: right;
-  white-space: pre;
   pointer-events: none;
   user-select: none;
 }
 
-.gmp-novel-editor.ProseMirror .gmp-code-block-card pre[data-line-numbers='true']::before {
+.gmp-novel-editor.ProseMirror .gmp-code-line-number {
+  display: block;
+  min-height: 1.3125rem;
+}
+
+.gmp-novel-editor.ProseMirror .gmp-code-block-card .gmp-code-line-number-gutter {
   padding-top: 2.75rem;
 }
 
@@ -902,6 +909,33 @@
   flex: 1;
 }
 
+.gmp-embed-link-player {
+  width: min(26rem, 44vw);
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid var(--gmp-novel-line);
+  background: var(--gmp-novel-toolbar-hover);
+}
+
+.gmp-embed-link-player iframe {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: var(--gmp-novel-surface);
+}
+
+.gmp-embed-link-player[data-provider='netease'] iframe {
+  height: 106px;
+}
+
+.gmp-embed-link-player[data-provider='bilibili'] {
+  aspect-ratio: 16 / 9;
+}
+
+.gmp-embed-link-player[data-provider='bilibili'] iframe {
+  height: 100%;
+}
+
 .gmp-embed-link-title {
   margin: 0;
   font-size: 0.95rem;
@@ -985,5 +1019,9 @@
   .gmp-embed-link-cover-wrapper {
     width: 100%;
     height: 8rem;
+  }
+
+  .gmp-embed-link-player {
+    width: 100%;
   }
 }

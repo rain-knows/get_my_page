@@ -6,6 +6,7 @@ import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.SetBucketPolicyArgs;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -107,9 +108,35 @@ public class StorageClient {
             if (!bucketExists) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
             }
+            ensureBucketPublicReadPolicy();
         } catch (Exception ex) {
             throw new BizException(ErrorCode.EXTERNAL_SERVICE_ERROR, "初始化对象存储桶失败");
         }
+    }
+
+    /**
+     * 功能：为博客资源桶设置公开只读策略，保证编辑器上传图片返回的直链可被浏览器真实加载。
+     * 关键参数：无（使用实例内 bucket 配置）。
+     * 返回值/副作用：无返回值；副作用为更新 MinIO bucket policy。
+     */
+    private void ensureBucketPublicReadPolicy() throws Exception {
+        String policy = """
+                {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Principal": {"AWS": ["*"]},
+                      "Action": ["s3:GetObject"],
+                      "Resource": ["arn:aws:s3:::%s/*"]
+                    }
+                  ]
+                }
+                """.formatted(bucket);
+        minioClient.setBucketPolicy(SetBucketPolicyArgs.builder()
+                .bucket(bucket)
+                .config(policy)
+                .build());
     }
 
     /**

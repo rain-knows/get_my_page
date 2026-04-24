@@ -1,8 +1,9 @@
 import type { createLowlight } from 'lowlight';
 import { CodeBlockLowlight } from 'novel';
 import {
-  buildCodeLineNumberGutter,
+  removeCodeLineNumberGutter,
   resolveCodeLineCount,
+  syncCodeLineNumberGutter,
 } from '@/features/post/editor/novel-demo/code-line-numbers';
 
 interface CodeBlockNodeLike {
@@ -27,12 +28,12 @@ interface CodeBlockNodeViewProps {
 }
 
 /**
- * 功能：根据代码块节点内容生成行号 gutter 文本。
+ * 功能：根据代码块节点内容同步真实 DOM 行号 gutter。
  * 关键参数：node 为当前 codeBlock 节点。
- * 返回值/副作用：返回适配 CSS content 的行号字符串；无副作用。
+ * 返回值/副作用：无返回值；副作用为更新 pre 节点内的行号 DOM。
  */
-function resolveLineNumberGutter(node: CodeBlockNodeLike): string {
-  return buildCodeLineNumberGutter(resolveCodeLineCount(node.textContent));
+function syncNodeLineNumberGutter(pre: HTMLElement, node: CodeBlockNodeLike): void {
+  syncCodeLineNumberGutter(pre, resolveCodeLineCount(node.textContent));
 }
 
 /**
@@ -102,11 +103,13 @@ function createCodeBlockNodeView(props: CodeBlockNodeViewProps) {
     code.className = language ? `language-${language}` : '';
 
     if (lineNumbersEnabled) {
-      pre.dataset.lineNumberGutter = resolveLineNumberGutter(currentNode);
+      delete pre.dataset.lineNumberGutter;
+      syncNodeLineNumberGutter(pre, currentNode);
       return;
     }
 
     delete pre.dataset.lineNumberGutter;
+    removeCodeLineNumberGutter(pre);
   }
 
   syncDomState();
