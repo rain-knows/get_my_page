@@ -2,9 +2,11 @@ import { createImageUpload, type UploadFn } from 'novel';
 import { normalizeStorageAssetUrl } from '@/features/post/editor/novel-demo/asset-url';
 
 const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024;
+const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPE_PREFIX = 'image/';
+const IMAGE_FILE_EXTENSION_PATTERN = /\.(apng|avif|bmp|gif|heic|heif|jpe?g|png|svg|webp)$/i;
 
-export type UploadKind = 'image' | 'pdf';
+export type UploadKind = 'image' | 'file';
 
 type UploadErrorType =
   | 'auth_failed'
@@ -12,7 +14,6 @@ type UploadErrorType =
   | 'backend_response_error'
   | 'network_error'
   | 'invalid_response'
-  | 'unsupported_upload_kind'
   | 'unknown';
 
 interface UploadProxyPayload {
@@ -70,9 +71,6 @@ function normalizeUploadErrorType(rawType?: string): UploadErrorType {
   if (rawType === 'invalid_response') {
     return 'invalid_response';
   }
-  if (rawType === 'unsupported_upload_kind') {
-    return 'unsupported_upload_kind';
-  }
   return 'unknown';
 }
 
@@ -90,21 +88,33 @@ function readAccessToken(): string {
 }
 
 /**
- * 功能：校验图片文件类型与大小，避免不支持格式或超大文件进入上传链路。
- * 关键参数：file 为待上传文件；uploadKind 为上传类型（当前仅 image 生效）。
+ * 功能：判断文件是否可视为图片，兼容部分剪贴板场景缺失 MIME 但扩展名可识别的情况。
+ * 关键参数：file 为待判断文件对象。
+ * 返回值/副作用：返回是否满足图片识别条件；无副作用。
+ */
+function isImageLikeFile(file: File): boolean {
+  if (file.type.includes(ACCEPTED_IMAGE_TYPE_PREFIX)) {
+    return true;
+  }
+  return IMAGE_FILE_EXTENSION_PATTERN.test(file.name || '');
+}
+
+/**
+ * 功能：校验上传文件类型与大小，区分图片上传链路与通用文件上传链路。
+ * 关键参数：file 为待上传文件；uploadKind 为上传类型（`image` 或 `file`）。
  * 返回值/副作用：无返回值；校验失败时抛出 Error。
  */
 function validateUploadFile(file: File, uploadKind: UploadKind): void {
-  if (uploadKind === 'pdf') {
-    throw new UploadError('unsupported_upload_kind', 'PDF 上传能力当前仅做代码预留，暂未开放。');
-  }
-
-  if (!file.type.includes(ACCEPTED_IMAGE_TYPE_PREFIX)) {
+  if (uploadKind === 'image' && !isImageLikeFile(file)) {
     throw new UploadError('unsupported_type', '上传失败：仅支持图片格式（JPEG/PNG/WebP/GIF/AVIF/HEIC/HEIF）。');
   }
 
-  if (file.size > MAX_IMAGE_SIZE_BYTES) {
+  if (uploadKind === 'image' && file.size > MAX_IMAGE_SIZE_BYTES) {
     throw new UploadError('unsupported_type', '上传失败：图片大小不能超过 8MB。');
+  }
+
+  if (uploadKind === 'file' && file.size > MAX_FILE_SIZE_BYTES) {
+    throw new UploadError('unsupported_type', '上传失败：文件大小不能超过 20MB。');
   }
 }
 
@@ -148,7 +158,7 @@ function buildUploadErrorFromResponse(response: Response, payload: UploadProxyPa
 
 /**
  * 功能：调用 `/api/upload` 并返回上传结果，统一处理认证头注入与错误分类。
- * 关键参数：file 为待上传文件；uploadKind 为上传类型（预留 pdf 分支）。
+ * 关键参数：file 为待上传文件；uploadKind 为上传类型（图片或通用文件）。
  * 返回值/副作用：返回上传结果对象；副作用为触发网络请求。
  */
 export async function uploadAssetFile(file: File, uploadKind: UploadKind = 'image'): Promise<UploadAssetResult> {

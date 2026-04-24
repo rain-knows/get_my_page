@@ -2,7 +2,6 @@ import { cx } from 'class-variance-authority';
 import { common, createLowlight } from 'lowlight';
 import {
   AIHighlight,
-  CharacterCount,
   CodeBlockLowlight,
   Color,
   CustomKeymap,
@@ -143,8 +142,6 @@ const mathematics = Mathematics.configure({
   },
 });
 
-const characterCount = CharacterCount.configure();
-
 /**
  * 功能：导出 Novel 官方 demo 基线扩展集合，供编辑态与阅读态共享。
  * 关键参数：无。
@@ -168,7 +165,6 @@ export function buildNovelBaseExtensions(): unknown[] {
     youtube,
     twitter,
     mathematics,
-    characterCount,
     TiptapUnderline,
     HighlightExtension,
     TextStyle,

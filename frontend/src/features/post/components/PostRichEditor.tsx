@@ -21,6 +21,11 @@ import {
 } from 'novel';
 import { type ComponentType, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  applyCodeLineNumberAttributes,
+  readCodeLineNumbersPreference,
+  writeCodeLineNumbersPreference,
+} from '@/features/post/editor/novel-demo/code-line-numbers';
+import {
   extractSingleUrlFromClipboard,
   insertEmbedCardAtSelection,
   resolveAndHydrateEmbedCard,
@@ -51,9 +56,6 @@ interface BubbleActionItem {
 }
 
 interface EditorStorageSnapshot {
-  characterCount?: {
-    words?: () => number;
-  };
   markdown?: {
     getMarkdown?: () => string;
   };
@@ -224,6 +226,36 @@ function tryConvertPastedUrlToEmbedCard(view: EditorView, event: ClipboardEvent)
 }
 
 /**
+ * 功能：判断当前剪贴板事件是否包含图片文件，用于优先走图片粘贴上传链路。
+ * 关键参数：event 为浏览器粘贴事件。
+ * 返回值/副作用：返回是否存在图片文件；无副作用。
+ */
+function hasImageFileInClipboard(event: ClipboardEvent): boolean {
+  const files = event.clipboardData?.files;
+  if (!files || files.length === 0) {
+    return false;
+  }
+  return Array.from(files).some((file) => file.type.startsWith('image/'));
+}
+
+/**
+ * 功能：统一处理编辑器粘贴事件，优先处理图片上传，其次处理 URL 自动转卡片。
+ * 关键参数：view 为 ProseMirror 视图；event 为粘贴事件。
+ * 返回值/副作用：返回是否消费本次粘贴；副作用为触发上传或插入卡片。
+ */
+function handleEditorPaste(view: EditorView, event: ClipboardEvent): boolean {
+  if (hasImageFileInClipboard(event)) {
+    return handleImagePaste(view, event, uploadFn);
+  }
+
+  if (tryConvertPastedUrlToEmbedCard(view, event)) {
+    return true;
+  }
+
+  return handleImagePaste(view, event, uploadFn);
+}
+
+/**
  * 功能：渲染单个 Bubble 按钮并根据当前选区格式状态切换高亮。
  * 关键参数：item 为 Bubble 动作项。
  * 返回值/副作用：返回按钮节点；副作用为调用编辑器格式命令。
@@ -268,6 +300,7 @@ function BubbleActionButton({ item }: BubbleActionButtonProps) {
  * 返回值/副作用：返回编辑器节点；副作用为写入 localStorage 与调用图片上传接口。
  */
 export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
+  const editorHostRef = useRef<HTMLDivElement | null>(null);
   const saveTimerRef = useRef<number | null>(null);
   const [initialContent] = useState<JSONContent>(() => {
     if (typeof window === 'undefined') {
@@ -278,7 +311,7 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
     return stored ?? createDefaultEditorContent();
   });
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('Saved');
-  const [wordCount, setWordCount] = useState(0);
+  const [showCodeLineNumbers, setShowCodeLineNumbers] = useState<boolean>(() => readCodeLineNumbersPreference());
 
   const storageKeys = useMemo(
     () => ({
@@ -293,7 +326,7 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
   const bubbleActions = useMemo(() => buildBubbleActions(), []);
 
   /**
-   * 功能：将编辑器内容防抖保存到 localStorage，并同步保存状态与词数统计。
+   * 功能：将编辑器内容防抖保存到 localStorage，并同步更新保存状态。
    * 关键参数：editor 为当前编辑器实例。
    * 返回值/副作用：无返回值；副作用为写入 localStorage。
    */
@@ -307,7 +340,6 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
       saveTimerRef.current = window.setTimeout(() => {
         try {
           const snapshot = editor.storage as EditorStorageSnapshot;
-          const nextWordCount = snapshot.characterCount?.words?.() ?? 0;
           const markdown = snapshot.markdown?.getMarkdown?.();
           const nextJson = editor.getJSON();
 
@@ -317,7 +349,6 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
             window.localStorage.setItem(storageKeys.markdown, markdown);
           }
 
-          setWordCount(nextWordCount);
           setSaveStatus('Saved');
         } catch {
           setSaveStatus('Error');
@@ -335,6 +366,25 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
     };
   }, []);
 
+  /**
+   * 功能：同步代码行号开关到本地存储并刷新当前编辑器代码块的行号属性。
+   * 关键参数：无（闭包读取 showCodeLineNumbers 与 editorHostRef）。
+   * 返回值/副作用：无返回值；副作用为写入 localStorage 与更新编辑器 DOM 属性。
+   */
+  const syncCodeLineNumberPreference = useCallback((): void => {
+    writeCodeLineNumbersPreference(showCodeLineNumbers);
+    if (typeof window === 'undefined') {
+      return;
+    }
+    window.requestAnimationFrame(() => {
+      applyCodeLineNumberAttributes(editorHostRef.current, showCodeLineNumbers);
+    });
+  }, [showCodeLineNumbers]);
+
+  useEffect(() => {
+    syncCodeLineNumberPreference();
+  }, [syncCodeLineNumberPreference]);
+
   return (
     <div className="mx-auto w-full max-w-screen-lg space-y-4">
       <div className="border border-(--gmp-novel-line-strong) bg-(--gmp-novel-toolbar) p-3 gmp-cut-corner-br md:p-4">
@@ -347,87 +397,99 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
             返回预览
           </button>
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setShowCodeLineNumbers((previous) => !previous);
+              }}
+              className={[
+                'inline-flex h-8 items-center border px-3 font-mono text-[10px] tracking-widest uppercase transition-colors',
+                showCodeLineNumbers
+                  ? 'border-(--gmp-novel-accent) bg-(--gmp-novel-accent-soft) text-(--gmp-novel-accent)'
+                  : 'border-(--gmp-novel-line) bg-(--gmp-novel-surface) text-(--gmp-novel-text-muted) hover:border-(--gmp-novel-line-strong) hover:text-(--gmp-novel-text)',
+              ].join(' ')}
+            >
+              {showCodeLineNumbers ? '隐藏行号' : '显示行号'}
+            </button>
             <span className="inline-flex h-8 items-center border border-(--gmp-novel-line) bg-(--gmp-novel-surface) px-3 font-mono text-[10px] tracking-widest text-(--gmp-novel-text-muted)">
               {resolveSaveStatusLabel(saveStatus)}
-            </span>
-            <span className="inline-flex h-8 items-center border border-(--gmp-novel-line) bg-(--gmp-novel-surface) px-3 font-mono text-[10px] tracking-widest text-(--gmp-novel-text-muted)">
-              {wordCount} 词
             </span>
           </div>
         </div>
       </div>
 
-      <EditorRoot>
-        <EditorContent
-          initialContent={initialContent}
-          extensions={extensions as never[]}
-          className="relative min-h-96 w-full max-w-screen-lg border border-(--gmp-novel-line-strong) bg-(--gmp-novel-surface)"
-          editorProps={{
-            handlePaste: (view, event) => {
-              if (tryConvertPastedUrlToEmbedCard(view, event)) {
-                return true;
-              }
-              return handleImagePaste(view, event, uploadFn);
-            },
-            handleDrop: (view, event, _slice, moved) => handleImageDrop(view, event, moved, uploadFn),
-            /**
-             * 功能：仅在 Slash 菜单可见时接管方向键/回车导航，避免 Enter 被编辑器当作普通换行。
-             * 关键参数：event 为当前键盘事件。
-             * 返回值/副作用：返回是否消费快捷键；无副作用。
-             */
-            handleKeyDown: (_view, event) => {
-              if (!document.querySelector('#slash-command')) {
-                return false;
-              }
-              return Boolean(handleCommandNavigation(event));
-            },
-            attributes: {
-              class: 'gmp-novel-editor max-w-full px-4 py-8 text-(--gmp-novel-text) focus:outline-none md:px-8',
-            },
-          }}
-          onUpdate={({ editor }) => {
-            setSaveStatus('Unsaved');
-            persistLocalContent(editor);
-          }}
-          slotAfter={<ImageResizer />}
-        >
-          <EditorCommand
-            loop
-            className="z-50 h-auto w-full max-w-xl overflow-hidden border border-(--gmp-novel-line-strong) bg-(--gmp-novel-toolbar) p-2 shadow-[4px_4px_0_0_rgba(0,0,0,0.35)] gmp-cut-corner-br transition-all"
+      <div ref={editorHostRef}>
+        <EditorRoot>
+          <EditorContent
+            initialContent={initialContent}
+            extensions={extensions as never[]}
+            className="relative min-h-96 w-full max-w-screen-lg border border-(--gmp-novel-line-strong) bg-(--gmp-novel-surface)"
+            editorProps={{
+              handlePaste: (view, event) => handleEditorPaste(view, event),
+              handleDrop: (view, event, _slice, moved) => handleImageDrop(view, event, moved, uploadFn),
+              /**
+               * 功能：仅在 Slash 菜单可见时接管方向键/回车导航，避免 Enter 被编辑器当作普通换行。
+               * 关键参数：event 为当前键盘事件。
+               * 返回值/副作用：返回是否消费快捷键；无副作用。
+               */
+              handleKeyDown: (_view, event) => {
+                if (!document.querySelector('#slash-command')) {
+                  return false;
+                }
+                return Boolean(handleCommandNavigation(event));
+              },
+              attributes: {
+                class: [
+                  'gmp-novel-editor max-w-full px-4 py-8 text-(--gmp-novel-text) focus:outline-none md:px-8',
+                  showCodeLineNumbers ? 'gmp-code-lines-enabled' : '',
+                ].join(' '),
+              },
+            }}
+            onUpdate={({ editor }) => {
+              setSaveStatus('Unsaved');
+              persistLocalContent(editor);
+              applyCodeLineNumberAttributes(editorHostRef.current, showCodeLineNumbers);
+            }}
+            slotAfter={<ImageResizer />}
           >
-            <EditorCommandEmpty className="px-2 py-1 text-sm text-(--gmp-novel-text-muted)">未匹配到命令</EditorCommandEmpty>
-            <EditorCommandList className="gmp-editor-command-scroll max-h-84 overflow-y-auto pr-1">
-              {suggestionItems.map((item) => (
-                <EditorCommandItem
-                  key={item.title}
-                  value={item.title}
-                  onCommand={(value) => {
-                    item.command?.(value);
-                  }}
-                  className="flex w-full items-center gap-3 border border-transparent px-2 py-2 text-left text-sm aria-selected:border-(--gmp-novel-line-strong) aria-selected:bg-(--gmp-novel-toolbar-hover) hover:border-(--gmp-novel-line) hover:bg-(--gmp-novel-toolbar-hover)"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center border border-(--gmp-novel-line) bg-(--gmp-novel-surface) text-(--gmp-novel-text-muted)">
-                    {item.icon}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-(--gmp-novel-text)">{item.title}</p>
-                    <p className="text-xs text-(--gmp-novel-text-muted)">{item.description}</p>
-                  </div>
-                </EditorCommandItem>
-              ))}
-            </EditorCommandList>
-          </EditorCommand>
+            <EditorCommand
+              loop
+              className="z-50 h-auto w-full max-w-xl overflow-hidden border border-(--gmp-novel-line-strong) bg-(--gmp-novel-toolbar) p-2 shadow-[4px_4px_0_0_rgba(0,0,0,0.35)] gmp-cut-corner-br transition-all"
+            >
+              <EditorCommandEmpty className="px-2 py-1 text-sm text-(--gmp-novel-text-muted)">未匹配到命令</EditorCommandEmpty>
+              <EditorCommandList className="gmp-editor-command-scroll max-h-84 overflow-y-auto pr-1">
+                {suggestionItems.map((item) => (
+                  <EditorCommandItem
+                    key={item.title}
+                    value={item.title}
+                    onCommand={(value) => {
+                      item.command?.(value);
+                    }}
+                    className="flex w-full items-center gap-3 border border-transparent px-2 py-2 text-left text-sm aria-selected:border-(--gmp-novel-line-strong) aria-selected:bg-(--gmp-novel-toolbar-hover) hover:border-(--gmp-novel-line) hover:bg-(--gmp-novel-toolbar-hover)"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center border border-(--gmp-novel-line) bg-(--gmp-novel-surface) text-(--gmp-novel-text-muted)">
+                      {item.icon}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-(--gmp-novel-text)">{item.title}</p>
+                      <p className="text-xs text-(--gmp-novel-text-muted)">{item.description}</p>
+                    </div>
+                  </EditorCommandItem>
+                ))}
+              </EditorCommandList>
+            </EditorCommand>
 
-          <EditorBubble
-            tippyOptions={{ placement: 'top' }}
-            className="flex items-center gap-1 border border-(--gmp-novel-line-strong) bg-(--gmp-novel-toolbar) p-1 shadow-[4px_4px_0_0_rgba(0,0,0,0.35)]"
-          >
-            {bubbleActions.map((item) => (
-              <BubbleActionButton key={item.id} item={item} />
-            ))}
-          </EditorBubble>
-        </EditorContent>
-      </EditorRoot>
+            <EditorBubble
+              tippyOptions={{ placement: 'top' }}
+              className="flex items-center gap-1 border border-(--gmp-novel-line-strong) bg-(--gmp-novel-toolbar) p-1 shadow-[4px_4px_0_0_rgba(0,0,0,0.35)]"
+            >
+              {bubbleActions.map((item) => (
+                <BubbleActionButton key={item.id} item={item} />
+              ))}
+            </EditorBubble>
+          </EditorContent>
+        </EditorRoot>
+      </div>
     </div>
   );
 }

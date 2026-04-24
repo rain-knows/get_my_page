@@ -28,7 +28,7 @@ public class FileController {
      * 关键参数：file 为上传文件；postId 为文章 ID（可选，缺省走兼容值 0）。
      * 返回值/副作用：返回上传结果；副作用为写入对象存储。
      */
-    @Operation(summary = "上传文件", description = "上传图片到对象存储")
+    @Operation(summary = "上传文件", description = "上传文章资源文件到对象存储")
     @PostMapping("/upload")
     public ApiResponse<FileUploadResponse> upload(
             @RequestParam("file") MultipartFile file,

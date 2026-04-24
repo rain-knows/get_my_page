@@ -1,7 +1,11 @@
 "use client";
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { EditorContent, EditorRoot } from 'novel';
+import {
+  applyCodeLineNumberAttributes,
+  readCodeLineNumbersPreference,
+} from '@/features/post/editor/novel-demo/code-line-numbers';
 import { buildNovelRendererExtensions, parsePostContentToNovelDoc } from '@/features/post/editor/novel-demo';
 import type { PostContentFormat } from '@/features/post/types';
 
@@ -16,8 +20,19 @@ interface PostContentRendererProps {
  * 返回值/副作用：返回阅读态编辑器节点；无副作用。
  */
 export function PostContentRenderer({ content, contentFormat }: PostContentRendererProps) {
+  const rendererHostRef = useRef<HTMLDivElement | null>(null);
   const document = useMemo(() => parsePostContentToNovelDoc(content, contentFormat), [content, contentFormat]);
   const extensions = useMemo(() => buildNovelRendererExtensions(), []);
+  const [showCodeLineNumbers] = useState<boolean>(() => readCodeLineNumbersPreference());
+
+  useEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      applyCodeLineNumberAttributes(rendererHostRef.current, showCodeLineNumbers);
+    });
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [document, showCodeLineNumbers]);
 
   if (contentFormat !== 'tiptap-json') {
     return (
@@ -28,19 +43,23 @@ export function PostContentRenderer({ content, contentFormat }: PostContentRende
   }
 
   return (
-    <EditorRoot>
-      <EditorContent
-        immediatelyRender={false}
-        editable={false}
-        initialContent={document}
-        extensions={extensions as never[]}
-        editorProps={{
-          attributes: {
-            class:
-              'gmp-novel-editor gmp-novel-view min-h-24 border border-(--gmp-novel-line-strong) bg-(--gmp-novel-surface) px-4 py-6 text-(--gmp-novel-text) gmp-cut-corner-br focus:outline-none md:px-6',
-          },
-        }}
-      />
-    </EditorRoot>
+    <div ref={rendererHostRef}>
+      <EditorRoot>
+        <EditorContent
+          immediatelyRender={false}
+          editable={false}
+          initialContent={document}
+          extensions={extensions as never[]}
+          editorProps={{
+            attributes: {
+              class: [
+                'gmp-novel-editor gmp-novel-view min-h-24 border border-(--gmp-novel-line-strong) bg-(--gmp-novel-surface) px-4 py-6 text-(--gmp-novel-text) gmp-cut-corner-br focus:outline-none md:px-6',
+                showCodeLineNumbers ? 'gmp-code-lines-enabled' : '',
+              ].join(' '),
+            },
+          }}
+        />
+      </EditorRoot>
+    </div>
   );
 }

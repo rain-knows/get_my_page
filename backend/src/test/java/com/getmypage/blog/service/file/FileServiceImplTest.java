@@ -55,18 +55,24 @@ class FileServiceImplTest {
     }
 
     /**
-     * 功能：验证不支持的 MIME 类型会被拒绝并返回参数错误码。
-     * 关键参数：无（测试内部构造 PDF 文件）。
-     * 返回值/副作用：无返回值；断言抛出 BAD_REQUEST 异常。
+     * 功能：验证通用文件（如 PDF）可上传并按原始 MIME 传递到对象存储。
+     * 关键参数：无（测试内部构造 PDF 文件与 mock 行为）。
+     * 返回值/副作用：无返回值；断言上传调用使用 `application/pdf`。
      */
     @Test
-    void uploadArticleAssetShouldRejectUnsupportedFileType() {
+    void uploadArticleAssetShouldAllowPdfUpload() {
         mockAuthenticatedUser();
         MockMultipartFile file = new MockMultipartFile("file", "manual.pdf", "application/pdf", new byte[]{1, 2});
+        when(storageClient.generateArticleObjectKey(1L, "manual.pdf"))
+                .thenReturn("/articles/2026/04/1/manual.pdf");
+        when(storageClient.upload(eq("/articles/2026/04/1/manual.pdf"), any(byte[].class), eq("application/pdf")))
+                .thenReturn("http://localhost:9000/blog-assets/articles/2026/04/1/manual.pdf");
 
-        BizException exception = assertThrows(BizException.class, () -> fileService.uploadArticleAsset(file, 1L));
+        FileUploadResponse response = fileService.uploadArticleAsset(file, 1L);
 
-        assertEquals(ErrorCode.BAD_REQUEST, exception.getErrorCode());
+        assertEquals("/articles/2026/04/1/manual.pdf", response.getKey());
+        assertEquals("http://localhost:9000/blog-assets/articles/2026/04/1/manual.pdf", response.getUrl());
+        verify(storageClient).upload(eq("/articles/2026/04/1/manual.pdf"), any(byte[].class), eq("application/pdf"));
     }
 
     /**

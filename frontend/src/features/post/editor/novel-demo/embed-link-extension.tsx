@@ -2,12 +2,25 @@
 
 import { mergeAttributes, Node } from '@tiptap/core';
 import { NodeViewWrapper, ReactNodeViewRenderer, type NodeViewProps } from '@tiptap/react';
-import { ChevronDown, Clapperboard, Globe, Link2, LoaderCircle, Music2, RefreshCw, Upload } from 'lucide-react';
+import {
+  ChevronDown,
+  Clapperboard,
+  Copy,
+  ExternalLink,
+  Globe,
+  Link2,
+  LoaderCircle,
+  MoreHorizontal,
+  Music2,
+  RefreshCw,
+  Upload,
+} from 'lucide-react';
 import { type MutableRefObject, useRef, useState } from 'react';
 import {
   createEmbedId,
   createEmptyEmbedAttrs,
   createPendingEmbedAttrs,
+  createUploadedFileEmbedAttrs,
   createUploadedImageEmbedAttrs,
   normalizeEmbedUrl,
   resolveAndHydrateEmbedCard,
@@ -34,6 +47,10 @@ interface EmbedLinkModePanelProps {
   onInputChange: (nextValue: string) => void;
   onSubmitResolve: () => Promise<void>;
   onUploadChange: (file: File) => Promise<void>;
+}
+
+interface EmbedLinkHoverActionsProps {
+  displayUrl: string;
 }
 
 /**
@@ -69,7 +86,7 @@ function resolveCardRenderVariant(attrs: Partial<EmbedLinkAttrs>): CardRenderVar
  * 返回值/副作用：返回面板模式 `link` 或 `upload`；无副作用。
  */
 function resolvePanelMode(attrs: Partial<EmbedLinkAttrs>): CardPanelMode {
-  if (attrs.uploadKind === 'image' || attrs.provider === 'upload' || attrs.cardType === 'image') {
+  if (attrs.uploadKind === 'image' || attrs.uploadKind === 'file' || attrs.provider === 'upload' || attrs.cardType === 'image') {
     return 'upload';
   }
   return 'link';
@@ -87,7 +104,7 @@ function resolvePanelExpanded(attrs: Partial<EmbedLinkAttrs>): boolean {
   if (Boolean(attrs.url) || Boolean(attrs.normalizedUrl)) {
     return true;
   }
-  if (attrs.uploadKind === 'image' || attrs.provider === 'upload') {
+  if (attrs.uploadKind === 'image' || attrs.uploadKind === 'file' || attrs.provider === 'upload') {
     return true;
   }
   return false;
@@ -186,6 +203,70 @@ function parseSnapshotAttribute(rawValue: string | null): Record<string, unknown
 }
 
 /**
+ * 功能：判断当前卡片是否采用“仅悬浮操作”的媒体模板（B站视频/网易云音乐）。
+ * 关键参数：variant 为当前卡片渲染模板。
+ * 返回值/副作用：返回是否启用右上角悬浮操作层；无副作用。
+ */
+function supportsReadonlyHoverActions(variant: CardRenderVariant): boolean {
+  return variant === 'netease-music' || variant === 'bilibili-video';
+}
+
+/**
+ * 功能：在浏览器可用时复制链接到剪贴板，失败时静默降级，避免打断编辑流程。
+ * 关键参数：text 为待复制文本。
+ * 返回值/副作用：返回 Promise<void>；副作用为尝试写入系统剪贴板。
+ */
+async function copyToClipboardIfPossible(text: string): Promise<void> {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  if (!text.trim() || !navigator.clipboard?.writeText) {
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    // ignore clipboard write failure for compatibility with restricted contexts.
+  }
+}
+
+/**
+ * 功能：渲染媒体卡片右上角悬浮操作层，提供打开链接/复制链接/更多占位操作。
+ * 关键参数：displayUrl 为当前卡片链接地址。
+ * 返回值/副作用：返回悬浮操作节点；副作用为触发复制操作。
+ */
+function EmbedLinkHoverActions({ displayUrl }: EmbedLinkHoverActionsProps) {
+  return (
+    <div className="gmp-embed-link-hover-actions" role="toolbar" aria-label="媒体卡片快捷操作">
+      <a
+        href={displayUrl || '#'}
+        target="_blank"
+        rel="noreferrer noopener"
+        className="gmp-embed-link-hover-action"
+        aria-label="打开链接"
+        title="打开链接"
+      >
+        <ExternalLink className="h-4 w-4" />
+      </a>
+      <button
+        type="button"
+        className="gmp-embed-link-hover-action"
+        onClick={() => {
+          void copyToClipboardIfPossible(displayUrl);
+        }}
+        aria-label="复制链接"
+        title="复制链接"
+      >
+        <Copy className="h-4 w-4" />
+      </button>
+      <button type="button" className="gmp-embed-link-hover-action" aria-label="更多选项" title="更多选项">
+        <MoreHorizontal className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+/**
  * 功能：渲染可折叠的输入面板组件，点击卡片后再显示链接解析与上传图片信息。
  * 关键参数：props 包含当前面板模式、展开状态、输入值与交互回调。
  * 返回值/副作用：返回面板节点；副作用为触发回调更新节点 attrs。
@@ -209,8 +290,8 @@ function EmbedLinkModePanel({
           <Globe className="h-4 w-4" />
         </span>
         <span className="gmp-embed-link-trigger-copy">
-          <strong>嵌入任何内容</strong>
-          <small>PDF、Google 文档、地图、音乐、视频链接等</small>
+          <strong>导入链接或上传并转换</strong>
+          <small>支持链接解析与文件上传后自动转卡片</small>
         </span>
         <ChevronDown className="h-4 w-4 gmp-embed-link-trigger-chevron" data-expanded={isExpanded ? 'true' : 'false'} />
       </button>
@@ -277,7 +358,7 @@ function EmbedLinkModePanel({
               <input
                 ref={uploadInputRef}
                 type="file"
-                accept="image/*"
+                accept="*/*"
                 className="hidden"
                 onChange={(event) => {
                   const selectedFile = event.target.files?.item(0);
@@ -294,13 +375,13 @@ function EmbedLinkModePanel({
                 onClick={() => {
                   uploadInputRef.current?.click();
                 }}
-                aria-label="选择图片上传"
+                aria-label="选择文件上传"
               >
                 {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                <span>{pending ? '上传中...' : '选择图片并生成卡片'}</span>
+                <span>{pending ? '上传中...' : '选择文件并转换卡片'}</span>
               </button>
-              <p className="gmp-embed-link-upload-hint">支持 `JPEG / PNG / WebP / GIF / AVIF / HEIC / HEIF`，单文件不超过 `8MB`。</p>
-              <p className="gmp-embed-link-upload-hint">PDF 上传能力仅保留代码结构，本次界面不开放入口。</p>
+              <p className="gmp-embed-link-upload-hint">图片将转换为预览卡片，其他文件将转换为通用文件卡片。</p>
+              <p className="gmp-embed-link-upload-hint">图片单文件不超过 `8MB`，其他文件单文件不超过 `20MB`。</p>
             </div>
           )}
         </div>
@@ -310,7 +391,7 @@ function EmbedLinkModePanel({
 }
 
 /**
- * 功能：渲染 embedLink 节点视图，支持输入链接、上传图片与平台专用卡片展示。
+ * 功能：渲染 embedLink 节点视图，支持输入链接、上传文件与平台专用卡片展示。
  * 关键参数：props 为 Tiptap NodeView 参数（含 node/editor/updateAttributes）。
  * 返回值/副作用：返回链接卡片节点；副作用为触发节点 attrs 更新与元数据请求。
  */
@@ -351,19 +432,20 @@ function EmbedLinkCardView({ node, editor, updateAttributes }: NodeViewProps) {
   };
 
   /**
-   * 功能：在上传模式中处理图片上传并直接生成卡片节点，失败时输出可定位错误。
-   * 关键参数：file 为本地待上传图片文件。
+   * 功能：在上传模式中处理文件上传并直接生成卡片节点，图片与通用文件分别走对应卡片形态。
+   * 关键参数：file 为本地待上传文件。
    * 返回值/副作用：返回 Promise<void>；副作用为调用上传接口并更新卡片 attrs。
    */
-  const submitImageUpload = async (file: File): Promise<void> => {
+  const submitAssetUpload = async (file: File): Promise<void> => {
     const existingEmbedId = typeof attrs.embedId === 'string' && attrs.embedId ? attrs.embedId : createEmbedId();
+    const uploadKind = file.type.startsWith('image/') ? 'image' : 'file';
     updateAttributes({
       ...createEmptyEmbedAttrs(existingEmbedId),
-      cardType: 'image',
-      mediaType: 'image',
+      cardType: uploadKind === 'image' ? 'image' : 'file',
+      mediaType: uploadKind === 'image' ? 'image' : 'file',
       provider: 'upload',
-      uploadKind: 'image',
-      title: file.name || '上传图片卡片',
+      uploadKind,
+      title: file.name || (uploadKind === 'image' ? '上传图片卡片' : '上传文件卡片'),
       pending: true,
       resolved: false,
       error: '',
@@ -371,29 +453,37 @@ function EmbedLinkCardView({ node, editor, updateAttributes }: NodeViewProps) {
         fileName: file.name || '',
         fileSize: file.size,
         mimeType: file.type || '',
-        mediaType: 'image',
+        mediaType: uploadKind === 'image' ? 'image' : 'file',
         provider: 'upload',
       },
     });
 
     try {
-      const uploaded = await uploadAssetFile(file, 'image');
+      const uploaded = await uploadAssetFile(file, uploadKind);
       updateAttributes(
-        createUploadedImageEmbedAttrs(uploaded.url, {
-          embedId: existingEmbedId,
-          fileName: uploaded.fileName,
-          fileSize: uploaded.fileSize,
-          mimeType: uploaded.mimeType,
-        }),
+        uploadKind === 'image'
+          ? createUploadedImageEmbedAttrs(uploaded.url, {
+              embedId: existingEmbedId,
+              fileName: uploaded.fileName,
+              fileSize: uploaded.fileSize,
+              mimeType: uploaded.mimeType,
+            })
+          : createUploadedFileEmbedAttrs(uploaded.url, {
+              embedId: existingEmbedId,
+              fileName: uploaded.fileName,
+              fileSize: uploaded.fileSize,
+              mimeType: uploaded.mimeType,
+            }),
       );
+      setIsPanelExpanded(false);
     } catch (error) {
       updateAttributes({
         ...createEmptyEmbedAttrs(existingEmbedId),
-        cardType: 'image',
-        mediaType: 'image',
+        cardType: uploadKind === 'image' ? 'image' : 'file',
+        mediaType: uploadKind === 'image' ? 'image' : 'file',
         provider: 'upload',
-        uploadKind: 'image',
-        title: file.name || '上传图片卡片',
+        uploadKind,
+        title: file.name || (uploadKind === 'image' ? '上传图片卡片' : '上传文件卡片'),
         pending: false,
         resolved: false,
         error: resolveUploadErrorMessage(error),
@@ -401,21 +491,24 @@ function EmbedLinkCardView({ node, editor, updateAttributes }: NodeViewProps) {
           fileName: file.name || '',
           fileSize: file.size,
           mimeType: file.type || '',
-          mediaType: 'image',
+          mediaType: uploadKind === 'image' ? 'image' : 'file',
           provider: 'upload',
         },
       });
     }
   };
 
-  const showInputPanel = editor.isEditable;
   const displayUrl = attrs.normalizedUrl || attrs.url || '';
   const cardVariant = resolveCardRenderVariant(attrs);
   const artist = resolveNeteaseArtist(attrs);
   const bilibiliVideoId = resolveBilibiliVideoId(attrs);
+  const supportsHoverActions = supportsReadonlyHoverActions(cardVariant);
+  const shouldLockResolvedMediaCard = supportsHoverActions && Boolean(attrs.resolved) && !attrs.pending && !attrs.error;
+  const shouldHidePanelAfterResolvedUpload = attrs.provider === 'upload' && Boolean(attrs.resolved) && !attrs.pending && !attrs.error;
   const activePanelMode = resolvePanelMode(attrs) === 'upload' ? 'upload' : panelMode;
   const activeExpandedState = isPanelExpanded || Boolean(attrs.pending) || Boolean(attrs.error);
   const shouldRenderBody = Boolean(attrs.pending || attrs.error || attrs.resolved || displayUrl || attrs.coverUrl);
+  const showInputPanel = editor.isEditable && !shouldLockResolvedMediaCard && !shouldHidePanelAfterResolvedUpload;
 
   return (
     <NodeViewWrapper className="gmp-embed-link-card not-prose">
@@ -441,12 +534,18 @@ function EmbedLinkCardView({ node, editor, updateAttributes }: NodeViewProps) {
               });
             }}
             onSubmitResolve={submitResolve}
-            onUploadChange={submitImageUpload}
+            onUploadChange={submitAssetUpload}
           />
         ) : null}
 
         {shouldRenderBody ? (
-          <div className="gmp-embed-link-body" data-pending={attrs.pending ? 'true' : 'false'}>
+          <div
+            className="gmp-embed-link-body"
+            data-pending={attrs.pending ? 'true' : 'false'}
+            data-variant={cardVariant}
+            data-hover-actions={supportsHoverActions ? 'true' : 'false'}
+          >
+            {supportsHoverActions && displayUrl ? <EmbedLinkHoverActions displayUrl={displayUrl} /> : null}
             <div className="gmp-embed-link-body-text">
               {cardVariant === 'netease-music' ? (
                 <>
@@ -480,7 +579,9 @@ function EmbedLinkCardView({ node, editor, updateAttributes }: NodeViewProps) {
                   <span>{displayUrl}</span>
                 </a>
               ) : (
-                <p className="gmp-embed-link-hint">点击上方卡片展开后，可继续编辑链接或切换到上传模式。</p>
+                <p className="gmp-embed-link-hint">
+                  {supportsHoverActions ? '悬浮卡片右上角可查看快捷操作。' : '点击上方卡片展开后，可继续编辑链接或切换到上传模式。'}
+                </p>
               )}
             </div>
 

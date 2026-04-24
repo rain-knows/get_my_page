@@ -10,17 +10,94 @@ interface BackendApiResponse {
   };
 }
 
-type UploadProxyErrorType = 'auth_failed' | 'unsupported_type' | 'backend_response_error' | 'invalid_response';
+type UploadProxyErrorType =
+  | 'auth_failed'
+  | 'unsupported_type'
+  | 'backend_response_error'
+  | 'invalid_response'
+  | 'network_error';
+
+interface BackendUploadAttemptResult {
+  response: Response;
+  payload: BackendApiResponse | null;
+  rawText: string;
+  backendUploadUrl: string;
+}
 
 /**
- * 功能：解析后端上传接口地址，优先使用 NEXT_PUBLIC_API_URL 并兼容缺省本地开发地址。
- * 关键参数：无。
+ * 功能：标准化后端 API 基地址，兼容绝对地址和以 `/` 开头的相对地址。
+ * 关键参数：inputBaseUrl 为原始配置地址；requestOrigin 为当前请求源地址。
+ * 返回值/副作用：返回可用于构造 URL 的规范化基址；无副作用。
+ */
+function normalizeApiBaseUrl(inputBaseUrl: string, requestOrigin: string): string {
+  const normalizedInput = inputBaseUrl.trim();
+  if (!normalizedInput) {
+    return '';
+  }
+
+  if (/^https?:\/\//i.test(normalizedInput)) {
+    return normalizedInput.replace(/\/+$/, '');
+  }
+
+  if (normalizedInput.startsWith('/')) {
+    return new URL(normalizedInput, requestOrigin).toString().replace(/\/+$/, '');
+  }
+
+  return '';
+}
+
+/**
+ * 功能：生成上传代理可尝试的后端 API 基地址列表，兼容容器内访问与本地直连场景。
+ * 关键参数：requestOrigin 为当前请求源，用于解析相对 API 地址。
+ * 返回值/副作用：返回去重后的候选 API 基址数组；无副作用。
+ */
+function resolveBackendApiBaseCandidates(requestOrigin: string): string[] {
+  const configuredInternalBaseUrl = (process.env.BACKEND_INTERNAL_API_URL ?? process.env.INTERNAL_API_URL ?? '').trim();
+  const configuredPublicBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? '').trim();
+  const normalizedPublicBase = normalizeApiBaseUrl(configuredPublicBaseUrl, requestOrigin);
+
+  const candidates = [
+    normalizeApiBaseUrl(configuredInternalBaseUrl, requestOrigin),
+    normalizedPublicBase,
+  ];
+
+  try {
+    if (normalizedPublicBase) {
+      const parsedPublicBase = new URL(normalizedPublicBase);
+      const isLoopbackHost =
+        parsedPublicBase.hostname === 'localhost' ||
+        parsedPublicBase.hostname === '127.0.0.1' ||
+        parsedPublicBase.hostname === '0.0.0.0';
+
+      if (isLoopbackHost) {
+        const normalizedPath = parsedPublicBase.pathname.replace(/\/+$/, '') || '/api';
+        candidates.push(`${parsedPublicBase.protocol}//backend:8080${normalizedPath}`);
+      }
+    }
+  } catch {
+    // ignore malformed configured base URL and fallback to defaults below.
+  }
+
+  candidates.push('http://backend:8080/api', 'http://localhost:8080/api');
+
+  const deduplicated = new Set<string>();
+  candidates.forEach((baseUrl) => {
+    const normalizedBase = baseUrl.trim().replace(/\/+$/, '');
+    if (normalizedBase) {
+      deduplicated.add(normalizedBase);
+    }
+  });
+
+  return Array.from(deduplicated);
+}
+
+/**
+ * 功能：由后端 API 基地址构造文件上传接口地址。
+ * 关键参数：apiBaseUrl 为后端 API 基地址（例如 `http://backend:8080/api`）。
  * 返回值/副作用：返回后端上传 URL；无副作用。
  */
-function resolveBackendUploadUrl(): URL {
-  const configuredBaseUrl = (process.env.NEXT_PUBLIC_API_URL ?? '').trim();
-  const normalizedBaseUrl = configuredBaseUrl || 'http://localhost:8080/api';
-  return new URL('files/upload', `${normalizedBaseUrl.replace(/\/+$/, '')}/`);
+function buildBackendUploadUrl(apiBaseUrl: string): URL {
+  return new URL('files/upload', `${apiBaseUrl.replace(/\/+$/, '')}/`);
 }
 
 /**
@@ -106,6 +183,9 @@ function resolveProxyErrorMessage(errorType: UploadProxyErrorType, backendMessag
   if (errorType === 'invalid_response') {
     return '上传失败：后端返回数据异常，未提供可用文件地址。';
   }
+  if (errorType === 'network_error') {
+    return '上传失败：上传代理无法连接后端服务，请检查后端或容器网络。';
+  }
   return backendMessage || '上传失败：后端服务响应异常，请稍后重试。';
 }
 
@@ -119,6 +199,7 @@ function buildUploadErrorResponse(
   errorType: UploadProxyErrorType,
   backendPayload: BackendApiResponse | null,
   backendRaw: string,
+  backendTarget?: string,
 ): Response {
   const backendMessage = backendPayload?.message?.trim() || backendRaw.trim();
   return NextResponse.json(
@@ -128,9 +209,34 @@ function buildUploadErrorResponse(
       backendStatus: status,
       backendCode: typeof backendPayload?.code === 'number' ? backendPayload.code : undefined,
       backendMessage: backendMessage || undefined,
+      backendTarget,
     },
     { status },
   );
+}
+
+/**
+ * 功能：尝试向单个后端地址转发上传请求并返回解析后的响应体，统一封装网络异常。
+ * 关键参数：backendUploadUrl 为后端上传接口地址；headers 为透传请求头；formData 为上传表单。
+ * 返回值/副作用：返回后端响应快照；副作用为触发网络请求。
+ */
+async function requestBackendUpload(
+  backendUploadUrl: URL,
+  headers: HeadersInit,
+  formData: FormData,
+): Promise<BackendUploadAttemptResult> {
+  const response = await fetch(backendUploadUrl.toString(), {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+  const { payload, rawText } = await parseBackendResponse(response);
+  return {
+    response,
+    payload,
+    rawText,
+    backendUploadUrl: backendUploadUrl.toString(),
+  };
 }
 
 /**
@@ -144,7 +250,8 @@ export async function POST(req: Request): Promise<Response> {
     const requestedName = req.headers.get('x-vercel-filename') || 'image';
     const filename = resolveFilename(requestedName, contentType);
     const fileBuffer = await req.arrayBuffer();
-    const uploadUrl = resolveBackendUploadUrl();
+    const requestOrigin = new URL(req.url).origin;
+    const backendApiCandidates = resolveBackendApiBaseCandidates(requestOrigin);
     const authorization = resolveAuthorizationHeader(req);
 
     const formData = new FormData();
@@ -155,24 +262,60 @@ export async function POST(req: Request): Promise<Response> {
       headers.authorization = authorization;
     }
 
-    const response = await fetch(uploadUrl.toString(), {
-      method: 'POST',
-      headers,
-      body: formData,
-    });
+    let lastNetworkError = '';
+    let lastAttempt: BackendUploadAttemptResult | null = null;
 
-    const { payload, rawText } = await parseBackendResponse(response);
-    if (!response.ok) {
-      const errorType = resolveErrorType(response.status, payload?.message?.trim() || rawText.trim());
-      return buildUploadErrorResponse(response.status, errorType, payload, rawText);
+    for (const apiBaseUrl of backendApiCandidates) {
+      const backendUploadUrl = buildBackendUploadUrl(apiBaseUrl);
+      try {
+        const attempt = await requestBackendUpload(backendUploadUrl, headers, formData);
+        lastAttempt = attempt;
+
+        if (!attempt.response.ok) {
+          if (attempt.response.status === 404 || attempt.response.status === 405) {
+            continue;
+          }
+          const errorType = resolveErrorType(
+            attempt.response.status,
+            attempt.payload?.message?.trim() || attempt.rawText.trim(),
+          );
+          return buildUploadErrorResponse(
+            attempt.response.status,
+            errorType,
+            attempt.payload,
+            attempt.rawText,
+            attempt.backendUploadUrl,
+          );
+        }
+
+        const uploadedUrl = attempt.payload?.data?.url;
+        if (!attempt.payload || attempt.payload.code !== 200 || !uploadedUrl) {
+          continue;
+        }
+
+        return NextResponse.json({ url: uploadedUrl });
+      } catch (error) {
+        if (error instanceof Error) {
+          lastNetworkError = error.message;
+        } else {
+          lastNetworkError = '';
+        }
+      }
     }
 
-    const uploadedUrl = payload?.data?.url;
-    if (!payload || payload.code !== 200 || !uploadedUrl) {
-      return buildUploadErrorResponse(502, 'invalid_response', payload, rawText);
+    if (lastAttempt) {
+      return buildUploadErrorResponse(502, 'invalid_response', lastAttempt.payload, lastAttempt.rawText, lastAttempt.backendUploadUrl);
     }
 
-    return NextResponse.json({ url: uploadedUrl });
+    return NextResponse.json(
+      {
+        errorType: 'network_error',
+        message: lastNetworkError
+          ? `上传失败：上传代理无法连接后端服务（${lastNetworkError}）。`
+          : '上传失败：上传代理无法连接后端服务，请稍后重试。',
+      },
+      { status: 502 },
+    );
   } catch {
     return NextResponse.json(
       {

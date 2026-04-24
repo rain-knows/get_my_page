@@ -10,8 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Set;
-
 /**
  * 文件服务实现。
  */
@@ -19,17 +17,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class FileServiceImpl implements FileService {
 
-    private static final long MAX_FILE_SIZE_BYTES = 8 * 1024 * 1024;
-    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
-            "image/jpeg",
-            "image/jpg",
-            "image/png",
-            "image/webp",
-            "image/gif",
-            "image/avif",
-            "image/heic",
-            "image/heif"
-    );
+    private static final long MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
 
     private final StorageClient storageClient;
     private final SecurityUtils securityUtils;
@@ -78,17 +66,13 @@ public class FileServiceImpl implements FileService {
             throw new BizException(ErrorCode.BAD_REQUEST, "上传文件不能为空");
         }
         if (file.getSize() > MAX_FILE_SIZE_BYTES) {
-            throw new BizException(ErrorCode.BAD_REQUEST, "文件大小不能超过 8MB");
+            throw new BizException(ErrorCode.BAD_REQUEST, "文件大小不能超过 20MB");
         }
-        String contentType = normalizeContentType(file.getContentType(), file.getOriginalFilename());
-        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
-            throw new BizException(ErrorCode.BAD_REQUEST, "不支持的文件类型");
-        }
-        return contentType;
+        return normalizeContentType(file.getContentType(), file.getOriginalFilename());
     }
 
     /**
-     * 功能：归一化上传文件 MIME，优先使用请求头类型，缺失时按文件后缀推断常见图片类型。
+     * 功能：归一化上传文件 MIME，优先使用请求头类型，缺失时按文件后缀推断常见类型并兜底为 octet-stream。
      * 关键参数：contentType 为请求头 MIME；filename 为原始文件名。
      * 返回值/副作用：返回归一化 MIME 字符串；无副作用。
      */
@@ -105,16 +89,16 @@ public class FileServiceImpl implements FileService {
             }
             if ("application/octet-stream".equals(normalizedContentType)
                     || "binary/octet-stream".equals(normalizedContentType)) {
-                return extensionBased;
+                return extensionBased != null ? extensionBased : "application/octet-stream";
             }
             return normalizedContentType;
         }
 
-        return extensionBased;
+        return extensionBased != null ? extensionBased : "application/octet-stream";
     }
 
     /**
-     * 功能：按文件后缀推断图片 MIME 类型，作为请求头缺失或通用流类型时的兜底。
+     * 功能：按文件后缀推断常见 MIME 类型，作为请求头缺失或通用流类型时的兜底。
      * 关键参数：filename 为上传文件原始名称。
      * 返回值/副作用：返回推断的 MIME；无法识别时返回 null。
      */
@@ -143,6 +127,66 @@ public class FileServiceImpl implements FileService {
         }
         if (lowerName.endsWith(".heif")) {
             return "image/heif";
+        }
+        if (lowerName.endsWith(".pdf")) {
+            return "application/pdf";
+        }
+        if (lowerName.endsWith(".txt")) {
+            return "text/plain";
+        }
+        if (lowerName.endsWith(".md")) {
+            return "text/markdown";
+        }
+        if (lowerName.endsWith(".json")) {
+            return "application/json";
+        }
+        if (lowerName.endsWith(".csv")) {
+            return "text/csv";
+        }
+        if (lowerName.endsWith(".doc")) {
+            return "application/msword";
+        }
+        if (lowerName.endsWith(".docx")) {
+            return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        }
+        if (lowerName.endsWith(".xls")) {
+            return "application/vnd.ms-excel";
+        }
+        if (lowerName.endsWith(".xlsx")) {
+            return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        }
+        if (lowerName.endsWith(".ppt")) {
+            return "application/vnd.ms-powerpoint";
+        }
+        if (lowerName.endsWith(".pptx")) {
+            return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+        }
+        if (lowerName.endsWith(".zip")) {
+            return "application/zip";
+        }
+        if (lowerName.endsWith(".rar")) {
+            return "application/vnd.rar";
+        }
+        if (lowerName.endsWith(".7z")) {
+            return "application/x-7z-compressed";
+        }
+        if (lowerName.endsWith(".mp3")) {
+            return "audio/mpeg";
+        }
+        if (lowerName.endsWith(".wav")) {
+            return "audio/wav";
+        }
+        if (lowerName.endsWith(".ogg")) {
+            return "audio/ogg";
+        }
+        if (lowerName.endsWith(".mp4")) {
+            return "video/mp4";
+        }
+        if (lowerName.endsWith(".webm")) {
+            return "video/webm";
+        }
+        if (lowerName.endsWith(".mov")) {
+            return "video/quicktime";
         }
         return null;
     }

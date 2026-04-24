@@ -4,6 +4,7 @@ import type { Range } from '@tiptap/core';
 import { fetchEmbedResolve, type EmbedResolveResponse } from '@/features/post/editor/novel-demo/embed-api';
 
 const HTTP_SCHEME_PATTERN = /^https?:\/\//i;
+const IMAGE_LINK_EXTENSION_PATTERN = /\.(apng|avif|bmp|gif|heic|heif|jpe?g|png|svg|webp)$/i;
 
 export interface EmbedLinkAttrs {
   embedId: string;
@@ -76,6 +77,20 @@ export function resolveEmbedDomain(url: string): string {
     return new URL(url).hostname.replace(/^www\./, '');
   } catch {
     return '';
+  }
+}
+
+/**
+ * 功能：判断标准化 URL 是否指向图片资源，避免图片链接依赖远端解析服务后无响应。
+ * 关键参数：normalizedUrl 为已标准化的 http/https 链接。
+ * 返回值/副作用：返回是否为图片链接；无副作用。
+ */
+function isImageResourceUrl(normalizedUrl: string): boolean {
+  try {
+    const parsed = new URL(normalizedUrl);
+    return IMAGE_LINK_EXTENSION_PATTERN.test(parsed.pathname);
+  } catch {
+    return false;
   }
 }
 
@@ -185,6 +200,99 @@ export function createUploadedImageEmbedAttrs(
       domain,
       provider: 'upload',
       mediaType: 'image',
+    },
+    pending: false,
+    resolved: true,
+    error: '',
+  };
+}
+
+/**
+ * 功能：根据上传成功的通用文件信息构造卡片 attrs，确保非图片资源也能直接转为可读卡片。
+ * 关键参数：uploadedUrl 为上传成功地址；embedId 为目标节点标识；fileName/fileSize/mimeType 为文件元信息。
+ * 返回值/副作用：返回通用文件卡片 attrs；无副作用。
+ */
+export function createUploadedFileEmbedAttrs(
+  uploadedUrl: string,
+  options?: {
+    embedId?: string;
+    fileName?: string;
+    fileSize?: number;
+    mimeType?: string;
+  },
+): EmbedLinkAttrs {
+  const normalizedUrl = normalizeEmbedUrl(uploadedUrl);
+  const domain = resolveEmbedDomain(normalizedUrl);
+  const embedId = options?.embedId || createEmbedId();
+  const fileName = options?.fileName ?? '';
+  const fileSize = typeof options?.fileSize === 'number' ? options.fileSize : 0;
+  const mimeType = options?.mimeType ?? '';
+  const title = fileName || normalizedUrl || '上传文件卡片';
+  const sizeLabel = fileSize > 0 ? ` · ${(fileSize / 1024).toFixed(1)}KB` : '';
+  const description = `已上传文件${sizeLabel}`;
+
+  return {
+    embedId,
+    url: uploadedUrl,
+    normalizedUrl,
+    cardType: 'file',
+    mediaType: 'file',
+    provider: 'upload',
+    title,
+    description,
+    artist: '',
+    videoId: '',
+    coverUrl: '',
+    domain,
+    siteName: 'Upload',
+    uploadKind: 'file',
+    snapshot: {
+      url: normalizedUrl,
+      fileName,
+      fileSize,
+      mimeType,
+      domain,
+      provider: 'upload',
+      mediaType: 'file',
+    },
+    pending: false,
+    resolved: true,
+    error: '',
+  };
+}
+
+/**
+ * 功能：根据图片外链构造已解析图片卡片 attrs，确保统一解析失败时仍能直接展示图片。
+ * 关键参数：imageUrl 为图片地址；embedId 为目标节点标识；originalInput 为用户输入原文（可选）。
+ * 返回值/副作用：返回图片卡片 attrs；无副作用。
+ */
+function createResolvedImageLinkAttrs(
+  imageUrl: string,
+  embedId: string,
+  originalInput?: string,
+): Partial<EmbedLinkAttrs> {
+  const domain = resolveEmbedDomain(imageUrl);
+  return {
+    embedId,
+    url: originalInput?.trim() || imageUrl,
+    normalizedUrl: imageUrl,
+    cardType: 'image',
+    mediaType: 'image',
+    provider: 'link',
+    title: imageUrl,
+    description: '图片外链已直接渲染。',
+    artist: '',
+    videoId: '',
+    coverUrl: imageUrl,
+    domain,
+    siteName: domain,
+    uploadKind: 'none',
+    snapshot: {
+      url: imageUrl,
+      coverUrl: imageUrl,
+      mediaType: 'image',
+      domain,
+      siteName: domain,
     },
     pending: false,
     resolved: true,
@@ -364,6 +472,11 @@ export async function resolveAndHydrateEmbedCard(view: EditorView, embedId: stri
       resolved: false,
       error: '请输入有效的 http 或 https 链接。',
     });
+    return;
+  }
+
+  if (isImageResourceUrl(normalizedUrl)) {
+    patchEmbedCardAttrs(view, embedId, createResolvedImageLinkAttrs(normalizedUrl, embedId, inputUrl));
     return;
   }
 
