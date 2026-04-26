@@ -16,7 +16,7 @@ import {
   RefreshCw,
   Upload,
 } from 'lucide-react';
-import { type MutableRefObject, useRef, useState } from 'react';
+import { type MutableRefObject, useEffect, useRef, useState } from 'react';
 import {
   createEmbedId,
   createEmptyEmbedAttrs,
@@ -52,6 +52,8 @@ interface EmbedLinkModePanelProps {
 
 interface EmbedLinkHoverActionsProps {
   displayUrl: string;
+  editable: boolean;
+  onDelete: () => void;
 }
 
 /**
@@ -290,12 +292,12 @@ function parseSnapshotAttribute(rawValue: string | null): Record<string, unknown
 }
 
 /**
- * 功能：判断当前卡片是否采用“仅悬浮操作”的媒体模板（B站视频/网易云音乐）。
- * 关键参数：variant 为当前卡片渲染模板。
- * 返回值/副作用：返回是否启用右上角悬浮操作层；无副作用。
+ * 功能：判断卡片是否已进入“解析完成可展示”状态，用于收敛为内容卡片形态。
+ * 关键参数：attrs 为 embedLink 节点属性。
+ * 返回值/副作用：返回是否已完成解析；无副作用。
  */
-function supportsReadonlyHoverActions(variant: CardRenderVariant): boolean {
-  return variant === 'netease-music' || variant === 'bilibili-video';
+function isResolvedEmbedCard(attrs: Partial<EmbedLinkAttrs>): boolean {
+  return Boolean(attrs.resolved) && !attrs.pending && !attrs.error;
 }
 
 /**
@@ -318,11 +320,36 @@ async function copyToClipboardIfPossible(text: string): Promise<void> {
 }
 
 /**
- * 功能：渲染媒体卡片右上角悬浮操作层，提供打开链接/复制链接/更多占位操作。
- * 关键参数：displayUrl 为当前卡片链接地址。
- * 返回值/副作用：返回悬浮操作节点；副作用为触发复制操作。
+ * 功能：渲染卡片右上角悬浮操作层，提供打开链接、复制链接与展开菜单删除。
+ * 关键参数：displayUrl 为当前卡片链接地址；editable 为当前是否可编辑；onDelete 为删除回调。
+ * 返回值/副作用：返回悬浮操作节点；副作用为触发复制与删除动作。
  */
-function EmbedLinkHoverActions({ displayUrl }: EmbedLinkHoverActionsProps) {
+function EmbedLinkHoverActions({ displayUrl, editable, onDelete }: EmbedLinkHoverActionsProps) {
+  const [menuExpanded, setMenuExpanded] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!menuExpanded) {
+      return;
+    }
+    /**
+     * 功能：在展开菜单时监听全局点击，点击操作区外部即自动收起菜单。
+     * 关键参数：event 为全局 pointerdown 事件。
+     * 返回值/副作用：无返回值；副作用为更新菜单展开状态。
+     */
+    function handleGlobalPointerDown(event: PointerEvent): void {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('.gmp-embed-link-hover-actions')) {
+        return;
+      }
+      setMenuExpanded(false);
+    }
+
+    window.addEventListener('pointerdown', handleGlobalPointerDown);
+    return () => {
+      window.removeEventListener('pointerdown', handleGlobalPointerDown);
+    };
+  }, [menuExpanded]);
+
   return (
     <div className="gmp-embed-link-hover-actions" role="toolbar" aria-label="媒体卡片快捷操作">
       <a
@@ -346,9 +373,38 @@ function EmbedLinkHoverActions({ displayUrl }: EmbedLinkHoverActionsProps) {
       >
         <Copy className="h-4 w-4" />
       </button>
-      <button type="button" className="gmp-embed-link-hover-action" aria-label="更多选项" title="更多选项">
-        <MoreHorizontal className="h-4 w-4" />
-      </button>
+      {editable ? (
+        <button
+          type="button"
+          className="gmp-embed-link-hover-action"
+          aria-label="展开菜单"
+          title="展开菜单"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setMenuExpanded((previous) => !previous);
+          }}
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </button>
+      ) : null}
+      {editable && menuExpanded ? (
+        <div className="gmp-embed-link-hover-menu" role="menu" aria-label="卡片菜单">
+          <button
+            type="button"
+            className="gmp-embed-link-hover-menu-item"
+            role="menuitem"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              setMenuExpanded(false);
+              onDelete();
+            }}
+          >
+            删除卡片
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -482,7 +538,7 @@ function EmbedLinkModePanel({
  * 关键参数：props 为 Tiptap NodeView 参数（含 node/editor/updateAttributes）。
  * 返回值/副作用：返回链接卡片节点；副作用为触发节点 attrs 更新与元数据请求。
  */
-function EmbedLinkCardView({ node, editor, updateAttributes }: NodeViewProps) {
+function EmbedLinkCardView({ node, editor, updateAttributes, deleteNode }: NodeViewProps) {
   const attrs = node.attrs as Partial<EmbedLinkAttrs>;
   const inputValue = attrs.url || attrs.normalizedUrl || '';
   const [panelMode, setPanelMode] = useState<CardPanelMode>(() => resolvePanelMode(attrs));
@@ -592,17 +648,20 @@ function EmbedLinkCardView({ node, editor, updateAttributes }: NodeViewProps) {
   const githubRepositoryName = resolveGithubRepositoryName(attrs);
   const neteaseEmbedUrl = resolveNeteaseEmbedUrl(attrs);
   const bilibiliEmbedUrl = resolveBilibiliEmbedUrl(attrs);
-  const supportsHoverActions = supportsReadonlyHoverActions(cardVariant);
-  const shouldLockResolvedMediaCard = supportsHoverActions && Boolean(attrs.resolved) && !attrs.pending && !attrs.error;
-  const shouldHidePanelAfterResolvedUpload = attrs.provider === 'upload' && Boolean(attrs.resolved) && !attrs.pending && !attrs.error;
+  const isResolvedCard = isResolvedEmbedCard(attrs);
+  const supportsHoverActions = editor.isEditable && isResolvedCard;
   const activePanelMode = resolvePanelMode(attrs) === 'upload' ? 'upload' : panelMode;
   const activeExpandedState = isPanelExpanded || Boolean(attrs.pending) || Boolean(attrs.error);
   const shouldRenderBody = Boolean(attrs.pending || attrs.error || attrs.resolved || displayUrl || attrs.coverUrl);
-  const showInputPanel = editor.isEditable && !shouldLockResolvedMediaCard && !shouldHidePanelAfterResolvedUpload;
+  const showInputPanel = editor.isEditable && !isResolvedCard;
+  const contentOnlyLayout = isResolvedCard;
+  const playerOnlyLayout =
+    contentOnlyLayout &&
+    ((cardVariant === 'netease-music' && Boolean(neteaseEmbedUrl)) || (cardVariant === 'bilibili-video' && Boolean(bilibiliEmbedUrl)));
 
   return (
     <NodeViewWrapper className="gmp-embed-link-card not-prose">
-      <section className="gmp-embed-link-shell">
+      <section className="gmp-embed-link-shell" data-content-only={contentOnlyLayout ? 'true' : 'false'}>
         {showInputPanel ? (
           <EmbedLinkModePanel
             panelMode={activePanelMode}
@@ -634,56 +693,60 @@ function EmbedLinkCardView({ node, editor, updateAttributes }: NodeViewProps) {
             data-pending={attrs.pending ? 'true' : 'false'}
             data-variant={cardVariant}
             data-hover-actions={supportsHoverActions ? 'true' : 'false'}
+            data-content-only={contentOnlyLayout ? 'true' : 'false'}
+            data-player-only={playerOnlyLayout ? 'true' : 'false'}
           >
-            {supportsHoverActions && displayUrl ? <EmbedLinkHoverActions displayUrl={displayUrl} /> : null}
-            <div className="gmp-embed-link-body-text">
-              {cardVariant === 'github-repository' ? (
-                <>
-                  <p className="gmp-embed-link-provider-tag">
-                    <GitBranch className="h-3.5 w-3.5" />
-                    <span>GitHub</span>
-                    {githubRepositoryName ? <strong className="gmp-embed-link-provider-id">{githubRepositoryName}</strong> : null}
-                  </p>
-                  <p className="gmp-embed-link-title">{resolveEmbedCardTitle(attrs)}</p>
-                  <p className="gmp-embed-link-description">{resolveEmbedCardDescription(attrs)}</p>
-                </>
-              ) : cardVariant === 'netease-music' ? (
-                <>
-                  <p className="gmp-embed-link-provider-tag">
-                    <Music2 className="h-3.5 w-3.5" />
-                    <span>网易云音乐</span>
-                  </p>
-                  <p className="gmp-embed-link-title">{resolveEmbedCardTitle(attrs)}</p>
-                  <p className="gmp-embed-link-description">{artist || resolveEmbedCardDescription(attrs)}</p>
-                </>
-              ) : cardVariant === 'bilibili-video' ? (
-                <>
-                  <p className="gmp-embed-link-provider-tag">
-                    <Clapperboard className="h-3.5 w-3.5" />
-                    <span>B站视频</span>
-                    {bilibiliVideoId ? <strong className="gmp-embed-link-provider-id">{bilibiliVideoId}</strong> : null}
-                  </p>
-                  <p className="gmp-embed-link-title">{resolveEmbedCardTitle(attrs)}</p>
-                  <p className="gmp-embed-link-description">{resolveEmbedCardDescription(attrs)}</p>
-                </>
-              ) : (
-                <>
-                  <p className="gmp-embed-link-title">{resolveEmbedCardTitle(attrs)}</p>
-                  <p className="gmp-embed-link-description">{resolveEmbedCardDescription(attrs)}</p>
-                </>
-              )}
+            {supportsHoverActions ? <EmbedLinkHoverActions displayUrl={displayUrl} editable={editor.isEditable} onDelete={deleteNode} /> : null}
+            {!playerOnlyLayout ? (
+              <div className="gmp-embed-link-body-text">
+                {cardVariant === 'github-repository' ? (
+                  <>
+                    <p className="gmp-embed-link-provider-tag">
+                      <GitBranch className="h-3.5 w-3.5" />
+                      <span>GitHub</span>
+                      {githubRepositoryName ? <strong className="gmp-embed-link-provider-id">{githubRepositoryName}</strong> : null}
+                    </p>
+                    <p className="gmp-embed-link-title">{resolveEmbedCardTitle(attrs)}</p>
+                    <p className="gmp-embed-link-description">{resolveEmbedCardDescription(attrs)}</p>
+                  </>
+                ) : cardVariant === 'netease-music' ? (
+                  <>
+                    <p className="gmp-embed-link-provider-tag">
+                      <Music2 className="h-3.5 w-3.5" />
+                      <span>网易云音乐</span>
+                    </p>
+                    <p className="gmp-embed-link-title">{resolveEmbedCardTitle(attrs)}</p>
+                    <p className="gmp-embed-link-description">{artist || resolveEmbedCardDescription(attrs)}</p>
+                  </>
+                ) : cardVariant === 'bilibili-video' ? (
+                  <>
+                    <p className="gmp-embed-link-provider-tag">
+                      <Clapperboard className="h-3.5 w-3.5" />
+                      <span>B站视频</span>
+                      {bilibiliVideoId ? <strong className="gmp-embed-link-provider-id">{bilibiliVideoId}</strong> : null}
+                    </p>
+                    <p className="gmp-embed-link-title">{resolveEmbedCardTitle(attrs)}</p>
+                    <p className="gmp-embed-link-description">{resolveEmbedCardDescription(attrs)}</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="gmp-embed-link-title">{resolveEmbedCardTitle(attrs)}</p>
+                    <p className="gmp-embed-link-description">{resolveEmbedCardDescription(attrs)}</p>
+                  </>
+                )}
 
-              {displayUrl ? (
-                <a href={displayUrl} target="_blank" rel="noreferrer noopener" className="gmp-embed-link-url">
-                  <Link2 className="h-3.5 w-3.5" />
-                  <span>{displayUrl}</span>
-                </a>
-              ) : (
-                <p className="gmp-embed-link-hint">
-                  {supportsHoverActions ? '悬浮卡片右上角可查看快捷操作。' : '点击上方卡片展开后，可继续编辑链接或切换到上传模式。'}
-                </p>
-              )}
-            </div>
+                {displayUrl ? (
+                  <a href={displayUrl} target="_blank" rel="noreferrer noopener" className="gmp-embed-link-url">
+                    <Link2 className="h-3.5 w-3.5" />
+                    <span>{displayUrl}</span>
+                  </a>
+                ) : (
+                  <p className="gmp-embed-link-hint">
+                    {supportsHoverActions ? '悬浮卡片右上角可查看快捷操作。' : '点击上方卡片展开后，可继续编辑链接或切换到上传模式。'}
+                  </p>
+                )}
+              </div>
+            ) : null}
 
             {cardVariant === 'netease-music' && neteaseEmbedUrl ? (
               <div className="gmp-embed-link-player" data-provider="netease">

@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { EditorContent, EditorRoot } from 'novel';
-import { applyCodeLineNumberAttributes } from '@/features/post/editor/novel-demo/code-line-numbers';
 import { buildNovelRendererExtensions, parsePostContentToNovelDoc } from '@/features/post/editor/novel-demo';
 import type { PostContentFormat } from '@/features/post/types';
 
@@ -17,18 +16,8 @@ interface PostContentRendererProps {
  * 返回值/副作用：返回阅读态编辑器节点；无副作用。
  */
 export function PostContentRenderer({ content, contentFormat }: PostContentRendererProps) {
-  const rendererHostRef = useRef<HTMLDivElement | null>(null);
   const document = useMemo(() => parsePostContentToNovelDoc(content, contentFormat), [content, contentFormat]);
   const extensions = useMemo(() => buildNovelRendererExtensions(), []);
-
-  useEffect(() => {
-    const frameId = window.requestAnimationFrame(() => {
-      applyCodeLineNumberAttributes(rendererHostRef.current);
-    });
-    return () => {
-      window.cancelAnimationFrame(frameId);
-    };
-  }, [document]);
 
   if (contentFormat !== 'tiptap-json') {
     return (
@@ -39,7 +28,7 @@ export function PostContentRenderer({ content, contentFormat }: PostContentRende
   }
 
   return (
-    <div ref={rendererHostRef}>
+    <div>
       <EditorRoot>
         <EditorContent
           immediatelyRender={false}

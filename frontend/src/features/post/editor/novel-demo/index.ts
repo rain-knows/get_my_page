@@ -8,3 +8,4 @@ export * from '@/features/post/editor/novel-demo/extensions';
 export * from '@/features/post/editor/novel-demo/slash-items';
 export * from '@/features/post/editor/novel-demo/storage';
 export * from '@/features/post/editor/novel-demo/upload';
+export * from '@/features/post/editor/code-block';

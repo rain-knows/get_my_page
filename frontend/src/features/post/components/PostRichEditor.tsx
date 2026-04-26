@@ -19,7 +19,6 @@ import {
   useEditor,
 } from 'novel';
 import { type ComponentType, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { applyCodeLineNumberAttributes } from '@/features/post/editor/novel-demo/code-line-numbers';
 import {
   extractSingleUrlFromClipboard,
   insertEmbedCardAtSelection,
@@ -72,7 +71,6 @@ function highlightCodeblocks(content: string): string {
     const typedElement = element as HTMLElement;
     typedElement.classList.add('hljs');
   });
-  applyCodeLineNumberAttributes(document.body);
   return new XMLSerializer().serializeToString(document);
 }
 
@@ -375,7 +373,6 @@ function BubbleActionButton({ item }: BubbleActionButtonProps) {
  * 返回值/副作用：返回编辑器节点；副作用为写入 localStorage 与调用图片上传接口。
  */
 export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
-  const editorHostRef = useRef<HTMLDivElement | null>(null);
   const saveTimerRef = useRef<number | null>(null);
   const [initialContent] = useState<JSONContent>(() => {
     if (typeof window === 'undefined') {
@@ -459,7 +456,7 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
         </div>
       </div>
 
-      <div ref={editorHostRef}>
+      <div>
         <EditorRoot>
           <EditorContent
             initialContent={initialContent}
@@ -488,7 +485,6 @@ export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
             onUpdate={({ editor }) => {
               setSaveStatus('Unsaved');
               persistLocalContent(editor);
-              applyCodeLineNumberAttributes(editorHostRef.current);
             }}
             slotAfter={<ImageResizer />}
           >
