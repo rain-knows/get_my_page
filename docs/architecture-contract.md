@@ -14,6 +14,7 @@
 - `frontend/src/components/shared`：跨板块复用展示组件。
 - `frontend/src/features/*`：按业务域聚合 API、hooks、types 与业务逻辑（优先放这里）。
 - `frontend/src/features/post/editor/novel-demo/*`：文章编辑器能力层（官方 demo 扩展、slash/bubble、`/api/upload` 桥接、默认内容与编解码）。
+- `frontend/src/features/post/editor/code-block/*`：代码块编辑器独立模块（CodeMirror 6 编辑态封装、语言选择、行号开关、只读渲染）。遵守与 `novel-demo/*` 相同的分层规则：位于 `features/` 内，仅依赖 `@/lib` 与 `@/components/ui`。
 - `frontend/src/hooks`：跨业务通用 hook（如 `use-debounce`）。
 - `frontend/src/lib`：基础能力封装（如 `api-client`、`mdx`、`seo`），避免业务耦合。
 - `frontend/src/types`：跨 feature 共享的公共类型，feature 私有类型应放在 feature 内。
@@ -88,7 +89,7 @@
 
 - 默认保持对外 API（路径、响应结构、错误码）兼容。
 - 若必须 breaking change：在 PR/变更说明中显式声明迁移策略。
-- 架构变更必须同步更新本文档及相关 docs（至少 `README.md`、`docs/00/01/02`）。
+- 架构变更必须同步更新本文档及相关 docs（至少 `README.md`、`docs/11-rich-editor-design.md`、`docs/design.md`）。
 - 当前生效的显式 breaking change（2026-04-22）：文章内容协议硬切为 `tiptap-json`，不再保留 `gmp-block-v1` 双读兼容。
 - 当前生效的编辑阶段策略（2026-04-23）：`/blog/{slug}/edit` 采用 Novel 官方 demo localStorage 模式，暂不将编辑内容写回 posts 接口。
 

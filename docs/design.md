@@ -28,8 +28,14 @@ A complete visual overhaul shifting from a heavily textured "dark noise/terminal
 - 大量使用 `tracking-widest` 增加字间距。
 
 ## 动效参数 (Motion)
-- 匀速或极快弹性的贝塞尔曲线：`ease-[0.2,1,0.2,1]`。
-- Hover 时不使用模糊或柔和阴影，使用硬质纯色阴影 `shadow-[4px_4px_0_var(--gmp-end-accent)]` 或色块位移。
+- 贝塞尔曲线规范：
+  - 编辑器/认证/首页加载相关组件使用 `cubic-bezier(0.2, 1, 0.2, 1)`（如 `InteractiveAuthShell`、`EndfieldLoadingScreen`、`KineticPageShell`）。
+  - 导航/展示/网格相关组件使用 `cubic-bezier(0.22, 1, 0.36, 1)`（如 `Navbar`、`Hero`、`FlowShowcase`、`ProjectGrid`）。
+  - 全局 CSS 中 `--gmp-end-timing-fast: 150ms`、`--gmp-end-timing-mid: 250ms` 为首页动效时长令牌。
+- Hover 时不使用模糊或柔和阴影，使用硬质纯色阴影 `.gmp-hard-shadow` / `.gmp-hard-shadow-accent` 或色块位移。
+- **动效库状态**：`frontend/src/components/motion/` 目录当前为空，动效实现分散在各业务组件内（使用 `motion/react` 的 `transition.ease` 直接声明），无集中的动效工具库/组件库。
+
+> **已知偏离**：早期设计规范仅记录 `[0.2, 1, 0.2, 1]` 单条曲线，实际代码中两种曲线并存。`[0.22, 1, 0.36, 1]` 曲线提供了更显著的 deceleration 感知，在导航与展示组件中使用。未来版本应统一曲线规范并补全令牌。
 
 ## 具体化与可复现实现方案 (Concrete & Reproducible Implementations)
 
@@ -51,6 +57,95 @@ A complete visual overhaul shifting from a heavily textured "dark noise/terminal
   --gmp-accent: #FFCC00;
 }
 ```
+
+### 完整令牌目录（实际 globals.css）
+
+**基础面板令牌 (Base / Panel Tokens)**:
+
+| 变量名 | 值 | 用途 |
+|---|---|---|
+| `--gmp-bg-base` | `#0B0C10` | 全局最深底色 |
+| `--gmp-bg-elevated` | `#16171B` | 微浮层背景 |
+| `--gmp-bg-panel` | `#1A1B20` | 卡片/面板主背景 |
+| `--gmp-line-soft` | `#303338` | 弱分割线（1px border 默认色） |
+| `--gmp-line-strong` | `#4F535B` | 强分割线（聚焦/强调 border 色） |
+| `--gmp-text-primary` | `#FFFFFF` | 主文本色 |
+| `--gmp-text-secondary` | `#8E9297` | 次要文本色/暗银灰 |
+| `--gmp-accent` | `#FFCC00` | 主题高亮黄（Ark Yellow） |
+| `--gmp-accent-dim` | `#D1A800` | 主题高亮黄暗淡变体 |
+| `--gmp-accent-blue` | `#00C2FF` | 辅助科技青（Ark Blue） |
+| `--gmp-text-gray-contrast` | `#a1a1aa` | 灰白对比文本（高亮区域用） |
+
+**终末地灵感令牌 (Endfield Tokens)**:
+
+| 变量名 | 值 | 用途 |
+|---|---|---|
+| `--gmp-end-bg` | `#0B0C10` | 首页深层背景 |
+| `--gmp-end-panel` | `#1A1B20` | 首页面板/卡片背景 |
+| `--gmp-end-accent` | `#FFCC00` | 首页强调色 |
+| `--gmp-end-danger` | `#FF3333` | 首页警示/危险色（Tactical Red） |
+| `--gmp-end-timing-fast` | `150ms` | 首页快速动效时长 |
+| `--gmp-end-timing-mid` | `250ms` | 首页中速动效时长 |
+
+**Novel 编辑器令牌 (Editor Tokens -- GitHub Dark Colorblind inspired)**:
+
+| 变量名 | 值 | 用途 |
+|---|---|---|
+| `--gmp-novel-surface` | `#0d1117` | 编辑器底层画布 |
+| `--gmp-novel-toolbar` | `#161b22` | 编辑器工具栏背景 |
+| `--gmp-novel-toolbar-hover` | `#21262d` | 工具栏 hover 态 |
+| `--gmp-novel-line` | `#30363d` | 编辑器内部分割线 |
+| `--gmp-novel-line-strong` | `#484f58` | 编辑器内强分割线 |
+| `--gmp-novel-text` | `#c9d1d9` | 编辑器正文色 |
+| `--gmp-novel-text-muted` | `#8b949e` | 编辑器次要文本 |
+| `--gmp-novel-text-strong` | `#f0f6fc` | 编辑器强调文本 |
+| `--gmp-novel-link` | `#79c0ff` | 编辑器链接色 |
+| `--gmp-novel-link-hover` | `#a5d6ff` | 编辑器链接 hover 色 |
+| `--gmp-novel-accent` | `#1f6feb` | 编辑器主题蓝 |
+| `--gmp-novel-accent-soft` | `#1f6feb33` | 编辑器主题蓝（半透明） |
+
+**代码块令牌 (Code Block Tokens)**:
+
+> 代码块令牌在 `:root` 与 `.dark` 中各有一份定义，下表以 `.dark` 覆盖后的实际生效值为准：
+
+| 变量名 | `.dark` 值 | 用途 |
+|---|---|---|
+| `--gmp-code-bg` | `#0d1117` | 代码块背景 |
+| `--gmp-code-toolbar` | `#161b22` | 代码块工具栏背景 |
+| `--gmp-code-toolbar-hover` | `#21262d` | 工具栏 hover |
+| `--gmp-code-gutter-bg` | `color-mix(in srgb, #161b22 86%, black 14%)` | 行号 gutter 背景 |
+| `--gmp-code-border` | `#30363d` | 代码块边框 |
+| `--gmp-code-border-strong` | `#484f58` | 代码块聚焦边框 |
+| `--gmp-code-text` | `#c9d1d9` | 代码文本色 |
+| `--gmp-code-text-strong` | `#f0f6fc` | 代码强调文本 |
+| `--gmp-code-muted` | `#8b949e` | 代码块次要文本 |
+| `--gmp-code-accent` | `#79c0ff` | 代码块强调色 |
+| `--gmp-code-accent-soft` | `#1f6feb33` | 代码块强调色（透明） |
+| `--gmp-code-caret` | `#f0f6fc` | 光标颜色 |
+| `--gmp-code-selection` | `#264f78cc` | 选中文本高亮 |
+| `--gmp-code-active-line` | `#161b2299` | 当前活动行背景 |
+| `--gmp-code-active-gutter` | `#21262d` | 当前活动行 gutter |
+| `--gmp-code-syntax-comment` | `#8b949e` | 语法高亮——注释 |
+| `--gmp-code-syntax-keyword` | `#ffab70` | 语法高亮——关键字 |
+| `--gmp-code-syntax-string` | `#a5d6ff` | 语法高亮——字符串 |
+| `--gmp-code-syntax-number` | `#79c0ff` | 语法高亮——数字 |
+| `--gmp-code-syntax-function` | `#79c0ff` | 语法高亮——函数 |
+| `--gmp-code-syntax-type` | `#d2a8ff` | 语法高亮——类型 |
+| `--gmp-code-syntax-variable` | `#c9d1d9` | 语法高亮——变量 |
+| `--gmp-code-syntax-meta` | `#7ee787` | 语法高亮——元信息 |
+
+**Novel 兼容别名令牌**:
+
+| 变量名 | 映射 | 用途 |
+|---|---|---|
+| `--gmp-novel-code-bg` | `var(--gmp-code-bg)` | 编辑器内代码块背景 |
+| `--gmp-novel-code-toolbar` | `var(--gmp-code-toolbar)` | 编辑器内代码工具栏背景 |
+| `--gmp-novel-code-text` | `var(--gmp-code-text)` | 编辑器内代码文本 |
+| `--gmp-novel-code-inline-bg` | `var(--gmp-code-toolbar-hover)` | 编辑器内行内代码背景 |
+| `--gmp-novel-code-inline-text` | `var(--gmp-code-text)` | 编辑器内行内代码文本 |
+| `--gmp-novel-code-border` | `var(--gmp-code-border)` | 编辑器内代码块边框 |
+
+> **已知偏离**：代码块令牌在 `:root` 与 `.dark` 中各定义一次，分别使用浅色与深色主题值。当前无全局浅色/深色主题切换编排机制，`.dark` 下的深色值即为应用实际生效值。
 
 **使用规范 (React/Tailwind v4)**:
 - **必须使用括号语法**: `bg-(--gmp-bg-panel)`, `text-(--gmp-accent)`, `border-(--gmp-line-strong)`。
@@ -80,6 +175,37 @@ A complete visual overhaul shifting from a heavily textured "dark noise/terminal
   Content
 </div>
 ```
+
+### 2.5 硬质阴影与面板辅助类 (Hard Shadows & Panel Helpers)
+
+以下为已实装但未在早期文档中列出的全局 utility class：
+
+**面板类**:
+- `.gmp-panel-matte`：纯色面板（`background-color: var(--gmp-bg-panel)`）。
+- `.gmp-panel-pure`：微浮层面板（`background-color: var(--gmp-bg-elevated)`）。
+
+**边框与装饰线**:
+- `.gmp-sharp-border`：1px 弱分割线边框（`border: 1px solid var(--gmp-line-soft)`）。
+- `.gmp-sharp-border-accent`：1px 强调色边框（`border: 1px solid var(--gmp-accent)`）。
+- `.gmp-tech-accent-b`：底部 2px 强调下划线（`border-bottom: 2px solid var(--gmp-accent)`）。
+- `.gmp-tech-accent-l`：左侧 2px 强调左边线（`border-left: 2px solid var(--gmp-accent)`）。
+
+**切角补充**:
+- `.gmp-cut-corner-double-reverse`：反向双切角 16px，与 `.gmp-cut-corner-double` 形成对角线镜像。
+
+**硬阴影**:
+- `.gmp-hard-shadow`：硬质纯色阴影（`box-shadow: 4px 4px 0 0 var(--gmp-line-soft)`）。
+- `.gmp-hard-shadow-accent`：硬质强调色阴影（`box-shadow: 4px 4px 0 0 var(--gmp-accent)`）。
+
+**Hover 填充效果**:
+- `.gmp-hover-fill`：hover 时从左侧滑入强调色填充块的交互效果。
+  - 内部使用 `::before` 伪元素 + `cubic-bezier(0.2, 1, 0.2, 1)` 过渡实现。
+  - hover 后文字颜色自动反转为 `var(--gmp-bg-base)`。
+
+**旧版组件别名（已停用，仅保留 CSS 占位，实际 `display: none`）**:
+- `.gmp-noise-overlay`、`.gmp-kinetic-bg`、`.gmp-fluid-scan`、`.gmp-parallax-geometry`、`.gmp-module-stage__aura`：早期版本的重纹理/动态背景层，已全部设为 `display: none`，保留仅用于避免破坏旧页面引用。
+
+> **已知偏离**：上述旧版类名仍在 CSS 中存在但已禁用，尚未从代码中清理。设计规范当前不鼓励使用它们。
 
 ### 3. 版式排版规范 (Typography Patterns)
 
@@ -150,3 +276,88 @@ A complete visual overhaul shifting from a heavily textured "dark noise/terminal
   </div>
 </div>
 ```
+
+### 7. 编辑器子系统设计 (Editor Subsystem CSS)
+
+#### 7.1 Novel 编辑器容器 (Novel Editor Container)
+
+`.gmp-novel-editor.ProseMirror` 为编辑器主画布：
+- 最小高度 `28rem`，文本色 `--gmp-novel-text`，行高 `1.75`。
+- 背景为 36x36 工业方格网底（透明度 0.02）。
+- 聚焦时无 outline；空段落 placeholder 使用 `::before` 伪元素显示，颜色 `--gmp-novel-text-muted`。
+- 标题 (h1/h2/h3) 使用 `--gmp-novel-text` 色，`font-weight: 700`。
+- 链接使用 `--gmp-novel-link`，hover 为 `--gmp-novel-link-hover`。
+- 引用块（blockquote）左侧 4px `--gmp-novel-line-strong` 分割线 + `--gmp-novel-text-muted` 文本色。
+- 内联代码与代码块使用 `--gmp-novel-code-*` 别名令牌。
+- `.gmp-novel-view.ProseMirror` 为阅读态变体（`min-height: auto`）。
+- `.gmp-editor-command-scroll` 隐藏滚动条视觉但保留滚动能力（`scrollbar-width: none`）。
+
+#### 7.2 代码块卡片 (Code Block Card)
+
+- `.gmp-code-block-card`：代码块容器卡片
+  - 1px `--gmp-code-border` 边框，`--gmp-code-bg` 背景。
+  - 聚焦时边框升级为 `--gmp-code-border-strong`。
+  - 支持 `data-editable` 属性区分编辑态/阅读态。
+- `.gmp-code-block-toolbar`：代码块顶部工具栏
+  - flex 布局，最小高度 `2.25rem`，底部分割线。
+  - 语言标签 `.gmp-code-block-language` 使用 `--gmp-code-muted` 色、等宽字体、`0.625rem`、全大写、`0.18em` 字间距。
+  - 操作按钮组 `.gmp-code-block-actions` 默认 opacity 0.72，hover/focus-within 时升至 1。
+- `.gmp-code-block-editor`：CodeMirror 编辑区容器
+  - `.cm-editor` 透明背景，继承 `--gmp-code-text` 色。
+  - `.cm-scroller` 行高 `1.75rem`。
+  - `.cm-content` 白色空格 `pre`，caret 使用 `--gmp-code-caret`。
+  - `.cm-gutters` 使用 `--gmp-code-gutter-bg` 背景 + `--gmp-code-muted` 行号色。
+  - `.cm-lineNumbers .cm-gutterElement` 最小宽 `2.8rem`，右对齐。
+  - 选中文本使用 `--gmp-code-selection`，语法高亮使用 `--gmp-code-syntax-*` 系列令牌。
+  - `::selection` 伪元素覆盖为 `--gmp-code-selection` 背景 + `--gmp-code-text-strong` 文本色。
+
+#### 7.3 嵌入链接卡片 (Embed Link Card)
+
+- `.gmp-embed-link-card`：卡片外层容器（margin `0.75rem 0`）。
+- `.gmp-embed-link-shell`：卡片内容壳层，支持 `data-content-only` 属性切换为无边框透明模式。
+- `.gmp-embed-link-control`：控制面板（触发按钮 + 可展开面板）。
+  - `.gmp-embed-link-trigger`：触发按钮（leading icon + copy text + chevron 指示器）。
+  - `.gmp-embed-link-panel`：可展开面板，内含 tab 切换（链接解析 / 上传图片）。
+- `.gmp-embed-link-input-wrapper`：链接输入区，含输入框 + 解析/上传 action 按钮。
+  - `.gmp-embed-link-action`：操作图标按钮，hover 时边框与图标变为 `--gmp-novel-accent`。
+- `.gmp-embed-link-upload-panel` + `.gmp-embed-link-upload-button` + `.gmp-embed-link-upload-hint`：上传面板相关组件。
+- `.gmp-embed-link-body`：卡片元数据主体
+  - `data-pending` 控制待解析状态边框高亮。
+  - `data-hover-actions` 控制在顶部显示悬浮操作菜单（复制链接、刷新、删除）。
+  - `data-player-only` 控制纯播放器模式（无边框、无内边距）。
+- `.gmp-embed-link-hover-actions`：悬浮操作菜单
+  - 默认 opacity 0，hover/focus-within 时滑入显示。
+  - `.gmp-embed-link-hover-action`：操作按钮，含 hover 危险色菜单项。
+- `.gmp-embed-link-player`：播放器 iframe 容器
+  - `[data-provider='netease']`：固定高度 106px。
+  - `[data-provider='bilibili']`：16:9 aspect-ratio。
+- 元数据元素：`.gmp-embed-link-title`、`.gmp-embed-link-description`、`.gmp-embed-link-provider-tag`、`.gmp-embed-link-cover-wrapper`、`.gmp-embed-link-cover`、`.gmp-embed-link-url`、`.gmp-embed-link-hint`。
+- 响应式：在 `max-width: 640px` 下卡片改为垂直堆叠布局，播放器与封面全宽。
+
+#### 7.4 全局拖拽手柄 (Global Drag Handle)
+
+- 使用者为 Novel `GlobalDragHandle` 扩展组件。
+- CSS 类 `.drag-handle`：
+  - `position: fixed`，`z-index: 45`。
+  - 1px `--gmp-novel-line` 边框 + `--gmp-novel-toolbar` 背景。
+  - 默认 `grab` 光标，active 时 `grabbing`。
+  - hover 时边框与颜色升级为 `--gmp-novel-accent`。
+  - `::before` 伪元素生成 4x4 点阵装饰图标。
+  - `.hide` 变体：opacity 0 + 左移 0.375rem（隐藏态）。
+
+> **已知偏离**：当前编辑器子系统 CSS 均以原生 class 选择器在 `globals.css` 中定义，尚未建立与基础面板令牌的完整映射。代码块模块的浅色/深色双主题定义在 `:root` 与 `.dark` 中分别存在，但无全局主题切换机制。
+
+---
+
+## 已知偏离与待统一事项 (Known Deviations & Unification Backlog)
+
+本文档记录当前代码状态与设计规范之间的已知差异，这些差异不应被隐藏或忽略：
+
+1. **动效曲线双轨**：`[0.2, 1, 0.2, 1]` 与 `[0.22, 1, 0.36, 1]` 并存，无统一令牌。参见"动效参数"章节。
+2. **components/motion/ 为空**：暗示的集中动效库不存在，动效以组件内联方式实现。参见"动效参数"章节。
+3. **旧版背景层类名未清理**：`.gmp-noise-overlay` 等 5 个类以 `display: none` 保留在 CSS 中。参见"硬质阴影与面板辅助类"章节。
+4. **代码块双主题定义**：`--gmp-code-*` 在 `:root` 与 `.dark` 各有一份，无切换机制。参见"完整令牌目录"章节。
+5. **`industrial-panel` class 未定义**：部分组件（Navbar、Hero、FlowShowcase）使用 `industrial-panel` 类名，但该 class 在 `globals.css` 中无定义。此为非文档化的已知 bug，不在本次文档更新范围内修复。
+6. **`rounded-2xl/rounded-3xl` 圆角使用**：部分展示组件（Navbar、Hero、FlowShowcase）使用大圆角（`rounded-2xl`/`rounded-3xl`），与设计规范"避免大圆角"原则不一致。但由于 `--radius: 0rem` 的 token 映射，这些类实际渲染为零圆角。此偏离应记录为待评审项。
+7. **字体实际加载与规范不符**：`design.md` 指定 Montserrat/Oswald/Noto Sans SC 字体组合，但 `layout.tsx` 中使用 local font（实际指向 GeistLatin woff2）覆盖了 Google Fonts 声明。Oswald 与 Fira Code 未在任何地方加载。参见"字体规范"章节。
+8. **`framer-motion` 与 `motion` 双重依赖**：`package.json` 同时安装了 `framer-motion` 与 `motion`（后者为前者的重命名版本），组件实际使用 `motion/react`，`framer-motion` 为冗余依赖。

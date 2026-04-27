@@ -1,6 +1,6 @@
 # 11. Novel 官方 Demo 编辑器设计（编辑页阶段）
 
-> **文档版本**: v4.2.0 | **最后更新**: 2026-04-24 | **适用范围**: 前端编辑能力
+> **文档版本**: v4.3.0 | **最后更新**: 2026-04-27 | **适用范围**: 前端编辑能力
 >
 > **相关文档**:
 > - `docs/architecture-contract.md`
@@ -27,12 +27,24 @@
 
 - 编辑器业务模块：`frontend/src/features/post/editor/novel-demo/*`
   - `content.ts`：官方默认演示文档（`Introducing Novel`）。
-  - `extensions.ts`：官方 demo 基线扩展（StarterKit、CodeBlockLowlight、Twitter、Youtube、Math、ImageResizer、`embedLink` 兼容）。
+  - `extensions.ts`：官方 demo 基线扩展集合，`buildNovelBaseExtensions()` 共注册 20 个扩展/插件：StarterKit、Placeholder、TiptapLink、TiptapImage、UpdatedImage（含 UploadImagesPlugin）、TaskList、TaskItem、HorizontalRule、embedLinkExtension、AIHighlight、codeBlockLowlight（via `createCodeBlockWithControls`）、Youtube、Twitter、Mathematics、TiptapUnderline、HighlightExtension、TextStyle、Color、CustomKeymap、GlobalDragHandle。
   - `slash-items.tsx`：中文 slash 命令集合（文本/标题/列表/引用/代码/导入链接卡片）。
   - `embed-api.ts`：`POST /api/embeds/resolve` 调用封装。
   - `embed-link.ts`：链接卡片 attrs、上传卡片 attrs、插入策略、粘贴 URL 判定、异步回填逻辑。
   - `embed-link-extension.tsx`：`embedLink` 节点与卡片 NodeView 渲染（链接/上传双模式 + GitHub/网易云/B站平台专用模板）。
   - `upload.ts`：上传能力封装（认证头注入、错误分类、`uploadKind` 占位、`createImageUpload` 兼容导出）。
+  - `storage.ts`：localStorage 读写封装（按 slug 隔离，支持 json/html/markdown 三种格式持久化与恢复）。
+  - `codec.ts`：内容编解码工具（tiptap-json 序列化/反序列化、格式检测、资源 URL 规范化）。
+  - `asset-url.ts`：MinIO 存储资源 URL 规范化处理，将后端 minio 地址转换为浏览器可访问的公开 URL。
+  - `index.ts`：barrel 导出文件，聚合并重导出 `novel-demo/*` 全部公开符号与 `code-block/*` 公开符号，供外部消费者通过单一入口引用。
+- 代码块编辑器模块：`frontend/src/features/post/editor/code-block/*`（共 7 个文件，新增独立模块）
+  - `index.ts`：模块 barrel 导出（5 个子模块）。
+  - `code-block.tsx`：React 代码块卡片容器，组合 toolbar 与 CodeMirror 编辑器，支持 `data-editable` 属性区分编辑态/阅读态。
+  - `code-block-languages.ts`：支持语言列表（11 种），含 language label 映射、normalize 查询与 CodeMirror LanguageSupport 解析。
+  - `code-block-toolbar.tsx`：语言选择器 + 行号开关工具栏 UI，集成 copy 按钮。
+  - `code-block-viewer.tsx`：阅读态只读代码块渲染（复用 CodeMirror 只读视图）。
+  - `code-editor.tsx`：CodeMirror 6 编辑态封装（via `@uiw/react-codemirror`）。
+  - `code-editor-extensions.ts`：CodeMirror 扩展集合（行号、语法高亮、括号匹配、缩进、选中样式等），提供 `codeBlockEditorTheme` 与 `codeBlockHighlightStyle` 共享主题。
 - 编辑器组件：`frontend/src/features/post/components/PostRichEditor.tsx`
   - 结构固定为 `EditorRoot + EditorContent + EditorCommand + EditorBubble + ImageResizer`。
   - 保存状态固定为 `Saved / Unsaved / Saving / Error`。
@@ -47,9 +59,14 @@
   - 透传 `Authorization` 到后端 `POST /api/files/upload`（MinIO）。
   - 返回统一 `{ url }`；错误返回 `errorType + message + backendStatus/backendCode/backendMessage` 供前端分类提示。
 - 代码块控制：`frontend/src/features/post/editor/novel-demo/code-block-with-controls.ts`
+  - 内部引用 `@/features/post/editor/code-block/*`，通过 `CodeBlockToolbar` 渲染工具栏。
   - `codeBlock` 节点持久化 `lineNumbers` 属性。
   - 每个代码块右上角提供独立行号开关；不再使用编辑器顶部全局行号开关。
   - 行号使用真实 DOM gutter 渲染，编辑态与阅读态共用刷新逻辑，避免长代码块依赖 CSS `attr()` 文本截断。
+- 左侧拖拽手柄：`GlobalDragHandle` 扩展（来自 Novel 扩展包）
+  - 为每个段落左侧提供可拖拽重排的抓手图标，仅在 hover 当前段落时显示。
+  - 视觉上使用 `--gmp-novel-*` 颜色令牌渲染，与编辑器深色主题一致。
+  - CSS 由 `globals.css` 中 `.drag-handle` 类控制，包含 hover 高亮与 active 抓取态样式。
 
 ---
 
@@ -62,12 +79,19 @@
   - 前端编辑器侧保持 `/api/upload` 不变。
   - `/api/upload` 内部转发后端 MinIO 上传并透传认证头，不影响编辑器调用方请求协议。
   - 后端上传链路确保博客资源桶具备公开只读策略，使返回的 MinIO 直链可被浏览器图片节点加载。
-  - 上传错误按 `auth_failed` / `unsupported_type` / `backend_response_error` / `invalid_response` 分类返回。
+  - 上传错误按 `auth_failed` / `unsupported_type` / `backend_response_error` / `invalid_response` / `network_error` 分类返回。
+  - 上传代理支持多候选后端地址回退（Multi-candidate Fallback）：
+    - 候选列表优先使用 `BACKEND_INTERNAL_API_URL`（或 `INTERNAL_API_URL`）容器内地址，其次 `NEXT_PUBLIC_API_URL` 外部地址。
+    - 若外部地址为 loopback（localhost/127.0.0.1/0.0.0.0），自动推导 `http://backend:8080/api` 容器名地址作为额外候选。
+    - 最后追加固定后备地址 `http://backend:8080/api` 与 `http://localhost:8080/api`（去重后依次尝试）。
+    - 任一候选返回 `404/405` 时自动尝试下一个候选；返回其他错误状态则直接按错误类型响应。
+    - 所有候选均失败时（网络错误或全部跳过），返回 `network_error` 类型错误。
   - 编辑器粘贴/拖拽图片时直接上传并插入 `image` 节点；导入链接卡片面板中的上传仍生成 `embedLink` 上传卡片。
 - 链接卡片契约：
   - 前端通过 `/api/embeds/resolve` 解析链接，响应结构沿用后端 `EmbedResolveResponse`。
   - `embedLink` 节点 attrs 保存 `url/normalizedUrl/cardType/mediaType/provider/title/description/artist/videoId/coverUrl/domain/siteName/uploadKind/snapshot/resolved/pending/error`。
   - `github + github`、`music + netease`、`video + bilibili` 命中平台专用模板；其余走通用模板回退。
+  - GitHub 仓库卡片支持 `owner/repo` 速记输入（如 `facebook/react`），后端自动补全为 `https://github.com/owner/repo` 后进行 OG 元数据解析。
   - 网易云与 B 站卡片优先使用后端 `snapshot.embedUrl`，前端可回退从 URL 推导播放器 iframe。
   - 文章 `contentFormat` 继续固定为 `tiptap-json`，不引入新的正文格式。
 
