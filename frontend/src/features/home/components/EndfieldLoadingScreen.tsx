@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { gmpMotionTransitions } from "@/components/motion";
 
 interface EndfieldLoadingScreenProps {
   progress: number;
@@ -19,7 +20,7 @@ export function EndfieldLoadingScreen({ progress }: EndfieldLoadingScreenProps) 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.25, ease: [0.2, 1, 0.2, 1] }}
+      transition={gmpMotionTransitions.controlFade}
       className="relative isolate min-h-dvh overflow-hidden bg-(--gmp-bg-base)"
       aria-label="首页加载中"
       role="status"
@@ -54,7 +55,7 @@ export function EndfieldLoadingScreen({ progress }: EndfieldLoadingScreenProps) 
             <motion.h1
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
-              transition={{ duration: 0.5, ease: [0.2, 1, 0.2, 1] }}
+              transition={gmpMotionTransitions.controlLoading}
               className="font-heading text-6xl font-black uppercase tracking-widest text-white sm:text-8xl md:text-9xl relative leading-none inline-block w-full"
             >
               协议<span className="text-(--gmp-accent)">接驳</span>

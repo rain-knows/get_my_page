@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "motion/react";
 import { Code2, LogIn, Search } from "lucide-react";
+import { gmpMotionTransitions } from "@/components/motion";
 import { Badge, Button } from "@/components/ui";
 
 /**
@@ -15,8 +16,8 @@ export default function Navbar() {
     <motion.header
       initial={{ y: -18, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-      className="industrial-panel sticky top-3 z-50 mx-auto mt-3 flex w-[min(1100px,calc(100%-1.5rem))] items-center justify-between rounded-2xl px-4 py-3 backdrop-blur-sm md:px-5 overflow-hidden"
+      transition={gmpMotionTransitions.displayEnter}
+      className="sticky top-3 z-50 mx-auto mt-3 flex w-[min(1100px,calc(100%-1.5rem))] items-center justify-between overflow-hidden border border-(--gmp-line-soft) bg-(--gmp-bg-panel) px-4 py-3 backdrop-blur-sm md:px-5 gmp-cut-corner-br gmp-hard-shadow"
     >
       <div className="absolute inset-0 gmp-halftone-card opacity-50 pointer-events-none" />
       <div className="relative z-10 flex items-center gap-3">

@@ -5,6 +5,7 @@ import { KineticPageShell } from "@/features/surface/components/KineticPageShell
 import { ChevronRight, DatabaseZap, Terminal } from "lucide-react";
 import { usePostList } from "@/features/post/hooks";
 import type { PostListItem } from "@/features/post/types";
+import { formatPostCalendarDate } from "@/features/post/time";
 
 /**
  * 功能：将文章内容格式与状态组合为列表项的工业标签文本。
@@ -15,19 +16,6 @@ function buildPostLabel(post: PostListItem): string {
   const formatLabel = post.contentFormat === "tiptap-json" ? "TIPTAP-JSON" : "UNKNOWN";
   const statusLabel = post.status === 1 ? "PUBLISHED" : "DRAFT";
   return `${formatLabel} // ${statusLabel}`;
-}
-
-/**
- * 功能：格式化文章更新时间，供列表展示使用。
- * 关键参数：value 为后端返回的更新时间字符串。
- * 返回值/副作用：返回可读日期文本，无副作用。
- */
-function formatPostUpdatedAt(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "UNKNOWN";
-  }
-  return date.toISOString().slice(0, 10);
 }
 
 /**
@@ -53,7 +41,7 @@ export function BlogListWorkbench() {
             </span>
           </div>
           <p className="font-mono text-[10px] font-bold tracking-widest text-(--gmp-text-secondary) uppercase">
-            LOCAL STORAGE // {loading ? "SYNCING..." : `${pagination.total} FRAGMENTS`}
+            POSTS API // {loading ? "SYNCING..." : `${pagination.total} FRAGMENTS`}
           </p>
         </div>
 
@@ -116,10 +104,10 @@ export function BlogListWorkbench() {
 
                   <div className="flex flex-row flex-wrap md:flex-col items-center md:items-end gap-3 mt-4 md:mt-0 font-mono text-[10px] font-bold tracking-widest uppercase text-(--gmp-text-secondary) group-hover:text-black transition-colors md:min-w-30">
                     <span>ID-{post.id}</span>
-                    <span>{formatPostUpdatedAt(post.updatedAt)}</span>
-                    <span className="border border-(--gmp-line-strong) group-hover:border-black px-2 mt-1">
-                      {post.status === 1 ? "ONLINE" : "DRAFT"}
-                    </span>
+                    <span>{formatPostCalendarDate(post.updatedAt)}</span>
+                  <span className="border border-(--gmp-line-strong) group-hover:border-black px-2 mt-1">
+                    {post.status === 1 ? "ONLINE" : "DRAFT"}
+                  </span>
                   </div>
                 </div>
 

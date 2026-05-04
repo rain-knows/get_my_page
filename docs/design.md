@@ -23,19 +23,19 @@ A complete visual overhaul shifting from a heavily textured "dark noise/terminal
 | **分割线 Borders** | Tech Line | `#FFFFFF20` | `rgba(255,255,255,0.12)` 或纯色 `#303338` |
 
 ## 字体规范 (Typography)
-- **Primary / Headings**: *Montserrat*, *Oswald*, *Noto Sans SC* (粗体，高对比)
-- **Monospace / Accents**: *JetBrains Mono*, *Fira Code* (工业编码指令，全大写)
+- **Primary / Sans**: *Montserrat* + *Noto Sans SC*（正文/UI 基础字族）
+- **Headings**: *Oswald* + *Noto Sans SC*（标题/大写标签）
+- **Monospace / Accents**: *JetBrains Mono* + *Fira Code*（工业编码指令，全大写）
+- 字体通过 `frontend/src/app/layout.tsx` 中的 `next/font/google` 注入，不再使用本地 Geist 占位字体覆盖主题变量。
 - 大量使用 `tracking-widest` 增加字间距。
 
 ## 动效参数 (Motion)
 - 贝塞尔曲线规范：
-  - 编辑器/认证/首页加载相关组件使用 `cubic-bezier(0.2, 1, 0.2, 1)`（如 `InteractiveAuthShell`、`EndfieldLoadingScreen`、`KineticPageShell`）。
-  - 导航/展示/网格相关组件使用 `cubic-bezier(0.22, 1, 0.36, 1)`（如 `Navbar`、`Hero`、`FlowShowcase`、`ProjectGrid`）。
-  - 全局 CSS 中 `--gmp-end-timing-fast: 150ms`、`--gmp-end-timing-mid: 250ms` 为首页动效时长令牌。
+  - `control`：编辑器/认证/首页加载相关组件使用 `cubic-bezier(0.2, 1, 0.2, 1)`（如 `InteractiveAuthShell`、`EndfieldLoadingScreen`、`KineticPageShell`）。
+  - `display`：导航/展示/网格相关组件使用 `cubic-bezier(0.22, 1, 0.36, 1)`（如 `Navbar`、`Hero`、`FlowShowcase`、`ProjectGrid`）。
+  - 时长令牌统一定义在 `globals.css`：`--gmp-motion-duration-fast`、`--gmp-motion-duration-enter`、`--gmp-motion-duration-panel`、`--gmp-motion-duration-slow`、`--gmp-motion-duration-loading`。
 - Hover 时不使用模糊或柔和阴影，使用硬质纯色阴影 `.gmp-hard-shadow` / `.gmp-hard-shadow-accent` 或色块位移。
-- **动效库状态**：`frontend/src/components/motion/` 目录当前为空，动效实现分散在各业务组件内（使用 `motion/react` 的 `transition.ease` 直接声明），无集中的动效工具库/组件库。
-
-> **已知偏离**：早期设计规范仅记录 `[0.2, 1, 0.2, 1]` 单条曲线，实际代码中两种曲线并存。`[0.22, 1, 0.36, 1]` 曲线提供了更显著的 deceleration 感知，在导航与展示组件中使用。未来版本应统一曲线规范并补全令牌。
+- **动效库状态**：`frontend/src/components/motion/tokens.ts` 为统一动效入口，集中定义双轨 easing、共享 duration 与 `motion/react` 过渡预设，业务组件不再内联硬编码 `ease` 数组。
 
 ## 具体化与可复现实现方案 (Concrete & Reproducible Implementations)
 
@@ -76,6 +76,19 @@ A complete visual overhaul shifting from a heavily textured "dark noise/terminal
 | `--gmp-accent-blue` | `#00C2FF` | 辅助科技青（Ark Blue） |
 | `--gmp-text-gray-contrast` | `#a1a1aa` | 灰白对比文本（高亮区域用） |
 
+**动效令牌 (Motion Tokens)**:
+
+| 变量名 | 值 | 用途 |
+|---|---|---|
+| `--gmp-motion-duration-fast` | `180ms` | 快速 hover / 微位移动效 |
+| `--gmp-motion-duration-fade` | `250ms` | 轻量 fade in/out |
+| `--gmp-motion-duration-enter` | `240ms` | 展示模块进场 |
+| `--gmp-motion-duration-panel` | `300ms` | 控制型面板进场 |
+| `--gmp-motion-duration-slow` | `400ms` | 大块内容 reveal |
+| `--gmp-motion-duration-loading` | `500ms` | 首页加载标题揭示 |
+| `--gmp-motion-ease-control` | `cubic-bezier(0.2, 1, 0.2, 1)` | 认证/加载/控制型交互 |
+| `--gmp-motion-ease-display` | `cubic-bezier(0.22, 1, 0.36, 1)` | 导航/展示/卡片 reveal |
+
 **终末地灵感令牌 (Endfield Tokens)**:
 
 | 变量名 | 值 | 用途 |
@@ -106,7 +119,7 @@ A complete visual overhaul shifting from a heavily textured "dark noise/terminal
 
 **代码块令牌 (Code Block Tokens)**:
 
-> 代码块令牌在 `:root` 与 `.dark` 中各有一份定义，下表以 `.dark` 覆盖后的实际生效值为准：
+> 应用固定为 dark 工业主题，代码块令牌在 `:root` 中维护单一深色真值源；`--gmp-novel-code-*` 继续作为编辑器兼容别名。
 
 | 变量名 | `.dark` 值 | 用途 |
 |---|---|---|
@@ -199,13 +212,11 @@ A complete visual overhaul shifting from a heavily textured "dark noise/terminal
 
 **Hover 填充效果**:
 - `.gmp-hover-fill`：hover 时从左侧滑入强调色填充块的交互效果。
-  - 内部使用 `::before` 伪元素 + `cubic-bezier(0.2, 1, 0.2, 1)` 过渡实现。
+  - 内部使用 `::before` 伪元素 + `--gmp-motion-duration-panel` / `--gmp-motion-ease-control` 过渡实现。
   - hover 后文字颜色自动反转为 `var(--gmp-bg-base)`。
 
-**旧版组件别名（已停用，仅保留 CSS 占位，实际 `display: none`）**:
-- `.gmp-noise-overlay`、`.gmp-kinetic-bg`、`.gmp-fluid-scan`、`.gmp-parallax-geometry`、`.gmp-module-stage__aura`：早期版本的重纹理/动态背景层，已全部设为 `display: none`，保留仅用于避免破坏旧页面引用。
-
-> **已知偏离**：上述旧版类名仍在 CSS 中存在但已禁用，尚未从代码中清理。设计规范当前不鼓励使用它们。
+**旧版背景层说明**:
+- `.gmp-noise-overlay`、`.gmp-kinetic-bg`、`.gmp-fluid-scan`、`.gmp-parallax-geometry`、`.gmp-module-stage__aura` 已从 `globals.css` 清理，不再保留兼容占位类。
 
 ### 3. 版式排版规范 (Typography Patterns)
 
@@ -351,13 +362,9 @@ A complete visual overhaul shifting from a heavily textured "dark noise/terminal
 
 ## 已知偏离与待统一事项 (Known Deviations & Unification Backlog)
 
-本文档记录当前代码状态与设计规范之间的已知差异，这些差异不应被隐藏或忽略：
+本轮已完成此前的设计收口项，当前无额外记录中的待统一偏离。实际代码基线为：
 
-1. **动效曲线双轨**：`[0.2, 1, 0.2, 1]` 与 `[0.22, 1, 0.36, 1]` 并存，无统一令牌。参见"动效参数"章节。
-2. **components/motion/ 为空**：暗示的集中动效库不存在，动效以组件内联方式实现。参见"动效参数"章节。
-3. **旧版背景层类名未清理**：`.gmp-noise-overlay` 等 5 个类以 `display: none` 保留在 CSS 中。参见"硬质阴影与面板辅助类"章节。
-4. **代码块双主题定义**：`--gmp-code-*` 在 `:root` 与 `.dark` 各有一份，无切换机制。参见"完整令牌目录"章节。
-5. **`industrial-panel` class 未定义**：部分组件（Navbar、Hero、FlowShowcase）使用 `industrial-panel` 类名，但该 class 在 `globals.css` 中无定义。此为非文档化的已知 bug，不在本次文档更新范围内修复。
-6. **`rounded-2xl/rounded-3xl` 圆角使用**：部分展示组件（Navbar、Hero、FlowShowcase）使用大圆角（`rounded-2xl`/`rounded-3xl`），与设计规范"避免大圆角"原则不一致。但由于 `--radius: 0rem` 的 token 映射，这些类实际渲染为零圆角。此偏离应记录为待评审项。
-7. **字体实际加载与规范不符**：`design.md` 指定 Montserrat/Oswald/Noto Sans SC 字体组合，但 `layout.tsx` 中使用 local font（实际指向 GeistLatin woff2）覆盖了 Google Fonts 声明。Oswald 与 Fira Code 未在任何地方加载。参见"字体规范"章节。
-8. **`framer-motion` 与 `motion` 双重依赖**：`package.json` 同时安装了 `framer-motion` 与 `motion`（后者为前者的重命名版本），组件实际使用 `motion/react`，`framer-motion` 为冗余依赖。
+1. **动效双轨已令牌化**：`control` / `display` easing 与共享 transition 预设统一维护在 `frontend/src/components/motion/tokens.ts`。
+2. **展示面板已回归正式 utility 组合**：首页 `Navbar`、`Hero`、`FlowShowcase` 不再使用未定义的 `industrial-panel` 或大圆角类。
+3. **字体与代码块主题已与规范一致**：Google 字体经 `next/font/google` 注入，代码块令牌固定为单一 dark palette。
+4. **冗余兼容层已清理**：旧背景层占位类与 `framer-motion` 依赖均已移除。

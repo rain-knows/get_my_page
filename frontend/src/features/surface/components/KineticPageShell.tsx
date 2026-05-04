@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowUpRight, Layers3 } from "lucide-react";
+import { gmpMotionSprings, gmpMotionTransitions } from "@/components/motion";
 import { cn } from "@/lib/utils";
 
 interface ShellNavItem {
@@ -119,7 +120,7 @@ export function KineticPageShell({
                           <motion.div
                             layoutId="navTrackerBg"
                             className="absolute -top-1 -bottom-1 left-0 -right-3 z-0 bg-(--gmp-bg-panel) border-y border-r border-(--gmp-line-strong) border-l-0 gmp-cut-corner-br shadow-[4px_4px_0_0_rgba(0,0,0,0.5)]"
-                            transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                            transition={gmpMotionSprings.tracker}
                           />
                         )}
 
@@ -128,7 +129,7 @@ export function KineticPageShell({
                           <motion.div
                             layoutId="navTrackerLine"
                             className="absolute left-0 -top-1 -bottom-1 w-1.5 bg-(--gmp-accent) z-60 shadow-[0_0_8px_var(--gmp-accent)]"
-                            transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                            transition={gmpMotionSprings.tracker}
                           />
                         )}
 
@@ -162,7 +163,7 @@ export function KineticPageShell({
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: [0.2, 1, 0.2, 1] }}
+          transition={gmpMotionTransitions.controlReveal}
           className={cn(
             "relative flex flex-col justify-start overflow-hidden",
             isFocusLayout ? "pt-4 pb-4" : "pt-6 pb-6",

@@ -1,33 +1,40 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Fira_Code, JetBrains_Mono, Montserrat, Noto_Sans_SC, Oswald } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-const inter = localFont({
-  src: [
-    { path: "../../public/fonts/GeistLatin-Regular.woff2", weight: "400", style: "normal" },
-    { path: "../../public/fonts/GeistLatinExt-Regular.woff2", weight: "400", style: "normal" },
-  ],
-  variable: "--font-sans",
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-sans-base",
   display: "swap",
 });
 
-const spaceGrotesk = localFont({
-  src: [
-    { path: "../../public/fonts/GeistLatin-Regular.woff2", weight: "400", style: "normal" },
-    { path: "../../public/fonts/GeistLatinExt-Regular.woff2", weight: "400", style: "normal" },
-  ],
-  variable: "--font-space-grotesk",
+const notoSansSC = Noto_Sans_SC({
+  weight: ["400", "500", "700", "900"],
+  variable: "--font-sans-cjk",
   display: "swap",
 });
 
-const archivo = localFont({
-  src: [
-    { path: "../../public/fonts/GeistLatin-Regular.woff2", weight: "400", style: "normal" },
-    { path: "../../public/fonts/GeistLatinExt-Regular.woff2", weight: "400", style: "normal" },
-  ],
-  variable: "--font-archivo",
+const oswald = Oswald({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-heading-base",
+  display: "swap",
+});
+
+const jetBrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "700", "800"],
+  variable: "--font-mono-base",
+  display: "swap",
+});
+
+const firaCode = Fira_Code({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-mono-accent",
   display: "swap",
 });
 
@@ -50,9 +57,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" className={cn("dark", "font-sans", inter.variable)}>
+    <html
+      lang="zh-CN"
+      className={cn(
+        "dark",
+        "font-sans",
+        montserrat.variable,
+        notoSansSC.variable,
+        oswald.variable,
+        jetBrainsMono.variable,
+        firaCode.variable,
+      )}
+    >
       <body
-        className={`${spaceGrotesk.className} ${archivo.variable} ${spaceGrotesk.variable} min-h-screen bg-(--gmp-bg-base) text-(--gmp-text-primary) antialiased selection:bg-(--gmp-accent)/30 selection:text-(--gmp-accent) overscroll-none`}
+        className="min-h-screen bg-(--gmp-bg-base) text-(--gmp-text-primary) antialiased selection:bg-(--gmp-accent)/30 selection:text-(--gmp-accent) overscroll-none"
       >
         <div className="relative z-0 flex min-h-screen w-full flex-col">
           {children}

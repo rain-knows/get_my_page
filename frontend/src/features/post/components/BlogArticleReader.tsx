@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { Clock, HardDrive, ShieldAlert } from "lucide-react";
 import { useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { KineticPageShell } from "@/features/surface/components/KineticPageShell";
 import { useIsAdminCapability, usePostDetail } from "@/features/post/hooks";
 import { PostContentRenderer } from "@/features/post/components/PostContentRenderer";
 import { loadNovelDraftContentString, loadNovelDraftTitle } from "@/features/post/editor/novel-demo";
+import { formatPostCalendarDateTime } from "@/features/post/time";
 import type { PostContentFormat } from "@/features/post/types";
 
 interface BlogArticleReaderProps {
@@ -19,46 +21,42 @@ interface LocalDraftSnapshot {
 }
 
 /**
- * 功能：将后端时间字符串格式化为详情页可读文本。
- * 关键参数：value 为时间字符串。
- * 返回值/副作用：返回格式化后的时间文本，无副作用。
- */
-function formatDetailTime(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "UNKNOWN";
-  }
-  return date.toISOString().replace("T", " ").slice(0, 16);
-}
-
-/**
  * 功能：渲染博客详情阅读页并接入真实文章详情接口。
  * 关键参数：slug 为文章唯一标识。
  * 返回值/副作用：返回文章详情节点；副作用为触发文章详情请求。
  */
 export function BlogArticleReader({ slug }: BlogArticleReaderProps) {
+  const searchParams = useSearchParams();
   const { data, loading, error, reload } = usePostDetail(slug);
   const canEdit = useIsAdminCapability();
+  const shouldUseLocalPreview = canEdit && searchParams.get("preview") === "local";
   const localDraft = useMemo<LocalDraftSnapshot>(() => {
+    if (!shouldUseLocalPreview) {
+      return {
+        title: null,
+        content: null,
+      };
+    }
+
     return {
       title: loadNovelDraftTitle(slug),
       content: loadNovelDraftContentString(slug),
     };
-  }, [slug]);
+  }, [shouldUseLocalPreview, slug]);
+  const hasLocalDraftPreview = Boolean(localDraft.title || localDraft.content);
 
   const resolvedTitle = useMemo(() => {
-    if (localDraft.title) {
+    if (hasLocalDraftPreview && localDraft.title) {
       return localDraft.title;
     }
     if (loading) {
       return "LOADING ARTICLE...";
     }
     return data?.title ?? "ARTICLE NOT FOUND";
-  }, [data?.title, loading, localDraft.title]);
+  }, [data?.title, hasLocalDraftPreview, loading, localDraft.title]);
 
-  const resolvedContent = localDraft.content ?? data?.content ?? "";
+  const resolvedContent = (hasLocalDraftPreview ? localDraft.content : null) ?? data?.content ?? "";
   const resolvedFormat: PostContentFormat = "tiptap-json";
-  const hasLocalDraft = Boolean(localDraft.content);
 
   return (
     <KineticPageShell
@@ -89,7 +87,7 @@ export function BlogArticleReader({ slug }: BlogArticleReaderProps) {
                 <h1 className="font-heading text-2xl font-black text-white uppercase leading-tight tracking-tight md:text-3xl">
                   {resolvedTitle}
                 </h1>
-                {hasLocalDraft ? (
+                {hasLocalDraftPreview ? (
                   <p className="font-mono text-[10px] uppercase tracking-widest text-emerald-300">LOCAL DRAFT PREVIEW ACTIVE</p>
                 ) : null}
               </div>
@@ -125,8 +123,13 @@ export function BlogArticleReader({ slug }: BlogArticleReaderProps) {
                   UPDATED
                 </dt>
                 <dd className="font-mono text-[10px] font-bold uppercase tracking-widest text-white/80">
-                  {data ? formatDetailTime(data.updatedAt) : "--"}
+                  {hasLocalDraftPreview ? "LOCAL PREVIEW" : data ? formatPostCalendarDateTime(data.updatedAt) : "--"}
                 </dd>
+                {hasLocalDraftPreview && data ? (
+                  <dd className="mt-1 font-mono text-[9px] font-bold uppercase tracking-widest text-(--gmp-text-secondary)">
+                    PUBLISHED {formatPostCalendarDateTime(data.updatedAt)}
+                  </dd>
+                ) : null}
               </div>
               <div className="border border-(--gmp-line-soft) bg-(--gmp-bg-panel) px-3 py-2">
                 <dt className="flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-widest text-(--gmp-text-secondary)">
@@ -134,7 +137,7 @@ export function BlogArticleReader({ slug }: BlogArticleReaderProps) {
                   FORMAT
                 </dt>
                 <dd className="font-mono text-[10px] font-bold uppercase tracking-widest text-white/80">{data?.contentFormat ?? "--"}</dd>
-                {hasLocalDraft ? (
+                {hasLocalDraftPreview ? (
                   <dd className="mt-1 font-mono text-[9px] font-bold uppercase tracking-widest text-emerald-300">LOCAL</dd>
                 ) : null}
               </div>
@@ -151,7 +154,7 @@ export function BlogArticleReader({ slug }: BlogArticleReaderProps) {
           </header>
 
           <div className="bg-(--gmp-bg-base) p-4 md:p-8 lg:p-10">
-            {loading && !hasLocalDraft ? (
+            {loading && !hasLocalDraftPreview ? (
               <div className="space-y-4 animate-pulse">
                 <div className="h-4 w-full bg-(--gmp-line-soft)" />
                 <div className="h-4 w-11/12 bg-(--gmp-line-soft)" />

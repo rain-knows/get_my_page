@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { ArrowUpRight, PenLine, Rocket, Sparkles } from "lucide-react";
+import { gmpMotionTransitions } from "@/components/motion";
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 
 const flowItems = [
@@ -41,7 +42,7 @@ const flowItemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.24, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+    transition: gmpMotionTransitions.displayEnter,
   },
 };
 
@@ -53,7 +54,7 @@ const flowItemVariants = {
 export default function FlowShowcase() {
   return (
     <section id="flow" className="mx-auto w-full max-w-6xl px-4 pb-9 md:px-6">
-      <div className="industrial-panel relative overflow-hidden rounded-3xl px-5 py-6 md:px-7 md:py-8">
+      <div className="relative overflow-hidden border border-(--gmp-line-soft) bg-(--gmp-bg-panel) px-5 py-6 md:px-7 md:py-8 gmp-cut-corner-double gmp-hard-shadow">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-(--gmp-line-strong) to-transparent" />
 
         <div className="mb-6 flex flex-wrap items-start justify-between gap-4">

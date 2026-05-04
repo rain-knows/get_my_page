@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap');
-
 @import "tailwindcss";
 @import "../../node_modules/tw-animate-css/dist/tw-animate.css";
 @import "shadcn/tailwind.css";
@@ -7,9 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-sans: "Montserrat", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Montserrat", "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+  --font-sans: var(--font-sans-base), var(--font-sans-cjk), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-heading-base), var(--font-sans-cjk), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-base), var(--font-mono-accent), ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 
 @layer base {
@@ -93,8 +91,16 @@
   --gmp-end-panel: #1A1B20;
   --gmp-end-accent: #FFCC00;
   --gmp-end-danger: #FF3333;
-  --gmp-end-timing-fast: 150ms;
-  --gmp-end-timing-mid: 250ms;
+  --gmp-motion-duration-fast: 180ms;
+  --gmp-motion-duration-fade: 250ms;
+  --gmp-motion-duration-enter: 240ms;
+  --gmp-motion-duration-panel: 300ms;
+  --gmp-motion-duration-slow: 400ms;
+  --gmp-motion-duration-loading: 500ms;
+  --gmp-motion-ease-control: cubic-bezier(0.2, 1, 0.2, 1);
+  --gmp-motion-ease-display: cubic-bezier(0.22, 1, 0.36, 1);
+  --gmp-end-timing-fast: var(--gmp-motion-duration-fast);
+  --gmp-end-timing-mid: var(--gmp-motion-duration-enter);
 
   --gmp-text-gray-contrast: #a1a1aa;
 
@@ -113,29 +119,29 @@
   --gmp-novel-accent-soft: #1f6feb33;
 
   /* Code block tokens */
-  --gmp-code-bg: #f6f8fa;
-  --gmp-code-toolbar: #ffffff;
-  --gmp-code-toolbar-hover: #eef2f6;
-  --gmp-code-gutter-bg: #f0f3f6;
-  --gmp-code-border: #d0d7de;
-  --gmp-code-border-strong: #8c959f;
-  --gmp-code-text: #24292f;
-  --gmp-code-text-strong: #0b0d12;
-  --gmp-code-muted: #57606a;
-  --gmp-code-accent: #0969da;
-  --gmp-code-accent-soft: #0969da22;
-  --gmp-code-caret: #24292f;
-  --gmp-code-selection: #0969da44;
-  --gmp-code-active-line: #ffffff99;
-  --gmp-code-active-gutter: #eaeef2;
-  --gmp-code-syntax-comment: #6e7781;
-  --gmp-code-syntax-keyword: #cf222e;
-  --gmp-code-syntax-string: #0a3069;
-  --gmp-code-syntax-number: #0550ae;
-  --gmp-code-syntax-function: #8250df;
-  --gmp-code-syntax-type: #953800;
-  --gmp-code-syntax-variable: #24292f;
-  --gmp-code-syntax-meta: #116329;
+  --gmp-code-bg: #0d1117;
+  --gmp-code-toolbar: #161b22;
+  --gmp-code-toolbar-hover: #21262d;
+  --gmp-code-gutter-bg: color-mix(in srgb, #161b22 86%, black 14%);
+  --gmp-code-border: #30363d;
+  --gmp-code-border-strong: #484f58;
+  --gmp-code-text: #c9d1d9;
+  --gmp-code-text-strong: #f0f6fc;
+  --gmp-code-muted: #8b949e;
+  --gmp-code-accent: #79c0ff;
+  --gmp-code-accent-soft: #1f6feb33;
+  --gmp-code-caret: #f0f6fc;
+  --gmp-code-selection: #264f78cc;
+  --gmp-code-active-line: #161b2299;
+  --gmp-code-active-gutter: #21262d;
+  --gmp-code-syntax-comment: #8b949e;
+  --gmp-code-syntax-keyword: #ffab70;
+  --gmp-code-syntax-string: #a5d6ff;
+  --gmp-code-syntax-number: #79c0ff;
+  --gmp-code-syntax-function: #79c0ff;
+  --gmp-code-syntax-type: #d2a8ff;
+  --gmp-code-syntax-variable: #c9d1d9;
+  --gmp-code-syntax-meta: #7ee787;
   --gmp-novel-code-bg: var(--gmp-code-bg);
   --gmp-novel-code-toolbar: var(--gmp-code-toolbar);
   --gmp-novel-code-text: var(--gmp-code-text);
@@ -163,29 +169,6 @@
   --border: oklch(1 0 0 / 20%);
   --input: oklch(1 0 0 / 20%);
   --ring: oklch(0.85 0.15 90);
-  --gmp-code-bg: #0d1117;
-  --gmp-code-toolbar: #161b22;
-  --gmp-code-toolbar-hover: #21262d;
-  --gmp-code-gutter-bg: color-mix(in srgb, #161b22 86%, black 14%);
-  --gmp-code-border: #30363d;
-  --gmp-code-border-strong: #484f58;
-  --gmp-code-text: #c9d1d9;
-  --gmp-code-text-strong: #f0f6fc;
-  --gmp-code-muted: #8b949e;
-  --gmp-code-accent: #79c0ff;
-  --gmp-code-accent-soft: #1f6feb33;
-  --gmp-code-caret: #f0f6fc;
-  --gmp-code-selection: #264f78cc;
-  --gmp-code-active-line: #161b2299;
-  --gmp-code-active-gutter: #21262d;
-  --gmp-code-syntax-comment: #8b949e;
-  --gmp-code-syntax-keyword: #ffab70;
-  --gmp-code-syntax-string: #a5d6ff;
-  --gmp-code-syntax-number: #79c0ff;
-  --gmp-code-syntax-function: #79c0ff;
-  --gmp-code-syntax-type: #d2a8ff;
-  --gmp-code-syntax-variable: #c9d1d9;
-  --gmp-code-syntax-meta: #7ee787;
 }
 
 @layer utilities {
@@ -301,24 +284,6 @@
   background-color: var(--gmp-bg-elevated);
 }
 
-/* Replaced noise layer with a much lighter, static minimal texture if absolutely needed, or purely stripped */
-.gmp-noise-overlay {
-  display: none;
-}
-
-/* Override previous complex backgrounds to minimal states */
-.gmp-kinetic-bg {
-  display: none;
-}
-
-.gmp-fluid-scan {
-  display: none;
-}
-
-.gmp-parallax-geometry {
-  display: none;
-}
-
 /* Hover fill animations */
 .gmp-hover-fill {
   position: relative;
@@ -334,7 +299,7 @@
   width: 100%;
   height: 100%;
   background: var(--gmp-end-accent);
-  transition: transform 0.3s cubic-bezier(0.2, 1, 0.2, 1);
+  transition: transform var(--gmp-motion-duration-panel) var(--gmp-motion-ease-control);
   z-index: -1;
   transform-origin: left;
 }
@@ -345,11 +310,6 @@
 
 .gmp-hover-fill:hover {
   color: var(--gmp-bg-base) !important;
-}
-
-/* Strip complex stage layers from older kinetic shells */
-.gmp-module-stage__aura {
-  display: none;
 }
 
 /* Hard Drop Shadow */

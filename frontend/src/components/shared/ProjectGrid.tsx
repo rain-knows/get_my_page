@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowUpRight, BookOpen, FolderGit2 } from "lucide-react";
+import { gmpMotionTransitions } from "@/components/motion";
 import { Badge, Button, Card, CardContent, CardFooter, CardHeader, CardTitle, Separator } from "@/components/ui";
 
 const feedItems = [
@@ -57,10 +58,7 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: {
-      duration: 0.24,
-      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
-    },
+    transition: gmpMotionTransitions.displayEnter,
   },
 };
 
@@ -68,7 +66,7 @@ const cardInteractionVariants = {
   rest: { y: 0 },
   hover: {
     y: -3,
-    transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+    transition: gmpMotionTransitions.displayHover,
   },
 };
 
@@ -78,7 +76,7 @@ const arrowMotionVariants = {
     x: 2,
     y: 0,
     rotate: 45,
-    transition: { duration: 0.24, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+    transition: gmpMotionTransitions.displayEnter,
   },
 };
 

@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { ShieldAlert } from "lucide-react";
 import { useMemo } from "react";
 import { KineticPageShell } from "@/features/surface/components/KineticPageShell";
-import { useIsAdminCapability } from "@/features/post/hooks";
+import { useIsAdminCapability, usePostDetail } from "@/features/post/hooks";
 import { PostRichEditor } from "@/features/post/components/PostRichEditor";
-import { loadNovelDraftTitle, saveNovelDraftTitle } from "@/features/post/editor/novel-demo";
+import { createDefaultEditorContent, loadNovelDraftDocument, loadNovelDraftTitle, parsePostContentToNovelDoc, saveNovelDraftTitle } from "@/features/post/editor/novel-demo";
 
 interface BlogArticleEditorProps {
   slug: string;
@@ -30,11 +30,30 @@ function buildFallbackTitleFromSlug(slug: string): string {
 export function BlogArticleEditor({ slug }: BlogArticleEditorProps) {
   const router = useRouter();
   const canEdit = useIsAdminCapability();
+  const { data, loading, error, reload } = usePostDetail(slug, canEdit);
   const detailPath = `/blog/${slug}`;
-  const initialTitle = useMemo(() => {
+  const localPreviewPath = `${detailPath}?preview=local`;
+  const initialSnapshot = useMemo(() => {
     const localTitle = loadNovelDraftTitle(slug);
-    return localTitle ?? buildFallbackTitleFromSlug(slug);
-  }, [slug]);
+    const localDocument = loadNovelDraftDocument(slug);
+    if (localTitle || localDocument) {
+      return {
+        key: `${slug}:local:${localTitle ? "title" : data?.baseUpdatedAt ?? "pending"}`,
+        title: localTitle ?? data?.title ?? buildFallbackTitleFromSlug(slug),
+        content: localDocument ?? (data ? parsePostContentToNovelDoc(data.content, data.contentFormat) : createDefaultEditorContent()),
+      };
+    }
+
+    if (data) {
+      return {
+        key: `${slug}:remote:${data.baseUpdatedAt}`,
+        title: data.title,
+        content: parsePostContentToNovelDoc(data.content, data.contentFormat),
+      };
+    }
+
+    return null;
+  }, [data, slug]);
 
   /**
    * 功能：处理退出编辑动作并返回阅读页。
@@ -78,8 +97,13 @@ export function BlogArticleEditor({ slug }: BlogArticleEditorProps) {
               BACK TO ARTICLE
             </Link>
           </section>
-        ) : (
-          <section className="border border-(--gmp-line-strong) bg-(--gmp-bg-panel) p-4 md:p-6 gmp-cut-corner-br">
+        ) : initialSnapshot ? (
+          <section key={initialSnapshot.key} className="border border-(--gmp-line-strong) bg-(--gmp-bg-panel) p-4 md:p-6 gmp-cut-corner-br">
+            {error ? (
+              <div className="mb-4 border border-amber-400/40 bg-amber-300/10 px-4 py-3 font-mono text-[10px] font-bold tracking-widest uppercase text-amber-200">
+                REMOTE DETAIL UNAVAILABLE // USING LOCAL SNAPSHOT
+              </div>
+            ) : null}
             <div className="mb-4 flex items-start justify-between gap-3">
               <div className="space-y-1">
                 <p className="font-mono text-[10px] font-bold tracking-widest uppercase text-(--gmp-accent)">EDIT TARGET // {slug}</p>
@@ -87,10 +111,10 @@ export function BlogArticleEditor({ slug }: BlogArticleEditorProps) {
                   编辑标题
                 </label>
                 <input
-                  key={slug}
+                  key={`${initialSnapshot.key}:title`}
                   id="gmp-editor-title-input"
                   type="text"
-                  defaultValue={initialTitle}
+                  defaultValue={initialSnapshot.title}
                   onChange={(event) => {
                     handleTitleChange(event.target.value);
                   }}
@@ -99,14 +123,51 @@ export function BlogArticleEditor({ slug }: BlogArticleEditorProps) {
                 />
               </div>
               <Link
-                href={detailPath}
+                href={localPreviewPath}
                 className="inline-flex h-9 items-center border border-(--gmp-line-soft) bg-(--gmp-bg-base) px-3 font-mono text-[10px] font-bold tracking-widest uppercase text-(--gmp-text-secondary) hover:text-white"
               >
-                READER MODE
+                LOCAL PREVIEW
               </Link>
             </div>
 
-            <PostRichEditor key={slug} slug={slug} onCancel={handleCancelEdit} />
+            <PostRichEditor key={initialSnapshot.key} slug={slug} initialContent={initialSnapshot.content} onCancel={handleCancelEdit} />
+          </section>
+        ) : error ? (
+          <section className="space-y-4 border border-(--gmp-line-strong) bg-(--gmp-bg-panel) p-5 gmp-cut-corner-br">
+            <p className="flex items-center gap-2 font-mono text-[11px] font-bold uppercase tracking-widest text-red-400">
+              <ShieldAlert className="h-4 w-4" />
+              LOAD FAILED
+            </p>
+            <p className="font-mono text-xs leading-relaxed text-(--gmp-text-secondary)">
+              {error}
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => void reload()}
+                className="inline-flex h-10 items-center border border-(--gmp-line-soft) bg-(--gmp-bg-base) px-4 font-mono text-[10px] font-bold tracking-widest uppercase text-white hover:border-white"
+              >
+                RETRY
+              </button>
+              <Link
+                href={detailPath}
+                className="inline-flex h-10 items-center border border-(--gmp-line-soft) bg-(--gmp-bg-base) px-4 font-mono text-[10px] font-bold tracking-widest uppercase text-white hover:border-white"
+              >
+                BACK TO ARTICLE
+              </Link>
+            </div>
+          </section>
+        ) : loading && !initialSnapshot ? (
+          <section className="space-y-4 border border-(--gmp-line-strong) bg-(--gmp-bg-panel) p-5 gmp-cut-corner-br animate-pulse">
+            <div className="h-4 w-40 bg-(--gmp-line-soft)" />
+            <div className="h-12 w-full max-w-xl bg-(--gmp-novel-line)" />
+            <div className="h-80 w-full bg-(--gmp-novel-surface)" />
+          </section>
+        ) : (
+          <section className="space-y-3 border border-(--gmp-line-soft) bg-(--gmp-bg-panel) p-5 gmp-cut-corner-br">
+            <p className="font-mono text-xs tracking-widest uppercase text-(--gmp-text-secondary)">
+              未找到可编辑内容。
+            </p>
           </section>
         )}
       </div>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowRight, Compass, Gauge, Layers3 } from "lucide-react";
+import { gmpMotionTransitions } from "@/components/motion";
 import { Badge, Button } from "@/components/ui";
 
 const heroMetrics = [
@@ -22,7 +23,7 @@ export default function Hero() {
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+        transition={gmpMotionTransitions.displayEnter}
         className="mx-auto flex w-full max-w-6xl flex-col items-start gap-10"
       >
         <div className="space-y-5">
@@ -57,7 +58,7 @@ export default function Hero() {
             </Button>
           </div>
 
-          <div className="industrial-panel grid w-full max-w-xl grid-cols-1 gap-2 rounded-2xl p-3 sm:grid-cols-3">
+          <div className="grid w-full max-w-xl grid-cols-1 gap-2 border border-(--gmp-line-soft) bg-(--gmp-bg-panel) p-3 sm:grid-cols-3 gmp-cut-corner-br gmp-hard-shadow">
             {heroMetrics.map((item) => (
               <div key={item.label} className="rounded-xl border border-(--gmp-line-soft) bg-[rgba(255,255,255,0.02)] px-3 py-2.5">
                 <p className="font-mono text-[10px] tracking-[0.12em] text-(--gmp-text-secondary) uppercase">{item.label}</p>

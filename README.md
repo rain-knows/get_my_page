@@ -115,7 +115,7 @@ get_my_page/
 ├── frontend/                  # Next.js 前端项目
 │   ├── src/
 │   │   ├── app/               # 路由层（仅页面/布局）
-│   │   ├── components/        # 组件分层 (ui/blog/admin/shared)
+│   │   ├── components/        # 组件分层 (ui/blog/admin/shared/motion)
 │   │   ├── features/          # 业务模块（auth/post/search/upload）
 │   │   ├── hooks/             # 通用 React Hooks
 │   │   ├── lib/               # 基础能力封装（api-client/mdx/seo）

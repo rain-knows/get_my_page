@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
+import { gmpMotionTransitions } from "@/components/motion";
 import { cn } from "@/lib/utils";
 
 interface InteractiveAuthShellProps {
@@ -37,7 +38,7 @@ export function InteractiveAuthShell({ title, description, mode, footer, childre
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3, ease: [0.2, 1, 0.2, 1] }}
+        transition={gmpMotionTransitions.controlEnter}
         className={cn("relative z-10 mx-auto flex w-full max-w-xl flex-col justify-center", className)}
       >
         <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">

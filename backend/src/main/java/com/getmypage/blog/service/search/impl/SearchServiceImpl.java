@@ -38,9 +38,10 @@ public class SearchServiceImpl implements SearchService {
             throw new BizException(ErrorCode.BAD_REQUEST, "搜索关键词不能为空");
         }
 
-        SearchClient.SearchQueryResult queryResult = searchClient.searchPublicPosts(keyword.trim());
-        if (queryResult.isDegraded()) {
-            return fallbackSearch(keyword.trim());
+        String normalizedKeyword = keyword.trim();
+        SearchClient.SearchQueryResult queryResult = searchClient.searchPublicPosts(normalizedKeyword);
+        if (queryResult.isDegraded() || shouldFallbackToDatabase(queryResult.getHits())) {
+            return fallbackSearch(normalizedKeyword);
         }
 
         List<SearchHitResponse> hits = queryResult.getHits().stream()
@@ -53,6 +54,21 @@ public class SearchServiceImpl implements SearchService {
                 .processingTimeMs(queryResult.getProcessingTimeMs())
                 .degraded(false)
                 .build();
+    }
+
+    /**
+     * 功能：判断搜索引擎返回结果是否缺失关键展示字段，避免前端拿到只有 ID 的脏索引文档。
+     * 关键参数：hits 为搜索引擎返回的原始命中文档集合。
+     * 返回值/副作用：返回是否应降级到数据库查询；无副作用。
+     */
+    private boolean shouldFallbackToDatabase(List<Map<String, Object>> hits) {
+        if (hits == null || hits.isEmpty()) {
+            return true;
+        }
+
+        return hits.stream().anyMatch((hit) ->
+                !hasText(hit.get("title")) || !hasText(hit.get("slug"))
+        );
     }
 
     /**
@@ -93,6 +109,15 @@ public class SearchServiceImpl implements SearchService {
                 .slug(stringValue(hit.get("slug")))
                 .coverUrl(stringValue(hit.get("coverUrl")))
                 .build();
+    }
+
+    /**
+     * 功能：判断搜索命中文档中的字段是否包含可展示文本，避免空字符串误判为有效结果。
+     * 关键参数：value 为待校验对象。
+     * 返回值/副作用：返回是否包含有效文本；无副作用。
+     */
+    private boolean hasText(Object value) {
+        return value != null && StringUtils.hasText(String.valueOf(value));
     }
 
     /**

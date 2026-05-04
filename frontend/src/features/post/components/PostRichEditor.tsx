@@ -24,10 +24,9 @@ import {
   insertEmbedCardAtSelection,
   resolveAndHydrateEmbedCard,
 } from '@/features/post/editor/novel-demo/embed-link';
-import { createDefaultEditorContent } from '@/features/post/editor/novel-demo/content';
 import { buildNovelEditorExtensions } from '@/features/post/editor/novel-demo/extensions';
 import { slashCommand, suggestionItems } from '@/features/post/editor/novel-demo/slash-items';
-import { buildNovelStorageKey, loadNovelDraftDocument } from '@/features/post/editor/novel-demo/storage';
+import { buildNovelStorageKey } from '@/features/post/editor/novel-demo/storage';
 import { resolveUploadErrorMessage, uploadImageForDirectInsert } from '@/features/post/editor/novel-demo/upload';
 
 const SAVE_DEBOUNCE_MS = 500;
@@ -37,6 +36,7 @@ type SaveStatus = 'Saved' | 'Unsaved' | 'Saving' | 'Error';
 
 interface PostRichEditorProps {
   slug: string;
+  initialContent: JSONContent;
   onCancel: () => void;
 }
 
@@ -369,19 +369,11 @@ function BubbleActionButton({ item }: BubbleActionButtonProps) {
 
 /**
  * 功能：渲染官方 advanced-editor 范式的文章编辑器（localStorage 保存，不接入后端正文写入）。
- * 关键参数：slug 为文章标识；onCancel 为返回阅读页回调。
+ * 关键参数：slug 为文章标识；initialContent 为首次挂载时的文档内容；onCancel 为返回阅读页回调。
  * 返回值/副作用：返回编辑器节点；副作用为写入 localStorage 与调用图片上传接口。
  */
-export function PostRichEditor({ slug, onCancel }: PostRichEditorProps) {
+export function PostRichEditor({ slug, initialContent, onCancel }: PostRichEditorProps) {
   const saveTimerRef = useRef<number | null>(null);
-  const [initialContent] = useState<JSONContent>(() => {
-    if (typeof window === 'undefined') {
-      return createDefaultEditorContent();
-    }
-
-    const stored = loadNovelDraftDocument(slug);
-    return stored ?? createDefaultEditorContent();
-  });
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('Saved');
 
   const storageKeys = useMemo(

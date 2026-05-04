@@ -1,5 +1,7 @@
 package com.getmypage.blog.infrastructure.search;
 
+import com.getmypage.blog.mapper.PostMapper;
+import com.getmypage.blog.model.entity.Post;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -24,17 +26,20 @@ public class SearchClient {
 
     private final RestTemplate meiliSearchRestTemplate;
     private final String postIndex;
+    private final PostMapper postMapper;
 
     /**
      * 功能：初始化搜索客户端并绑定 Meilisearch 连接与索引名配置。
-     * 关键参数：meiliSearchRestTemplate 为已配置认证信息的 HTTP 客户端；postIndex 为文章索引名。
+     * 关键参数：meiliSearchRestTemplate 为已配置认证信息的 HTTP 客户端；postIndex 为文章索引名；postMapper 用于读取真实文章字段构建搜索文档。
      * 返回值/副作用：无返回值；构造后可提交索引任务与执行搜索查询。
      */
     public SearchClient(
             @Qualifier("meiliSearchRestTemplate") RestTemplate meiliSearchRestTemplate,
-            @Value("${blog.meilisearch.post-index:posts}") String postIndex) {
+            @Value("${blog.meilisearch.post-index:posts}") String postIndex,
+            PostMapper postMapper) {
         this.meiliSearchRestTemplate = meiliSearchRestTemplate;
         this.postIndex = postIndex;
+        this.postMapper = postMapper;
     }
 
     /**
@@ -123,12 +128,15 @@ public class SearchClient {
      * 返回值/副作用：无返回值；副作用为调用文档写入接口。
      */
     private void upsertPostIndex(Long postId) {
+        Post post = postMapper.selectById(postId);
+        if (post == null || post.getStatus() == null || post.getStatus() != 1) {
+            log.warn("Skip meilisearch upsert because post is absent or unpublished, postId={}", postId);
+            removePostIndex(postId);
+            return;
+        }
+
         String path = "/indexes/%s/documents?primaryKey=id".formatted(postIndex);
-        List<Map<String, Object>> documents = List.of(Map.of(
-                "id", postId,
-                "status", 1,
-                "updatedAt", Instant.now().toString()
-        ));
+        List<Map<String, Object>> documents = List.of(buildSearchDocument(post));
 
         try {
             ResponseEntity<Map> response = meiliSearchRestTemplate.postForEntity(path, documents, Map.class);
@@ -137,6 +145,29 @@ public class SearchClient {
         } catch (Exception ex) {
             log.error("Failed to submit meilisearch upsert, postId={}, index={}", postId, postIndex, ex);
         }
+    }
+
+    /**
+     * 功能：将文章实体转换为搜索索引文档，确保搜索页可直接展示标题、摘要、slug 与封面。
+     * 关键参数：post 为已发布文章实体。
+     * 返回值/副作用：返回可提交到 Meilisearch 的文档 Map；无副作用。
+     */
+    private Map<String, Object> buildSearchDocument(Post post) {
+        String title = post.getTitle() == null ? "" : post.getTitle();
+        String slug = post.getSlug() == null ? "" : post.getSlug();
+        String summary = post.getSummary() == null ? "" : post.getSummary();
+        String coverUrl = post.getCoverUrl() == null ? "" : post.getCoverUrl();
+        String updatedAt = post.getUpdatedAt() == null ? Instant.now().toString() : post.getUpdatedAt().toString();
+        return Map.of(
+                "id", post.getId(),
+                "title", title,
+                "summary", summary,
+                "excerpt", summary,
+                "slug", slug,
+                "coverUrl", coverUrl,
+                "status", post.getStatus(),
+                "updatedAt", updatedAt
+        );
     }
 
     /**
