@@ -2,7 +2,7 @@
 
 import type { EditorView } from '@tiptap/pm/view';
 import { TextSelection } from '@tiptap/pm/state';
-import { Bold, Code, Italic, Link as LinkIcon, Strikethrough } from 'lucide-react';
+import { Bold, Code, Italic, Link as LinkIcon, Strikethrough, Save } from 'lucide-react';
 import {
   EditorBubble,
   EditorBubbleItem,
@@ -38,6 +38,10 @@ interface PostRichEditorProps {
   slug: string;
   initialContent: JSONContent;
   onCancel: () => void;
+  /** 功能：将编辑器内容发布到后端。关键参数：content 为当前文档。 */
+  onPublish?: (content: JSONContent) => Promise<void>;
+  /** 是否正在发布中，禁用按钮防重复提交。 */
+  publishing?: boolean;
 }
 
 interface BubbleActionItem {
@@ -372,9 +376,10 @@ function BubbleActionButton({ item }: BubbleActionButtonProps) {
  * 关键参数：slug 为文章标识；initialContent 为首次挂载时的文档内容；onCancel 为返回阅读页回调。
  * 返回值/副作用：返回编辑器节点；副作用为写入 localStorage 与调用图片上传接口。
  */
-export function PostRichEditor({ slug, initialContent, onCancel }: PostRichEditorProps) {
+export function PostRichEditor({ slug, initialContent, onCancel, onPublish, publishing = false }: PostRichEditorProps) {
   const saveTimerRef = useRef<number | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('Saved');
+  const editorInstanceRef = useRef<EditorInstance | null>(null);
 
   const storageKeys = useMemo(
     () => ({
@@ -430,7 +435,7 @@ export function PostRichEditor({ slug, initialContent, onCancel }: PostRichEdito
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-screen-lg space-y-4">
+    <div className="mx-auto w-full max-w-5xl space-y-4">
       <div className="border border-(--gmp-novel-line-strong) bg-(--gmp-novel-toolbar) p-3 gmp-cut-corner-br md:p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <button
@@ -444,6 +449,21 @@ export function PostRichEditor({ slug, initialContent, onCancel }: PostRichEdito
             <span className="inline-flex h-8 items-center border border-(--gmp-novel-line) bg-(--gmp-novel-surface) px-3 font-mono text-[10px] tracking-widest text-(--gmp-novel-text-muted)">
               {resolveSaveStatusLabel(saveStatus)}
             </span>
+            {onPublish ? (
+              <button
+                type="button"
+                disabled={publishing}
+                onClick={() => {
+                  const editor = editorInstanceRef.current;
+                  if (!editor) return;
+                  void onPublish(editor.getJSON());
+                }}
+                className="inline-flex h-9 items-center gap-2 border border-(--gmp-accent) bg-(--gmp-accent) px-4 font-mono text-[10px] font-black tracking-widest text-black uppercase transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save className="h-3.5 w-3.5" />
+                {publishing ? '发布中...' : '发布到服务器'}
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
@@ -453,7 +473,10 @@ export function PostRichEditor({ slug, initialContent, onCancel }: PostRichEdito
           <EditorContent
             initialContent={initialContent}
             extensions={extensions as never[]}
-            className="relative min-h-96 w-full max-w-screen-lg border border-(--gmp-novel-line-strong) bg-(--gmp-novel-surface)"
+            className="relative min-h-96 w-full max-w-5xl border border-(--gmp-novel-line-strong) bg-(--gmp-novel-surface)"
+            onCreate={({ editor }) => {
+              editorInstanceRef.current = editor;
+            }}
             editorProps={{
               handlePaste: (view, event) => handleEditorPaste(view, event),
               handleDrop: (view, event, _slice, moved) => tryInsertDroppedImages(view, event, moved),

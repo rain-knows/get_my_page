@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ShieldAlert } from "lucide-react";
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { KineticPageShell } from "@/features/surface/components/KineticPageShell";
 import { useIsAdminCapability, usePostDetail } from "@/features/post/hooks";
 import { PostRichEditor } from "@/features/post/components/PostRichEditor";
-import { createDefaultEditorContent, loadNovelDraftDocument, loadNovelDraftTitle, parsePostContentToNovelDoc, saveNovelDraftTitle } from "@/features/post/editor/novel-demo";
+import { createDefaultEditorContent, loadNovelDraftDocument, loadNovelDraftTitle, parsePostContentToNovelDoc, saveNovelDraftTitle, serializeNovelDoc } from "@/features/post/editor/novel-demo";
+import { updatePost } from "@/features/post/api";
+import type { JSONContent } from "novel";
 
 interface BlogArticleEditorProps {
   slug: string;
@@ -23,6 +25,50 @@ function buildFallbackTitleFromSlug(slug: string): string {
 }
 
 /**
+ * 功能：尝试解析服务端内容为 Novel 文档，失败时返回错误信息而非静默降级。
+ * 关键参数：content 为正文 JSON 字符串；format 为内容格式。
+ * 返回值/副作用：返回文档与可选错误信息；无副作用。
+ */
+function tryParsePostContent(
+  content: string | undefined | null,
+  format: string | undefined | null,
+): { doc: JSONContent; error?: string } {
+  if (!content) {
+    return { doc: createDefaultEditorContent(), error: "服务端返回内容为空，请检查文章是否存在或格式是否正确。" };
+  }
+  if (format !== "tiptap-json") {
+    return { doc: createDefaultEditorContent(), error: `不支持的内容格式：${format || "未知"}，仅支持 tiptap-json。` };
+  }
+  try {
+    const doc = parsePostContentToNovelDoc(content, format);
+    if (isEffectivelyEmpty(doc)) {
+      return { doc, error: "文章内容解析后为空，可能为旧格式或未完成迁移的内容。" };
+    }
+    return { doc };
+  } catch {
+    return { doc: createDefaultEditorContent(), error: "文章内容 JSON 解析失败，可能为旧版 MDX 格式数据。" };
+  }
+}
+
+/**
+ * 功能：判断文档是否实际为空（仅含一个无文本的段落）。
+ * 关键参数：doc 为待检测的 Novel 文档。
+ * 返回值/副作用：返回是否为空文档；无副作用。
+ */
+function isEffectivelyEmpty(doc: JSONContent): boolean {
+  const content = doc.content;
+  if (!content || content.length === 0) return true;
+  if (content.length > 1) return false;
+  const firstNode = content[0];
+  if (!firstNode) return true;
+  if (firstNode.type !== "paragraph") return false;
+  const textNodes = firstNode.content;
+  if (!textNodes || textNodes.length === 0) return true;
+  if (textNodes.length > 1) return false;
+  return textNodes[0]?.type === "text" && !(textNodes[0] as { text?: string }).text;
+}
+
+/**
  * 功能：渲染文章编辑页壳层，仅负责权限门禁与编辑器装配，不再承载旧版数据编排逻辑。
  * 关键参数：slug 为文章唯一标识，用于 localStorage 命名空间隔离。
  * 返回值/副作用：返回编辑页节点；副作用为根据用户操作触发路由跳转。
@@ -33,22 +79,33 @@ export function BlogArticleEditor({ slug }: BlogArticleEditorProps) {
   const { data, loading, error, reload } = usePostDetail(slug, canEdit);
   const detailPath = `/blog/${slug}`;
   const localPreviewPath = `${detailPath}?preview=local`;
+  const [publishError, setPublishError] = useState("");
+  const [publishing, setPublishing] = useState(false);
+  const [contentParseError, setContentParseError] = useState("");
+
   const initialSnapshot = useMemo(() => {
+    // 优先使用服务端数据，localStorage 仅保留标题草稿供用户继续编辑
+    if (data) {
+      const localTitle = loadNovelDraftTitle(slug);
+      const { doc: parsedDoc, error: parseError } = tryParsePostContent(data.content, data.contentFormat);
+      setContentParseError(parseError ?? "");
+      return {
+        key: `${slug}:remote:${data.baseUpdatedAt}`,
+        title: localTitle ?? data.title,
+        content: parsedDoc,
+        baseUpdatedAt: data.baseUpdatedAt,
+      };
+    }
+
+    // 服务端不可用时，回退到本地草稿恢复
     const localTitle = loadNovelDraftTitle(slug);
     const localDocument = loadNovelDraftDocument(slug);
     if (localTitle || localDocument) {
       return {
-        key: `${slug}:local:${localTitle ? "title" : data?.baseUpdatedAt ?? "pending"}`,
-        title: localTitle ?? data?.title ?? buildFallbackTitleFromSlug(slug),
-        content: localDocument ?? (data ? parsePostContentToNovelDoc(data.content, data.contentFormat) : createDefaultEditorContent()),
-      };
-    }
-
-    if (data) {
-      return {
-        key: `${slug}:remote:${data.baseUpdatedAt}`,
-        title: data.title,
-        content: parsePostContentToNovelDoc(data.content, data.contentFormat),
+        key: `${slug}:local:fallback`,
+        title: localTitle ?? buildFallbackTitleFromSlug(slug),
+        content: localDocument ?? createDefaultEditorContent(),
+        baseUpdatedAt: undefined,
       };
     }
 
@@ -72,6 +129,39 @@ export function BlogArticleEditor({ slug }: BlogArticleEditorProps) {
   function handleTitleChange(nextTitle: string): void {
     saveNovelDraftTitle(slug, nextTitle);
   }
+
+  /**
+   * 功能：将编辑器当前内容保存到后端，含正文序列化与更新元信息。
+   * 关键参数：content 为当前编辑器文档；title 为当前标题。
+   * 返回值/副作用：返回 Promise<void>；副作用为调用后端更新接口并刷新页面。
+   */
+  const handlePublish = useCallback(async (content: JSONContent): Promise<void> => {
+    if (!data) return;
+
+    setPublishing(true);
+    setPublishError("");
+
+    try {
+      const currentTitle = loadNovelDraftTitle(slug) ?? data.title;
+      const serializedContent = serializeNovelDoc(content);
+      await updatePost(data.id, {
+        title: currentTitle,
+        slug: data.slug,
+        excerpt: data.excerpt || "",
+        summary: data.summary || "",
+        content: serializedContent,
+        contentFormat: "tiptap-json",
+        status: data.status ?? 1,
+        baseUpdatedAt: data.baseUpdatedAt,
+        coverUrl: data.coverUrl,
+      });
+      router.push(detailPath);
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : "发布失败，请稍后重试");
+    } finally {
+      setPublishing(false);
+    }
+  }, [data, detailPath, router, slug]);
 
   return (
     <KineticPageShell
@@ -104,6 +194,16 @@ export function BlogArticleEditor({ slug }: BlogArticleEditorProps) {
                 REMOTE DETAIL UNAVAILABLE // USING LOCAL SNAPSHOT
               </div>
             ) : null}
+            {contentParseError ? (
+              <div className="mb-4 border border-amber-400/40 bg-amber-300/10 px-4 py-3 font-mono text-[10px] font-bold tracking-widest uppercase text-amber-200">
+                {contentParseError}
+              </div>
+            ) : null}
+            {publishError ? (
+              <div className="mb-4 border border-red-400/40 bg-red-300/10 px-4 py-3 font-mono text-[10px] font-bold tracking-widest uppercase text-red-200">
+                PUBLISH FAILED // {publishError}
+              </div>
+            ) : null}
             <div className="mb-4 flex items-start justify-between gap-3">
               <div className="space-y-1">
                 <p className="font-mono text-[10px] font-bold tracking-widest uppercase text-(--gmp-accent)">EDIT TARGET // {slug}</p>
@@ -130,7 +230,14 @@ export function BlogArticleEditor({ slug }: BlogArticleEditorProps) {
               </Link>
             </div>
 
-            <PostRichEditor key={initialSnapshot.key} slug={slug} initialContent={initialSnapshot.content} onCancel={handleCancelEdit} />
+            <PostRichEditor
+              key={initialSnapshot.key}
+              slug={slug}
+              initialContent={initialSnapshot.content}
+              onCancel={handleCancelEdit}
+              onPublish={handlePublish}
+              publishing={publishing}
+            />
           </section>
         ) : error ? (
           <section className="space-y-4 border border-(--gmp-line-strong) bg-(--gmp-bg-panel) p-5 gmp-cut-corner-br">

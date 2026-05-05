@@ -1,5 +1,6 @@
 package com.getmypage.blog.infrastructure.search;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getmypage.blog.mapper.PostMapper;
 import com.getmypage.blog.model.entity.Post;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,15 @@ class SearchClientTest {
     private PostMapper postMapper;
 
     /**
+     * 功能：构造 ObjectMapper 实例用于测试搜索客户端，无需 mock 实际 JSON 解析。
+     * 关键参数：无。
+     * 返回值/副作用：返回 ObjectMapper 实例；无副作用。
+     */
+    private static ObjectMapper objectMapper() {
+        return new ObjectMapper();
+    }
+
+    /**
      * 功能：构造可用于搜索索引同步的已发布文章实体，避免每个测试重复拼装字段。
      * 关键参数：postId 为文章 ID。
      * 返回值/副作用：返回已发布文章实体；无副作用。
@@ -60,7 +70,7 @@ class SearchClientTest {
         when(restTemplate.postForEntity(any(String.class), any(Object.class), eq(Map.class)))
                 .thenReturn(new ResponseEntity<>(Map.of("taskUid", 1), HttpStatus.ACCEPTED));
         when(postMapper.selectById(7L)).thenReturn(buildPublishedPost(7L));
-        SearchClient searchClient = new SearchClient(restTemplate, "posts", postMapper);
+        SearchClient searchClient = new SearchClient(restTemplate, "posts", postMapper, objectMapper());
 
         searchClient.syncPublicPostIndex(7L, 1, false);
 
@@ -87,7 +97,7 @@ class SearchClientTest {
      */
     @Test
     void syncPublicPostIndexShouldDeleteWhenDraftOrDeleted() {
-        SearchClient searchClient = new SearchClient(restTemplate, "posts", postMapper);
+        SearchClient searchClient = new SearchClient(restTemplate, "posts", postMapper, objectMapper());
 
         searchClient.syncPublicPostIndex(8L, 0, false);
         searchClient.syncPublicPostIndex(9L, 1, true);
@@ -103,7 +113,7 @@ class SearchClientTest {
      */
     @Test
     void updatePostIndexShouldSkipWhenPostIdIsNull() {
-        SearchClient searchClient = new SearchClient(restTemplate, "posts", postMapper);
+        SearchClient searchClient = new SearchClient(restTemplate, "posts", postMapper, objectMapper());
 
         searchClient.updatePostIndex(null);
 
@@ -125,7 +135,7 @@ class SearchClientTest {
         when(restTemplate.postForEntity(eq("/indexes/posts/search"), any(Object.class), eq(Map.class)))
                 .thenReturn(new ResponseEntity<>(meiliBody, HttpStatus.OK));
 
-        SearchClient searchClient = new SearchClient(restTemplate, "posts", postMapper);
+        SearchClient searchClient = new SearchClient(restTemplate, "posts", postMapper, objectMapper());
         SearchClient.SearchQueryResult result = searchClient.searchPublicPosts("nextjs");
 
         assertFalse(result.isDegraded());
@@ -143,7 +153,7 @@ class SearchClientTest {
         when(restTemplate.postForEntity(eq("/indexes/posts/search"), any(Object.class), eq(Map.class)))
                 .thenThrow(new RuntimeException("meili down"));
 
-        SearchClient searchClient = new SearchClient(restTemplate, "posts", postMapper);
+        SearchClient searchClient = new SearchClient(restTemplate, "posts", postMapper, objectMapper());
         SearchClient.SearchQueryResult result = searchClient.searchPublicPosts("nextjs");
 
         assertTrue(result.isDegraded());
