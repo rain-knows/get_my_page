@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { KineticPageShell } from "@/features/surface/components/KineticPageShell";
-import { ChevronRight, DatabaseZap, Terminal } from "lucide-react";
-import { usePostList } from "@/features/post/hooks";
+import { ChevronRight, DatabaseZap, Plus, Terminal } from "lucide-react";
+import { useIsAdminCapability, usePostList } from "@/features/post/hooks";
 import type { PostListItem } from "@/features/post/types";
 import { formatPostCalendarDate } from "@/features/post/time";
 
@@ -25,6 +25,7 @@ function buildPostLabel(post: PostListItem): string {
  */
 export function BlogListWorkbench() {
   const { records, pagination, loading, error, reload } = usePostList({ page: 1, size: 20 });
+  const canEdit = useIsAdminCapability();
 
   return (
     <KineticPageShell
@@ -44,6 +45,18 @@ export function BlogListWorkbench() {
             POSTS API // {loading ? "SYNCING..." : `${pagination.total} FRAGMENTS`}
           </p>
         </div>
+
+        {canEdit ? (
+          <div className="flex justify-end">
+            <Link
+              href="/blog/new"
+              className="inline-flex h-10 items-center gap-2 border border-(--gmp-accent) bg-(--gmp-accent) px-4 font-mono text-[10px] font-black tracking-widest text-black uppercase transition-opacity hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              NEW ARTICLE
+            </Link>
+          </div>
+        ) : null}
 
         {error ? (
           <div className="border border-(--gmp-line-strong) bg-(--gmp-bg-panel) p-6 gmp-cut-corner-br flex items-center justify-between gap-4">
@@ -70,15 +83,15 @@ export function BlogListWorkbench() {
         <div className="grid gap-6">
           {loading
             ? Array.from({ length: 3 }).map((_, index) => (
-                <article
-                  key={`post-skeleton-${index}`}
-                  className="relative border border-(--gmp-line-soft) bg-(--gmp-bg-panel) p-6 md:p-8 min-h-35 gmp-cut-corner-br animate-pulse"
-                >
-                  <div className="h-4 w-40 bg-(--gmp-line-soft)" />
-                  <div className="mt-4 h-7 w-3/4 bg-(--gmp-line-soft)" />
-                  <div className="mt-4 h-4 w-full bg-(--gmp-line-soft)" />
-                </article>
-              ))
+              <article
+                key={`post-skeleton-${index}`}
+                className="relative border border-(--gmp-line-soft) bg-(--gmp-bg-panel) p-6 md:p-8 min-h-35 gmp-cut-corner-br animate-pulse"
+              >
+                <div className="h-4 w-40 bg-(--gmp-line-soft)" />
+                <div className="mt-4 h-7 w-3/4 bg-(--gmp-line-soft)" />
+                <div className="mt-4 h-4 w-full bg-(--gmp-line-soft)" />
+              </article>
+            ))
             : records.map((post) => (
               <Link
                 key={post.id}
@@ -105,9 +118,9 @@ export function BlogListWorkbench() {
                   <div className="flex flex-row flex-wrap md:flex-col items-center md:items-end gap-3 mt-4 md:mt-0 font-mono text-[10px] font-bold tracking-widest uppercase text-(--gmp-text-secondary) group-hover:text-black transition-colors md:min-w-30">
                     <span>ID-{post.id}</span>
                     <span>{formatPostCalendarDate(post.updatedAt)}</span>
-                  <span className="border border-(--gmp-line-strong) group-hover:border-black px-2 mt-1">
-                    {post.status === 1 ? "ONLINE" : "DRAFT"}
-                  </span>
+                    <span className="border border-(--gmp-line-strong) group-hover:border-black px-2 mt-1">
+                      {post.status === 1 ? "ONLINE" : "DRAFT"}
+                    </span>
                   </div>
                 </div>
 

@@ -3,6 +3,7 @@
 import type { EditorView } from '@tiptap/pm/view';
 import { TextSelection } from '@tiptap/pm/state';
 import { Bold, Code, Italic, Link as LinkIcon, Strikethrough, Save } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   EditorBubble,
   EditorBubbleItem,
@@ -264,7 +265,7 @@ async function uploadAndInsertImages(view: EditorView, imageFiles: File[]): Prom
       const uploaded = await uploadImageForDirectInsert(file);
       insertImageAtSelection(view, uploaded.url, uploaded.fileName);
     } catch (error) {
-      window.alert(resolveUploadErrorMessage(error));
+      toast.error(resolveUploadErrorMessage(error));
     }
   }
 }

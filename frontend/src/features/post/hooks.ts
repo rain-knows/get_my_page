@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
+import useSWR, { type KeyedMutator, useSWRConfig } from 'swr';
 import { ApiError } from '@/lib/api-client';
 import { fetchPostDetail, fetchPostList } from '@/features/post/api';
-import type { PostDetail, PostListItem, PostListQuery, PostListResponse } from '@/features/post/types';
+import type { PostListItem, PostListQuery, PostListResponse } from '@/features/post/types';
 import { useAuthStore } from '@/stores/use-auth-store';
 
 interface PostListState {
@@ -9,125 +10,144 @@ interface PostListState {
   pagination: Pick<PostListResponse, 'current' | 'size' | 'total' | 'pages'>;
 }
 
-const DEFAULT_POST_LIST_STATE: PostListState = {
-  records: [],
-  pagination: {
-    current: 1,
-    size: 10,
-    total: 0,
-    pages: 0,
-  },
-};
+/** 文章列表的 SWR 缓存键前缀，用于批量失效。 */
+export const POST_LIST_CACHE_KEY = '/posts.list';
 
 /**
- * 功能：封装文章列表加载状态与重载行为，供列表页面复用。
+ * 功能：按查询参数拼接出唯一 SWR 缓存键，实现不同分页/权限独立缓存。
+ * 关键参数：query 控制分页与草稿可见性。
+ * 返回值/副作用：返回去重后的列表缓存键元组；无副作用。
+ */
+function buildPostListKey(query: PostListQuery): [string, number, number, boolean] {
+  const page = query.page ?? 1;
+  const size = query.size ?? 10;
+  const includeDraft = query.includeDraft ?? false;
+  return [POST_LIST_CACHE_KEY, page, size, includeDraft];
+}
+
+/**
+ * 功能：将原始列表响应映射为组件友好的状态对象。
+ * 关键参数：response 为后端分页响应。
+ * 返回值/副作用：返回 PostListState；无副作用。
+ */
+function mapPostListResponse(response: PostListResponse): PostListState {
+  return {
+    records: response.records,
+    pagination: {
+      current: Number(response.current),
+      size: Number(response.size),
+      total: Number(response.total),
+      pages: Number(response.pages),
+    },
+  };
+}
+
+/**
+ * 功能：封装文章列表加载状态与重载行为，底层基于 SWR 实现请求去重与缓存。
  * 关键参数：query 控制分页与草稿可见性。
  * 返回值/副作用：返回列表数据、加载状态、错误信息与重载函数；副作用为触发网络请求。
  */
 export function usePostList(query: PostListQuery = {}) {
-  const [data, setData] = useState<PostListState>(DEFAULT_POST_LIST_STATE);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  const page = query.page ?? 1;
-  const size = query.size ?? 10;
-  const includeDraft = query.includeDraft ?? false;
+  const key = buildPostListKey(query);
+  const { data, error, isLoading, isValidating, mutate } = useSWR(
+    key,
+    async ([, page, size, includeDraft]) => {
+      const response = await fetchPostList({ page, size, includeDraft });
+      return mapPostListResponse(response);
+    },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 5000,
+    },
+  );
 
   /**
-   * 功能：加载文章分页数据并维护错误状态。
-   * 关键参数：无（闭包内读取 page/size/includeDraft）。
-   * 返回值/副作用：返回 Promise<void>；副作用为更新 React 状态。
+   * 功能：重新加载文章列表数据。
+   * 关键参数：无。
+   * 返回值/副作用：返回 Promise；副作用为触发 SWR 重验证。
    */
   const reload = useCallback(async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      const response = await fetchPostList({ page, size, includeDraft });
-      setData({
-        records: response.records,
-        pagination: {
-          current: Number(response.current),
-          size: Number(response.size),
-          total: Number(response.total),
-          pages: Number(response.pages),
-        },
-      });
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError('文章列表加载失败，请稍后重试');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [includeDraft, page, size]);
-
-  useEffect(() => {
-    void reload();
-  }, [reload]);
+    await mutate();
+  }, [mutate]);
 
   return {
-    ...data,
-    loading,
-    error,
+    records: data?.records ?? [],
+    pagination: data?.pagination ?? { current: 1, size: 10, total: 0, pages: 0 },
+    loading: isLoading,
+    validating: isValidating,
+    error: error ? (error instanceof ApiError ? error.message : '文章列表加载失败，请稍后重试') : '',
     reload,
+    mutate,
   };
 }
 
 /**
- * 功能：封装文章详情加载状态与重载行为，供详情页复用。
+ * 功能：构建文章详情 SWR 缓存键。
+ * 关键参数：slug 为文章唯一标识；includeDraft 控制草稿可见性。
+ * 返回值/副作用：返回详情缓存键元组或 null（slug 无效时）；无副作用。
+ */
+function buildPostDetailKey(slug: string, includeDraft: boolean): [string, string, boolean] | null {
+  if (!slug.trim()) {
+    return null;
+  }
+  return ['/posts.detail', slug, includeDraft];
+}
+
+/**
+ * 功能：封装文章详情加载状态与重载行为，底层基于 SWR 实现请求去重与缓存。
  * 关键参数：slug 为文章唯一标识；includeDraft 控制草稿可见性。
  * 返回值/副作用：返回详情数据、加载状态、错误信息与重载函数；副作用为触发网络请求。
  */
 export function usePostDetail(slug: string, includeDraft = false) {
-  const [data, setData] = useState<PostDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const key = buildPostDetailKey(slug, includeDraft);
+  const { data, error, isLoading, isValidating, mutate } = useSWR(
+    key,
+    async ([, s, incDraft]) => fetchPostDetail(s, incDraft),
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 5000,
+    },
+  );
 
   /**
-   * 功能：按 slug 重新加载文章详情。
-   * 关键参数：无（闭包内读取 slug/includeDraft）。
-   * 返回值/副作用：返回 Promise<void>；副作用为更新 React 状态。
+   * 功能：重新加载文章详情数据。
+   * 关键参数：无。
+   * 返回值/副作用：返回 Promise；副作用为触发 SWR 重验证。
    */
   const reload = useCallback(async () => {
-    if (!slug.trim()) {
-      setData(null);
-      setError('文章标识无效');
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
-    try {
-      const response = await fetchPostDetail(slug, includeDraft);
-      setData(response);
-    } catch (err) {
-      setData(null);
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError('文章详情加载失败，请稍后重试');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [includeDraft, slug]);
-
-  useEffect(() => {
-    void reload();
-  }, [reload]);
+    await mutate();
+  }, [mutate]);
 
   return {
-    data,
-    loading,
-    error,
+    data: data ?? null,
+    loading: isLoading,
+    validating: isValidating,
+    error: error ? (error instanceof ApiError ? error.message : '文章详情加载失败，请稍后重试') : '',
     reload,
+    mutate,
   };
 }
+
+/**
+ * 功能：返回批量失效文章列表缓存的函数，供写操作（create/update/delete）后调用。
+ * 关键参数：无。
+ * 返回值/副作用：返回失效函数；副作用不在此执行，由调用方触发。
+ */
+export function useInvalidatePostList(): () => Promise<void> {
+  const { mutate } = useSWRConfig();
+
+  return useCallback(async () => {
+    await mutate(
+      (key) => Array.isArray(key) && key[0] === POST_LIST_CACHE_KEY,
+      undefined,
+      { revalidate: true },
+    );
+  }, [mutate]);
+}
+
+export type { KeyedMutator };
+
+// ---- 以下为权限相关 hooks（保持不变） ----
 
 /**
  * 功能：解析 JWT accessToken 中的 role 字段，作为刷新后的权限兜底来源。
@@ -180,7 +200,7 @@ export function useIsAdminCapability(): boolean {
  */
 function subscribeAccessTokenStorage(onStoreChange: () => void): () => void {
   if (typeof window === 'undefined') {
-    return () => {};
+    return () => { };
   }
 
   const handleStorage = (event: StorageEvent): void => {

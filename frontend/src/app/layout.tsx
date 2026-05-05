@@ -3,6 +3,7 @@ import { Fira_Code, JetBrains_Mono, Montserrat, Noto_Sans_SC, Oswald } from "nex
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { ToastProvider } from "@/components/shared/ToastProvider";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -75,6 +76,7 @@ export default function RootLayout({
         <div className="relative z-0 flex min-h-screen w-full flex-col">
           {children}
         </div>
+        <ToastProvider />
         <SpeedInsights />
       </body>
     </html>

@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/api-client';
 import type {
   FileUploadResult,
+  PostCreatePayload,
   PostDetail,
   PostListQuery,
   PostListResponse,
@@ -42,6 +43,15 @@ export async function fetchPostDetail(slug: string, includeDraft = false): Promi
  */
 export async function updatePost(postId: number, payload: PostMutationPayload): Promise<PostDetail> {
   return apiClient.put<PostDetail>(`/posts/${postId}`, payload);
+}
+
+/**
+ * 功能：创建新文章并返回文章详情。
+ * 关键参数：payload 为创建请求体，包含 title/slug/content/contentFormat/status 等必填字段。
+ * 返回值/副作用：返回创建后的文章详情；副作用为触发文章写接口。
+ */
+export async function createPost(payload: PostCreatePayload): Promise<PostDetail> {
+  return apiClient.post<PostDetail>('/posts', payload);
 }
 
 /**

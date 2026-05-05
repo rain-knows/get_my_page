@@ -100,7 +100,7 @@ coverage/
 #------------------------------
 # agents & design-system
 #------------------------------
-
+.qoder/
 .agent/
 .agents/
 .claude/

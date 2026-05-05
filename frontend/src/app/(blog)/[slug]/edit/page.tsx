@@ -12,5 +12,5 @@ interface BlogEditPageProps {
 export default async function BlogEditPage({ params }: BlogEditPageProps) {
   const { slug } = await params;
 
-  return <BlogArticleEditor slug={slug} />;
+  return <BlogArticleEditor mode="edit" slug={slug} />;
 }

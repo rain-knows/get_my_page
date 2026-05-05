@@ -164,7 +164,8 @@
 | POST | `/api/posts` | ADMIN | 创建文章 |
 | PUT | `/api/posts/{id}` | ADMIN | 更新文章 |
 | DELETE | `/api/posts/{id}` | ADMIN | 删除文章 |
-| POST | `/api/posts/{id}/like` | USER | 点赞/取消点赞 |
+
+> **注意**: `POST /api/posts/{id}/like` 在早期文档中列出，但当前版本未实现（无对应 Controller/Service/数据表），已从此清单移除。
 
 #### 文章列表查询参数
 
@@ -196,7 +197,9 @@
 
 ---
 
-### 4.3 分类模块 `/api/categories`
+### 4.3 分类模块 `/api/categories`（桩代码阶段）
+
+> **状态**: Entity + 空 Mapper 已存在，无 Controller/Service/DTO。以下接口为规划中的声明，当前不可用。
 
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|
@@ -205,7 +208,9 @@
 | PUT | `/api/categories/{id}` | ADMIN | 更新分类 |
 | DELETE | `/api/categories/{id}` | ADMIN | 删除分类 |
 
-### 4.4 标签模块 `/api/tags`
+### 4.4 标签模块 `/api/tags`（桩代码阶段）
+
+> **状态**: Entity + 空 Mapper 已存在，无 Controller/Service/DTO。以下接口为规划中的声明，当前不可用。
 
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|

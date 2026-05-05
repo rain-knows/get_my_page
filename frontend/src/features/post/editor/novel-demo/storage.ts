@@ -104,3 +104,25 @@ export function saveNovelDraftTitle(slug: string, title: string): void {
   window.localStorage.setItem(key, normalized);
 }
 
+/**
+ * 功能：清除指定 slug 对应的全部本地草稿数据（标题 + 正文 3 种格式），供发布成功后清理使用。
+ * 关键参数：slug 为文章唯一标识。
+ * 返回值/副作用：无返回值；副作用为删除 localStorage 中的多个草稿键。
+ */
+export function clearNovelDraftStorage(slug: string): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const keysToClear = [
+    buildNovelStorageKey(slug, TITLE_FIELD),
+    buildNovelStorageKey(slug, JSON_FIELD),
+    buildNovelStorageKey(slug, "html-content"),
+    buildNovelStorageKey(slug, "markdown"),
+  ];
+
+  for (const key of keysToClear) {
+    window.localStorage.removeItem(key);
+  }
+}
+

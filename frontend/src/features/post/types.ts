@@ -52,6 +52,21 @@ export interface PostMutationPayload {
   coverUrl?: string | null;
 }
 
+/**
+ * 功能：定义创建文章请求体，与后端 PostCreateRequest 字段一一对应。
+ * 关键字段：title/slug/content/contentFormat/status 为必填；summary/excerpt/coverUrl 可选。
+ */
+export interface PostCreatePayload {
+  title: string;
+  slug: string;
+  summary?: string;
+  excerpt?: string;
+  content: string;
+  contentFormat: PostContentFormat;
+  status: PostStatus;
+  coverUrl?: string | null;
+}
+
 export interface FileUploadResult {
   url: string;
   key: string;

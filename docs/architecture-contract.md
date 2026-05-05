@@ -92,7 +92,7 @@
 - 若必须 breaking change：在 PR/变更说明中显式声明迁移策略。
 - 架构变更必须同步更新本文档及相关 docs（至少 `README.md`、`docs/11-rich-editor-design.md`、`docs/design.md`）。
 - 当前生效的显式 breaking change（2026-04-22）：文章内容协议硬切为 `tiptap-json`，不再保留 `gmp-block-v1` 双读兼容。
-- 当前生效的编辑阶段策略（2026-04-23）：`/blog/{slug}/edit` 采用 Novel 官方 demo localStorage 模式；编辑页首次进入时优先读取本地草稿，不存在时回退后端 `posts` 详情初始化，但暂不将编辑内容写回 `posts` 接口。
+- 当前生效的编辑阶段策略（2026-04-23 → 2026-05-05 更新）：`/blog/{slug}/edit` 采用 Novel 官方 demo 编辑器；编辑页首次进入以服务端 `GET /api/posts/{slug}` 数据为准；localStorage 草稿用于标题恢复与离线兜底；编辑器通过"发布到服务器"按钮调用 `PUT /api/posts/{id}` 将编辑内容写回后端。新建文章通过 `/blog/new` 路由进入 create 模式编辑器，发布时调用 `POST /api/posts`。
 
 ## 4. Agent 执行规范
 
